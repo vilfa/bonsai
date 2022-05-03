@@ -1,9 +1,37 @@
 project(
     'bonsai', 'c',
-    version: '0.1.0',
-    license: 'MIT',
-    meson_version: '>=0.62.1',
-    default_options: [
-        'buildtype=debugoptimized'
+    version : '0.1.0',
+    license : 'MIT',
+    meson_version : '>=0.62.1',
+    default_options : [
+        'c_std=c11',
+        'warning_level=2',
+        'werror=false',
+        'buildtype=debugoptimized',
     ]
 )
+
+### Dependencies
+dep_wlroots = dependency('wlroots', required : true)
+dep_libinput = dependency('libinput', required : true)
+dep_libevdev = dependency('libevdev', required : false)
+dep_libudev = dependency('libudev', required : true)
+dep_xkbcommon = dependency('xkbcommon', required : true)
+dep_glesv2 = dependency('glesv2', required : true)
+dep_drm = dependency('libdrm', required : false)
+dep_wayland_server = dependency('wayland-server', required : true)
+dep_wayland_client = dependency('wayland-client', required : true)
+dep_wayland_cursor = dependency('wayland-cursor', required : true)
+dep_wayland_egl = dependency('wayland-egl', required : true)
+dep_wayland_protocols = dependency('wayland-protocols', required : true)
+
+dep_libdev = dep_libudev
+if dep_libevdev.found()
+    dep_libdev = dep_libevdev
+endif
+
+### Include dirs
+inc_default = include_directories('include')
+
+### Subdirs
+subdir('bonsai')

@@ -1,0 +1,34 @@
+bonsai_src = [
+    'main.c',
+
+    'config/output.c',
+    'config/signal.c'
+]
+
+bonsai_dep = [
+    dep_wlroots,
+    dep_libinput,
+    dep_libdev,
+    dep_xkbcommon,
+    dep_glesv2,
+    dep_drm,
+    dep_wayland_server,
+    dep_wayland_client,
+    dep_wayland_cursor,
+    dep_wayland_egl,
+    dep_wayland_protocols,
+]
+
+bonsai_inc = [
+    inc_default,
+]
+
+executable(
+    'bonsai',
+    sources : bonsai_src,
+    include_directories : bonsai_inc,
+    dependencies : bonsai_dep,
+    c_args : [
+        '-DWLR_USE_UNSTABLE'
+        ]
+    )
