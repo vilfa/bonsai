@@ -4,8 +4,10 @@
 #include "bonsai/config/signal.h"
 
 struct bsi_listeners*
-bsi_listeners_init(struct bsi_listeners* bsi_listeners)
+bsi_listeners_init(struct bsi_listeners* bsi_listeners,
+                   struct bsi_server* bsi_server)
 {
+    bsi_listeners->server = bsi_server;
     bsi_listeners->active_listeners = 0;
     return bsi_listeners;
 }

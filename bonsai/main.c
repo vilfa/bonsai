@@ -9,6 +9,7 @@
 #include <wlr/render/allocator.h>
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_compositor.h>
+#include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_scene.h>
@@ -56,6 +57,9 @@ bsi_listeners_new_output_notify(struct wl_listener* listener, void* data)
     struct wlr_output* wlr_output = data;
     struct bsi_server* server =
         wl_container_of(listener, server, bsi_listeners.new_output_listener);
+
+    wlr_output_init_render(
+        wlr_output, server->wlr_allocator, server->wlr_renderer);
 
     if (!wl_list_empty(&wlr_output->modes)) {
         struct wlr_output_mode* mode =
@@ -117,6 +121,9 @@ main(void)
     wlr_compositor_create(server.wl_display, server.wlr_renderer);
     wlr_log(WLR_DEBUG, "created wlr_compositor");
 
+    wlr_data_device_manager_create(server.wl_display);
+    wlr_log(WLR_DEBUG, "created wlr_data_device_manager");
+
     server.wlr_output_layout = wlr_output_layout_create();
     wlr_log(WLR_DEBUG, "created output layout");
 
@@ -125,7 +132,7 @@ main(void)
     server.bsi_outputs = bsi_outputs;
 
     struct bsi_listeners bsi_listeners;
-    bsi_listeners_init(&bsi_listeners);
+    bsi_listeners_init(&bsi_listeners, &server);
     server.bsi_listeners = bsi_listeners;
 
     bsi_listeners_add_new_output_notify(&server.bsi_listeners,

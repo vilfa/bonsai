@@ -28,7 +28,8 @@ struct bsi_listeners
 };
 
 struct bsi_listeners*
-bsi_listeners_init(struct bsi_listeners* bsi_listeners);
+bsi_listeners_init(struct bsi_listeners* bsi_listeners,
+                   struct bsi_server* bsi_server);
 
 void
 bsi_listeners_add_new_output_notify(struct bsi_listeners* bsi_listeners,
