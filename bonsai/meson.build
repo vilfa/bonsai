@@ -1,6 +1,8 @@
 bonsai_src = [
     'main.c',
 
+    'util.c',
+
     'config/output.c',
     'config/signal.c'
 ]

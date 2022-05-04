@@ -18,6 +18,7 @@
 #include "bonsai/config/output.h"
 #include "bonsai/config/signal.h"
 #include "bonsai/server.h"
+#include "bonsai/util.h"
 
 static void
 bsi_output_destroy_notify(struct wl_listener* listener, void* data)
@@ -26,11 +27,7 @@ bsi_output_destroy_notify(struct wl_listener* listener, void* data)
     struct bsi_output* bsi_output =
         wl_container_of(listener, bsi_output, destroy_listener);
 
-    wl_list_remove(&bsi_output->link);
-    wl_list_remove(&bsi_output->destroy_listener.link);
-    wl_list_remove(&bsi_output->frame_listener.link);
-
-    free(bsi_output);
+    bsi_outputs_remove(&bsi_output->server->bsi_outputs, bsi_output);
 }
 
 static void
@@ -46,8 +43,7 @@ bsi_output_frame_notify(struct wl_listener* listener, void* data)
 
     wlr_scene_output_commit(wlr_scene_output);
 
-    struct timespec now;
-    timespec_get(&now, TIME_UTC);
+    struct timespec now = bsi_util_timespec_get();
     wlr_scene_output_send_frame_done(wlr_scene_output, &now);
 }
 
@@ -70,21 +66,17 @@ bsi_listeners_new_output_notify(struct wl_listener* listener, void* data)
             return;
     }
 
-    struct timespec now;
-    timespec_get(&now, TIME_UTC);
+    struct timespec now = bsi_util_timespec_get();
 
     struct bsi_output* bsi_output = calloc(1, sizeof(struct bsi_output));
     bsi_output->server = server;
     bsi_output->wlr_output = wlr_output;
     bsi_output->last_frame = now;
-    wl_list_insert(&server->bsi_outputs.outputs, &bsi_output->link);
 
-    bsi_output->destroy_listener.notify = bsi_output_destroy_notify;
-    wl_signal_add(&wlr_output->events.destroy, &bsi_output->destroy_listener);
+    bsi_output_add_destroy_listener(bsi_output, bsi_output_destroy_notify);
+    bsi_output_add_frame_listener(bsi_output, bsi_output_frame_notify);
 
-    bsi_output->frame_listener.notify = bsi_output_frame_notify;
-    wl_signal_add(&wlr_output->events.frame, &bsi_output->frame_listener);
-
+    bsi_outputs_add(&server->bsi_outputs, bsi_output);
     wlr_output_layout_add_auto(server->wlr_output_layout, wlr_output);
 }
 
@@ -137,8 +129,6 @@ main(void)
 
     bsi_listeners_add_new_output_notify(&server.bsi_listeners,
                                         bsi_listeners_new_output_notify);
-    wl_signal_add(&server.wlr_backend->events.new_output,
-                  &server.bsi_listeners.new_output_listener);
 
     wlr_log(WLR_DEBUG, "attached bsi_output_notify listeners");
 
