@@ -1,8 +1,76 @@
 #!/usr/bin/env zsh
 
+### Logging utils
+
+declare -A COLORS
+
+COLORS=(
+    [blue]="\033[1;34m"
+    [yellow]="\033[1;33m"
+    [red]="\033[1;31m"
+    [nil]="\033[0m"
+)
+
+print_info() {
+    echo "${COLORS[blue]}Info: $1${COLORS[nil]}"
+}
+
+print_warn() {
+    echo "${COLORS[yellow]}Warn: $1${COLORS[nil]}"
+}
+
+print_err() {
+    echo "${COLORS[red]}Err: $1${COLORS[nil]}"
+}
+
+### Project location utils
+
+project_dir() {
+    wd=${PWD##*/}
+    case $wd in
+    "bonsai")
+        echo "$(realpath -s $PWD)"
+        return
+        ;;
+    "remote")
+        echo "$(realpath -s $PWD/..)"
+        return
+        ;;
+    *)
+        print_err "Please run from the project_root or project_root/remote directory"
+        exit 1
+        ;;
+    esac
+}
+
+### Prefs location
+
+prefs_loc() {
+    wd=${PWD##*/}
+    case $wd in
+    "bonsai")
+        echo "$(realpath -s $PWD/remote/prefs.sh)"
+        return
+        ;;
+    "remote")
+        echo "$(realpath -s $PWD/prefs.sh)"
+        return
+        ;;
+    *)
+        print_err "Please run from the project_root or project_root/remote directory"
+        exit 1
+        ;;
+    esac
+}
+
+### Check working directory
+
+CWD=$(project_dir)
+PREFS=$(prefs_loc)
+
 ### Setup preferences
 
-source ./prefs.sh
+source "$PREFS"
 
 ### Build helpers
 
