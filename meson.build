@@ -4,7 +4,7 @@ project(
     license : 'MIT',
     meson_version : '>=0.61.0',
     default_options : [
-        'c_std=c11',
+        'c_std=c17',
         'warning_level=2',
         'werror=true',
         'buildtype=debugoptimized',

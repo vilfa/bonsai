@@ -3,8 +3,9 @@ bonsai_src = files(
 
     'util.c',
 
+    'config/input.c',
     'config/output.c',
-    'config/signal.c'
+    'config/signal.c',
 )
 
 bonsai_dep = [

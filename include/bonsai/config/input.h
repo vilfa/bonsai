@@ -1,3 +1,5 @@
+#pragma once
+
 #include <stddef.h>
 #include <stdlib.h>
 #include <wayland-server-core.h>
@@ -5,7 +7,7 @@
 
 /**
  * @brief Holds all inputs the server knows about via signal listeners. The
- * inputs_cursors list holds elements of type `struct bsi_input_cursor`. The
+ * inputs_pointers list holds elements of type `struct bsi_input_pointer`. The
  * inputs_keyboards list holds elements of type `struct bsi_input_keyboard`.
  *
  */
@@ -13,21 +15,22 @@ struct bsi_inputs
 {
     struct wlr_seat* seat;
 
-    size_t len_cursors;
-    struct wl_list inputs_cursors;
+    size_t len_pointers;
+    struct wl_list inputs_pointers;
 
     size_t len_keyboards;
     struct wl_list inputs_keyboards;
 };
 
 /**
- * @brief Holds a single input cursor and its event listeners.
+ * @brief Holds a single input pointer and its event listeners.
  *
  */
-struct bsi_input_cursor
+struct bsi_input_pointer
 {
     struct bsi_server* server;
     struct wlr_cursor* wlr_cursor;
+    struct wlr_input_device* wlr_input_device;
 
     struct wl_listener cursor_motion;
     struct wl_listener cursor_motion_absolute;
@@ -45,7 +48,7 @@ struct bsi_input_cursor
 struct bsi_input_keyboard
 {
     struct bsi_server* server;
-    struct wlr_keyboard* wlr_keyboard;
+    struct wlr_input_device* wlr_input_device;
 
     struct wl_listener key;
     struct wl_listener modifier;
@@ -64,24 +67,24 @@ struct bsi_inputs*
 bsi_inputs_init(struct bsi_inputs* bsi_inputs, struct wlr_seat* wlr_seat);
 
 /**
- * @brief Adds a cursor to the server inputs.
+ * @brief Adds a pointer to the server inputs.
  *
  * @param bsi_inputs Pointer to server inputs struct.
- * @param bsi_input_cursor Pointer to cursor to add.
+ * @param bsi_input_pointer Pointer to pointer to add.
  */
 void
-bsi_inputs_add_cursor(struct bsi_inputs* bsi_inputs,
-                      struct bsi_input_cursor* bsi_input_cursor);
+bsi_inputs_add_pointer(struct bsi_inputs* bsi_inputs,
+                       struct bsi_input_pointer* bsi_input_pointer);
 
 /**
- * @brief Remove a cursor from the server inputs.
+ * @brief Remove a pointer from the server inputs.
  *
  * @param bsi_inputs Pointer to server inputs struct.
- * @param bsi_input_cursor Pointer to cursor to remove.
+ * @param bsi_input_pointer Pointer to pointer to remove.
  */
 void
-bsi_inputs_remove_cursor(struct bsi_inputs* bsi_inputs,
-                         struct bsi_input_cursor* bsi_input_cursor);
+bsi_inputs_remove_pointer(struct bsi_inputs* bsi_inputs,
+                          struct bsi_input_pointer* bsi_input_pointer);
 
 /**
  * @brief Add a keyboard to the server inputs.
@@ -104,13 +107,13 @@ bsi_inputs_remove_keyboard(struct bsi_inputs* bsi_inputs,
                            struct bsi_input_keyboard* bsi_input_keyboard);
 
 /**
- * @brief Gets the number of server input cursors.
+ * @brief Gets the number of server input pointers.
  *
  * @param bsi_inputs Pointer to server inputs struct.
- * @return size_t The number of server input cursors.
+ * @return size_t The number of server input pointers.
  */
 size_t
-bsi_inputs_len_cursors(struct bsi_inputs* bsi_inputs);
+bsi_inputs_len_pointers(struct bsi_inputs* bsi_inputs);
 
 /**
  * @brief Gets the number of server input keyboards.

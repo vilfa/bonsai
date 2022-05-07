@@ -114,7 +114,7 @@ build_seq() {
 
 BUILD_SEQ=(
     "cd remote/bonsai"
-    "meson setup builddir"
+    "meson setup --wipe builddir"
     "meson configure --clearcache builddir"
     "meson compile --clean -C builddir"
     "meson compile -C builddir"

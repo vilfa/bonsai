@@ -1,5 +1,6 @@
 #pragma once
 
+#include "bonsai/config/input.h"
 #include "bonsai/config/output.h"
 #include "bonsai/config/signal.h"
 
@@ -10,8 +11,8 @@
 struct bsi_server
 {
     /* Globals */
-    struct wl_display* wl_display;
     const char* wl_socket;
+    struct wl_display* wl_display;
     struct wl_event_loop* wl_event_loop;
     struct wlr_backend* wlr_backend;
     struct wlr_renderer* wlr_renderer;
@@ -21,7 +22,11 @@ struct bsi_server
     struct wlr_compositor* wlr_compositor;
     struct wlr_data_device_manager* wlr_data_device_manager;
     struct wlr_xdg_shell* wlr_xdg_shell;
+    struct wlr_seat* wlr_seat;
+    struct wlr_cursor* wlr_cursor;
+    struct wlr_xcursor_manager* wlr_xcursor_manager;
     /* State */
     struct bsi_listeners bsi_listeners;
     struct bsi_outputs bsi_outputs;
+    struct bsi_inputs bsi_inputs;
 };
