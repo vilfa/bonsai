@@ -37,7 +37,7 @@ bsi_output_destroy_notify(struct wl_listener* listener,
     struct bsi_output* bsi_output =
         wl_container_of(listener, bsi_output, destroy);
 
-    bsi_outputs_remove(&bsi_output->server->bsi_outputs, bsi_output);
+    bsi_outputs_remove(&bsi_output->bsi_server->bsi_outputs, bsi_output);
 }
 
 static void
@@ -46,7 +46,7 @@ bsi_output_frame_notify(struct wl_listener* listener,
 {
     struct bsi_output* bsi_output =
         wl_container_of(listener, bsi_output, frame);
-    struct wlr_scene* wlr_scene = bsi_output->server->wlr_scene;
+    struct wlr_scene* wlr_scene = bsi_output->bsi_server->wlr_scene;
 
     struct wlr_scene_output* wlr_scene_output =
         wlr_scene_get_scene_output(wlr_scene, bsi_output->wlr_output);
@@ -79,7 +79,7 @@ bsi_listeners_new_output_notify(struct wl_listener* listener, void* data)
     struct timespec now = bsi_util_timespec_get();
 
     struct bsi_output* bsi_output = calloc(1, sizeof(struct bsi_output));
-    bsi_output->server = bsi_server;
+    bsi_output->bsi_server = bsi_server;
     bsi_output->wlr_output = wlr_output;
     bsi_output->last_frame = now;
 
@@ -101,7 +101,7 @@ bsi_listeners_new_input_notify(struct wl_listener* listener, void* data)
         case WLR_INPUT_DEVICE_POINTER: {
             struct bsi_input_pointer* bsi_input_pointer =
                 calloc(1, sizeof(struct bsi_input_pointer));
-            bsi_input_pointer->server = bsi_server;
+            bsi_input_pointer->bsi_server = bsi_server;
             bsi_input_pointer->wlr_cursor = bsi_server->wlr_cursor;
             bsi_input_pointer->wlr_input_device = wlr_input_device;
             bsi_inputs_add_pointer(&bsi_server->bsi_inputs, bsi_input_pointer);
@@ -111,7 +111,7 @@ bsi_listeners_new_input_notify(struct wl_listener* listener, void* data)
         case WLR_INPUT_DEVICE_KEYBOARD: {
             struct bsi_input_keyboard* bsi_input_keyboard =
                 calloc(1, sizeof(struct bsi_input_keyboard));
-            bsi_input_keyboard->server = bsi_server;
+            bsi_input_keyboard->bsi_server = bsi_server;
             bsi_input_keyboard->wlr_input_device = wlr_input_device;
             bsi_inputs_add_keyboard(&bsi_server->bsi_inputs,
                                     bsi_input_keyboard);

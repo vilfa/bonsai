@@ -23,7 +23,7 @@ struct bsi_outputs
  */
 struct bsi_output
 {
-    struct bsi_server* server;
+    struct bsi_server* bsi_server;
     struct wlr_output* wlr_output;
     struct timespec last_frame;
 

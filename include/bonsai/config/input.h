@@ -13,7 +13,7 @@
  */
 struct bsi_inputs
 {
-    struct wlr_seat* seat;
+    struct wlr_seat* wlr_seat;
 
     size_t len_pointers;
     struct wl_list inputs_pointers;
@@ -28,10 +28,11 @@ struct bsi_inputs
  */
 struct bsi_input_pointer
 {
-    struct bsi_server* server;
+    struct bsi_server* bsi_server;
     struct wlr_cursor* wlr_cursor;
     struct wlr_input_device* wlr_input_device;
 
+    // TODO: Add handlers for these events.
     struct wl_listener cursor_motion;
     struct wl_listener cursor_motion_absolute;
     struct wl_listener cursor_button;
@@ -47,9 +48,10 @@ struct bsi_input_pointer
  */
 struct bsi_input_keyboard
 {
-    struct bsi_server* server;
+    struct bsi_server* bsi_server;
     struct wlr_input_device* wlr_input_device;
 
+    // TODO: Add handlers for these events.
     struct wl_listener key;
     struct wl_listener modifier;
 

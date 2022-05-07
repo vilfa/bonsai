@@ -14,7 +14,7 @@ bsi_inputs_init(struct bsi_inputs* bsi_inputs, struct wlr_seat* wlr_seat)
     assert(bsi_inputs);
     assert(wlr_seat);
 
-    bsi_inputs->seat = wlr_seat;
+    bsi_inputs->wlr_seat = wlr_seat;
     bsi_inputs->len_pointers = 0;
     bsi_inputs->len_keyboards = 0;
     wl_list_init(&bsi_inputs->inputs_pointers);
@@ -77,7 +77,7 @@ bsi_inputs_add_keyboard(struct bsi_inputs* bsi_inputs,
     xkb_keymap_unref(xkb_keymap);
     xkb_context_unref(xkb_context);
 
-    wlr_seat_set_keyboard(bsi_inputs->seat,
+    wlr_seat_set_keyboard(bsi_inputs->wlr_seat,
                           bsi_input_keyboard->wlr_input_device);
 }
 
