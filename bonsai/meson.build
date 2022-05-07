@@ -1,11 +1,11 @@
-bonsai_src = [
+bonsai_src = files(
     'main.c',
 
     'util.c',
 
     'config/output.c',
     'config/signal.c'
-]
+)
 
 bonsai_dep = [
     dep_wlroots,
@@ -23,6 +23,7 @@ bonsai_dep = [
 
 bonsai_inc = [
     inc_default,
+    inc_protocols,
 ]
 
 executable(

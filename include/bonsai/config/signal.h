@@ -11,6 +11,7 @@ enum bsi_listeners_mask
 {
     BSI_LISTENER_OUTPUT = 1 << 0,
     BSI_LISTENER_INPUT = 1 << 1,
+    BSI_LISTENER_XDG_SURFACE = 1 << 2,
 };
 
 /**
@@ -25,16 +26,44 @@ struct bsi_listeners
 
     struct wl_listener new_output_listener;
     struct wl_listener new_input_listener;
+    struct wl_listener new_xdg_surface_listener;
 };
 
+/**
+ * @brief Initializes the server listeners struct.
+ *
+ * @param bsi_listeners Pointer to server listeners struct.
+ * @return struct bsi_listeners* Pointer to initialized listeners struct.
+ */
 struct bsi_listeners*
-bsi_listeners_init(struct bsi_listeners* bsi_listeners,
-                   struct bsi_server* bsi_server);
+bsi_listeners_init(struct bsi_listeners* bsi_listeners);
 
+/**
+ * @brief Adds a new output listener to the server listeners.
+ *
+ * @param bsi_listeners Pointer to server listeners.
+ * @param func Listener function.
+ */
 void
 bsi_listeners_add_new_output_notify(struct bsi_listeners* bsi_listeners,
                                     wl_notify_func_t func);
 
+/**
+ * @brief Adds a new input listener to the server listeners.
+ *
+ * @param bsi_listeners Pointer to server listeners.
+ * @param func Listener function.
+ */
 void
 bsi_listeners_add_new_input_notify(struct bsi_listeners* bsi_listeners,
                                    wl_notify_func_t func);
+
+/**
+ * @brief Adds a new XDG surface listener to the server listeners.
+ *
+ * @param bsi_listeners Pointer to server listeners.
+ * @param func Listener func.
+ */
+void
+bsi_listeners_add_new_xdg_surface_notify(struct bsi_listeners* bsi_listeners,
+                                         wl_notify_func_t func);

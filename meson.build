@@ -6,7 +6,7 @@ project(
     default_options : [
         'c_std=c11',
         'warning_level=2',
-        'werror=false',
+        'werror=true',
         'buildtype=debugoptimized',
     ]
 )
@@ -32,6 +32,7 @@ endif
 
 ### Include dirs
 inc_default = include_directories('include')
+inc_protocols = include_directories('include/protocols')
 
 ### Subdirs
 subdir('bonsai')

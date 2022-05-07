@@ -24,7 +24,7 @@ bsi_outputs_add(struct bsi_outputs* bsi_outputs, struct bsi_output* bsi_output)
     assert(bsi_outputs);
     assert(bsi_output);
 
-    --bsi_outputs->len;
+    ++bsi_outputs->len;
     wl_list_insert(&bsi_outputs->outputs, &bsi_output->link);
 }
 

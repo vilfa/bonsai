@@ -34,23 +34,59 @@ struct bsi_output
     struct wl_list link;
 };
 
+/**
+ * @brief Initialize the server outputs struct.
+ *
+ * @param bsi_outputs Pointer to bsi_outputs struct.
+ * @return struct bsi_outputs* Pointer to initialized struct.
+ */
 struct bsi_outputs*
 bsi_outputs_init(struct bsi_outputs* bsi_outputs);
 
+/**
+ * @brief Adds an output to the known server outputs.
+ *
+ * @param bsi_outputs Pointer to server outputs struct.
+ * @param bsi_output Pointer to output.
+ */
 void
 bsi_outputs_add(struct bsi_outputs* bsi_outputs, struct bsi_output* bsi_output);
 
+/**
+ * @brief Removes an output from the known server outputs.
+ *
+ * @param bsi_outputs Pointer to server outputs struct.
+ * @param bsi_output Pointer to output.
+ */
 void
 bsi_outputs_remove(struct bsi_outputs* bsi_outputs,
                    struct bsi_output* bsi_output);
 
+/**
+ * @brief Gets the size of the known server outputs.
+ *
+ * @param bsi_outputs Pointer to server outputs struct.
+ * @return size_t The number of outputs.
+ */
 size_t
 bsi_outputs_len(struct bsi_outputs* bsi_outputs);
 
+/**
+ * @brief Adds a destroy listener to a single server output.
+ *
+ * @param bsi_output The output.
+ * @param func The listener function.
+ */
 void
 bsi_output_add_destroy_listener(struct bsi_output* bsi_output,
                                 wl_notify_func_t func);
 
+/**
+ * @brief Adds a frame listener to a single server output.
+ *
+ * @param bsi_output The output.
+ * @param func The listener function.
+ */
 void
 bsi_output_add_frame_listener(struct bsi_output* bsi_output,
                               wl_notify_func_t func);
