@@ -24,9 +24,12 @@ struct bsi_listeners
 
     uint32_t active_listeners;
 
-    struct wl_listener new_output_listener;
-    struct wl_listener new_input_listener;
-    struct wl_listener new_xdg_surface_listener;
+    /* bsi_outputs */
+    struct wl_listener new_output;
+    /* bsi_inputs */
+    struct wl_listener new_input;
+    /* wlr_xdg_surface */
+    struct wl_listener new_xdg_surface;
 };
 
 /**

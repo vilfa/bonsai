@@ -37,14 +37,16 @@ bsi_outputs_remove(struct bsi_outputs* bsi_outputs,
 
     --bsi_outputs->len;
     wl_list_remove(&bsi_output->link);
-    wl_list_remove(&bsi_output->destroy_listener.link);
-    wl_list_remove(&bsi_output->frame_listener.link);
+    wl_list_remove(&bsi_output->destroy.link);
+    wl_list_remove(&bsi_output->frame.link);
     free(bsi_output);
 }
 
 size_t
 bsi_outputs_len(struct bsi_outputs* bsi_outputs)
 {
+    assert(bsi_outputs);
+
     return bsi_outputs->len;
 }
 
@@ -54,9 +56,9 @@ bsi_output_add_destroy_listener(struct bsi_output* bsi_output,
 {
     assert(bsi_output);
 
-    bsi_output->destroy_listener.notify = func;
+    bsi_output->destroy.notify = func;
     wl_signal_add(&bsi_output->wlr_output->events.destroy,
-                  &bsi_output->destroy_listener);
+                  &bsi_output->destroy);
 }
 
 void
@@ -65,7 +67,6 @@ bsi_output_add_frame_listener(struct bsi_output* bsi_output,
 {
     assert(bsi_output);
 
-    bsi_output->frame_listener.notify = func;
-    wl_signal_add(&bsi_output->wlr_output->events.frame,
-                  &bsi_output->frame_listener);
+    bsi_output->frame.notify = func;
+    wl_signal_add(&bsi_output->wlr_output->events.frame, &bsi_output->frame);
 }

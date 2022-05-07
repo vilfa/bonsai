@@ -28,7 +28,7 @@ bsi_output_destroy_notify(struct wl_listener* listener,
                           __attribute__((unused)) void* data)
 {
     struct bsi_output* bsi_output =
-        wl_container_of(listener, bsi_output, destroy_listener);
+        wl_container_of(listener, bsi_output, destroy);
 
     bsi_outputs_remove(&bsi_output->server->bsi_outputs, bsi_output);
 }
@@ -38,7 +38,7 @@ bsi_output_frame_notify(struct wl_listener* listener,
                         __attribute((unused)) void* data)
 {
     struct bsi_output* bsi_output =
-        wl_container_of(listener, bsi_output, frame_listener);
+        wl_container_of(listener, bsi_output, frame);
     struct wlr_scene* wlr_scene = bsi_output->server->wlr_scene;
 
     struct wlr_scene_output* wlr_scene_output =
@@ -54,8 +54,8 @@ static void
 bsi_listeners_new_output_notify(struct wl_listener* listener, void* data)
 {
     struct wlr_output* wlr_output = data;
-    struct bsi_server* bsi_server = wl_container_of(
-        listener, bsi_server, bsi_listeners.new_output_listener);
+    struct bsi_server* bsi_server =
+        wl_container_of(listener, bsi_server, bsi_listeners.new_output);
 
     wlr_output_init_render(
         wlr_output, bsi_server->wlr_allocator, bsi_server->wlr_renderer);
@@ -87,8 +87,8 @@ static void
 bsi_listeners_new_xdg_surface_notify(struct wl_listener* listener, void* data)
 {
     __attribute__((unused)) struct wlr_xdg_surface* wlr_xdg_surface = data;
-    struct bsi_server* bsi_server = wl_container_of(
-        listener, bsi_server, bsi_listeners.new_xdg_surface_listener);
+    struct bsi_server* bsi_server =
+        wl_container_of(listener, bsi_server, bsi_listeners.new_xdg_surface);
 }
 
 int

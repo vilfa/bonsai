@@ -18,18 +18,17 @@ struct bsi_outputs
 };
 
 /**
- * @brief Represents a single output.
+ * @brief Represents a single output and its event listeners.
  *
  */
 struct bsi_output
 {
     struct bsi_server* server;
-
     struct wlr_output* wlr_output;
     struct timespec last_frame;
 
-    struct wl_listener destroy_listener;
-    struct wl_listener frame_listener;
+    struct wl_listener destroy;
+    struct wl_listener frame;
 
     struct wl_list link;
 };

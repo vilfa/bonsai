@@ -28,13 +28,13 @@ bsi_listeners_add_new_output_notify(struct bsi_listeners* bsi_listeners,
     assert(bsi_listeners);
 
     bsi_listeners->active_listeners |= BSI_LISTENER_OUTPUT;
-    bsi_listeners->new_output_listener.notify = func;
+    bsi_listeners->new_output.notify = func;
 
     struct bsi_server* bsi_server =
         wl_container_of(bsi_listeners, bsi_server, bsi_listeners);
 
     wl_signal_add(&bsi_server->wlr_backend->events.new_output,
-                  &bsi_listeners->new_output_listener);
+                  &bsi_listeners->new_output);
 }
 
 void
@@ -44,13 +44,13 @@ bsi_listeners_add_new_input_notify(struct bsi_listeners* bsi_listeners,
     assert(bsi_listeners);
 
     bsi_listeners->active_listeners |= BSI_LISTENER_INPUT;
-    bsi_listeners->new_input_listener.notify = func;
+    bsi_listeners->new_input.notify = func;
 
     struct bsi_server* bsi_server =
         wl_container_of(bsi_listeners, bsi_server, bsi_listeners);
 
     wl_signal_add(&bsi_server->wlr_backend->events.new_input,
-                  &bsi_listeners->new_input_listener);
+                  &bsi_listeners->new_input);
 }
 
 void
@@ -60,11 +60,11 @@ bsi_listeners_add_new_xdg_surface_notify(struct bsi_listeners* bsi_listeners,
     assert(bsi_listeners);
 
     bsi_listeners->active_listeners |= BSI_LISTENER_XDG_SURFACE;
-    bsi_listeners->new_xdg_surface_listener.notify = func;
+    bsi_listeners->new_xdg_surface.notify = func;
 
     struct bsi_server* bsi_server =
         wl_container_of(bsi_listeners, bsi_server, bsi_listeners);
 
     wl_signal_add(&bsi_server->wlr_xdg_shell->events.new_surface,
-                  &bsi_listeners->new_xdg_surface_listener);
+                  &bsi_listeners->new_xdg_surface);
 }
