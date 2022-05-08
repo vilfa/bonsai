@@ -7,6 +7,7 @@
 #include <xkbcommon/xkbcommon.h>
 
 #include "bonsai/config/input.h"
+#include "bonsai/server.h"
 
 struct bsi_inputs*
 bsi_inputs_init(struct bsi_inputs* bsi_inputs, struct wlr_seat* wlr_seat)
@@ -17,8 +18,8 @@ bsi_inputs_init(struct bsi_inputs* bsi_inputs, struct wlr_seat* wlr_seat)
     bsi_inputs->wlr_seat = wlr_seat;
     bsi_inputs->len_pointers = 0;
     bsi_inputs->len_keyboards = 0;
-    wl_list_init(&bsi_inputs->inputs_pointers);
-    wl_list_init(&bsi_inputs->inputs_keyboards);
+    wl_list_init(&bsi_inputs->pointers);
+    wl_list_init(&bsi_inputs->keyboards);
 
     return bsi_inputs;
 }
@@ -33,7 +34,7 @@ bsi_inputs_add_pointer(struct bsi_inputs* bsi_inputs,
     assert(bsi_input_pointer->wlr_input_device);
 
     ++bsi_inputs->len_pointers;
-    wl_list_insert(&bsi_inputs->inputs_pointers, &bsi_input_pointer->link);
+    wl_list_insert(&bsi_inputs->pointers, &bsi_input_pointer->link);
 
     wlr_cursor_attach_input_device(bsi_input_pointer->wlr_cursor,
                                    bsi_input_pointer->wlr_input_device);
@@ -48,19 +49,7 @@ bsi_inputs_remove_pointer(struct bsi_inputs* bsi_inputs,
 
     --bsi_inputs->len_pointers;
     wl_list_remove(&bsi_input_pointer->link);
-    wl_list_remove(&bsi_input_pointer->events.motion.link);
-    wl_list_remove(&bsi_input_pointer->events.motion_absolute.link);
-    wl_list_remove(&bsi_input_pointer->events.button.link);
-    wl_list_remove(&bsi_input_pointer->events.axis.link);
-    wl_list_remove(&bsi_input_pointer->events.frame.link);
-    wl_list_remove(&bsi_input_pointer->events.swipe_begin.link);
-    wl_list_remove(&bsi_input_pointer->events.swipe_update.link);
-    wl_list_remove(&bsi_input_pointer->events.swipe_end.link);
-    wl_list_remove(&bsi_input_pointer->events.pinch_begin.link);
-    wl_list_remove(&bsi_input_pointer->events.pinch_update.link);
-    wl_list_remove(&bsi_input_pointer->events.pinch_end.link);
-    wl_list_remove(&bsi_input_pointer->events.hold_begin.link);
-    wl_list_remove(&bsi_input_pointer->events.hold_end.link);
+    bsi_input_pointer_listeners_unlink_all(bsi_input_pointer);
     free(bsi_input_pointer);
 }
 
@@ -73,7 +62,7 @@ bsi_inputs_add_keyboard(struct bsi_inputs* bsi_inputs,
     assert(bsi_input_keyboard->wlr_input_device);
 
     ++bsi_inputs->len_keyboards;
-    wl_list_insert(&bsi_inputs->inputs_keyboards, &bsi_input_keyboard->link);
+    wl_list_insert(&bsi_inputs->keyboards, &bsi_input_keyboard->link);
 
     struct xkb_context* xkb_context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
     struct xkb_keymap* xkb_keymap = xkb_keymap_new_from_names(
@@ -98,11 +87,7 @@ bsi_inputs_remove_keyboard(struct bsi_inputs* bsi_inputs,
 
     --bsi_inputs->len_keyboards;
     wl_list_remove(&bsi_input_keyboard->link);
-    wl_list_remove(&bsi_input_keyboard->events.key.link);
-    wl_list_remove(&bsi_input_keyboard->events.modifiers.link);
-    wl_list_remove(&bsi_input_keyboard->events.keymap.link);
-    wl_list_remove(&bsi_input_keyboard->events.repeat_info.link);
-    wl_list_remove(&bsi_input_keyboard->events.destroy.link);
+    bsi_input_keyboard_listeners_unlink_all(bsi_input_keyboard);
     free(bsi_input_keyboard);
 }
 
@@ -120,4 +105,97 @@ bsi_inputs_len_keyboard(struct bsi_inputs* bsi_inputs)
     assert(bsi_inputs);
 
     return bsi_inputs->len_keyboards;
+}
+
+struct bsi_input_pointer*
+bsi_input_pointer_init(struct bsi_input_pointer* bsi_input_pointer,
+                       struct bsi_server* bsi_server,
+                       struct wlr_input_device* wlr_input_device)
+{
+    assert(bsi_input_pointer);
+    assert(bsi_server);
+    assert(wlr_input_device);
+
+    bsi_input_pointer->bsi_server = bsi_server;
+    bsi_input_pointer->wlr_cursor = bsi_server->wlr_cursor;
+    bsi_input_pointer->wlr_input_device = wlr_input_device;
+    bsi_input_pointer->active_listeners = 0;
+    bsi_input_pointer->len_active_links = 0;
+
+    return bsi_input_pointer;
+}
+
+void
+bsi_input_pointer_add_listener(
+    struct bsi_input_pointer* bsi_input_pointer,
+    enum bsi_input_pointer_listener_mask listener_type,
+    struct wl_listener* bsi_listener_memb,
+    struct wl_signal* bsi_signal_memb,
+    wl_notify_func_t func)
+{
+    assert(bsi_input_pointer);
+    assert(func);
+
+    bsi_listener_memb->notify = func;
+    bsi_input_pointer->active_listeners |= listener_type;
+    bsi_input_pointer->active_links[bsi_input_pointer->len_active_links++] =
+        &bsi_listener_memb->link;
+
+    wl_signal_add(bsi_signal_memb, bsi_listener_memb);
+}
+
+void
+bsi_input_pointer_listeners_unlink_all(
+    struct bsi_input_pointer* bsi_input_pointer)
+{
+    for (size_t i = 0; i < bsi_input_pointer->len_active_links; ++i) {
+        if (bsi_input_pointer->active_links[i] != NULL)
+            wl_list_remove(bsi_input_pointer->active_links[i]);
+    }
+}
+
+struct bsi_input_keyboard*
+bsi_input_keyboard_init(struct bsi_input_keyboard* bsi_input_keyboard,
+                        struct bsi_server* bsi_server,
+                        struct wlr_input_device* wlr_input_device)
+{
+    assert(bsi_input_keyboard);
+    assert(bsi_server);
+    assert(wlr_input_device);
+
+    bsi_input_keyboard->bsi_server = bsi_server;
+    bsi_input_keyboard->wlr_input_device = wlr_input_device;
+    bsi_input_keyboard->active_listeners = 0;
+    bsi_input_keyboard->len_active_links = 0;
+
+    return bsi_input_keyboard;
+}
+
+void
+bsi_input_keyboard_add_listener(
+    struct bsi_input_keyboard* bsi_input_keyboard,
+    enum bsi_input_keyboard_listener_mask listener_type,
+    struct wl_listener* bsi_listener_memb,
+    struct wl_signal* bsi_signal_memb,
+    wl_notify_func_t func)
+{
+    assert(bsi_input_keyboard);
+    assert(func);
+
+    bsi_listener_memb->notify = func;
+    bsi_input_keyboard->active_listeners |= listener_type;
+    bsi_input_keyboard->active_links[bsi_input_keyboard->len_active_links++] =
+        &bsi_listener_memb->link;
+
+    wl_signal_add(bsi_signal_memb, bsi_listener_memb);
+}
+
+void
+bsi_input_keyboard_listeners_unlink_all(
+    struct bsi_input_keyboard* bsi_input_keyboard)
+{
+    for (size_t i = 0; i < bsi_input_keyboard->len_active_links; ++i) {
+        if (bsi_input_keyboard->active_links[i] != NULL)
+            wl_list_remove(bsi_input_keyboard->active_links[i]);
+    }
 }

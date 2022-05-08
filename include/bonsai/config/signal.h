@@ -21,6 +21,8 @@ enum bsi_listeners_mask
     BSI_LISTENERS_XDG_SHELL_NEW_SURFACE = 1 << 5,
 };
 
+#define bsi_listeners_len 6
+
 /**
  * @brief Holds signal listeners for all the globals that belong to the server.
  *
@@ -28,14 +30,16 @@ enum bsi_listeners_mask
 struct bsi_listeners
 {
     struct bsi_server* bsi_server;
-    uint32_t active_listeners;
 
-    // TODO: Add handlers for these events.
+    uint32_t active_listeners;
+    struct wl_list* active_links[bsi_listeners_len];
+    size_t len_active_links;
+
     struct
     {
         struct wl_listener new_output;
         struct wl_listener new_input;
-        struct wl_listener destroy; // TODO
+        struct wl_listener destroy;
     } wlr_backend;
 
     // TODO: Add handlers for these events.
@@ -99,3 +103,11 @@ bsi_listeners_add_listener(struct bsi_listeners* bsi_listeners,
                            struct wl_listener* bsi_listener_memb,
                            struct wl_signal* bsi_signal_memb,
                            wl_notify_func_t func);
+
+/**
+ * @brief Unlinks all active listeners belonging to the server.
+ *
+ * @param bsi_listeners The listeners struct.
+ */
+void
+bsi_listeners_unlink_all(struct bsi_listeners* bsi_listeners);

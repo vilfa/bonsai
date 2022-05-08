@@ -1,11 +1,13 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <time.h>
 #include <wayland-server-core.h>
 #include <wayland-util.h>
 #include <wlr/types/wlr_output.h>
 
 #include "bonsai/config/output.h"
+#include "bonsai/util.h"
 
 struct bsi_outputs*
 bsi_outputs_init(struct bsi_outputs* bsi_outputs)
@@ -37,17 +39,7 @@ bsi_outputs_remove(struct bsi_outputs* bsi_outputs,
 
     --bsi_outputs->len;
     wl_list_remove(&bsi_output->link);
-    wl_list_remove(&bsi_output->events.frame.link);
-    wl_list_remove(&bsi_output->events.damage.link);
-    wl_list_remove(&bsi_output->events.needs_frame.link);
-    wl_list_remove(&bsi_output->events.precommit.link);
-    wl_list_remove(&bsi_output->events.commit.link);
-    wl_list_remove(&bsi_output->events.present.link);
-    wl_list_remove(&bsi_output->events.bind.link);
-    wl_list_remove(&bsi_output->events.enable.link);
-    wl_list_remove(&bsi_output->events.mode.link);
-    wl_list_remove(&bsi_output->events.description.link);
-    wl_list_remove(&bsi_output->events.destroy.link);
+    bsi_output_listeners_unlink_all(bsi_output);
     free(bsi_output);
 }
 
@@ -57,6 +49,26 @@ bsi_outputs_len(struct bsi_outputs* bsi_outputs)
     assert(bsi_outputs);
 
     return bsi_outputs->len;
+}
+
+struct bsi_output*
+bsi_output_init(struct bsi_output* bsi_output,
+                struct bsi_server* bsi_server,
+                struct wlr_output* wlr_output)
+{
+    assert(bsi_output);
+    assert(bsi_server);
+    assert(wlr_output);
+
+    bsi_output->active_listeners = 0;
+    bsi_output->len_active_links = 0;
+    bsi_output->bsi_server = bsi_server;
+    bsi_output->wlr_output = wlr_output;
+
+    struct timespec now = bsi_util_timespec_get();
+    bsi_output->last_frame = now;
+
+    return bsi_output;
 }
 
 void
@@ -69,7 +81,21 @@ bsi_output_add_listener(struct bsi_output* bsi_output,
     assert(bsi_output);
     assert(func);
 
-    bsi_output->active_listeners |= listener_type;
     bsi_listener_memb->notify = func;
+    bsi_output->active_listeners |= listener_type;
+    bsi_output->active_links[bsi_output->len_active_links++] =
+        &bsi_listener_memb->link;
+
     wl_signal_add(bsi_signal_memb, bsi_listener_memb);
+}
+
+void
+bsi_output_listeners_unlink_all(struct bsi_output* bsi_output)
+{
+    assert(bsi_output);
+
+    for (size_t i = 0; i < bsi_output->len_active_links; ++i) {
+        if (bsi_output->active_links[i] != NULL)
+            wl_list_remove(bsi_output->active_links[i]);
+    }
 }

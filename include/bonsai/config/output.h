@@ -27,6 +27,8 @@ enum bsi_output_listener_mask
     BSI_OUTPUT_LISTENER_DESTROY = 1 << 1,
 };
 
+#define bsi_output_listener_len 2
+
 /**
  * @brief Represents a single output and its event listeners.
  *
@@ -39,6 +41,8 @@ struct bsi_output
 
     // TODO: Add handlers for these events.
     uint32_t active_listeners;
+    struct wl_list* active_links[bsi_output_listener_len];
+    size_t len_active_links;
     struct
     {
         struct wl_listener frame;
@@ -95,6 +99,19 @@ size_t
 bsi_outputs_len(struct bsi_outputs* bsi_outputs);
 
 /**
+ * @brief Initializes a preallocated bsi_output.
+ *
+ * @param bsi_output The bsi_output.
+ * @param bsi_server The server.
+ * @param wlr_output The output data.
+ * @return struct bsi_output* Pointer to the initialized struct.
+ */
+struct bsi_output*
+bsi_output_init(struct bsi_output* bsi_output,
+                struct bsi_server* bsi_server,
+                struct wlr_output* wlr_output);
+
+/**
  * @brief Add a listener `func` for the specified member of the `bsi_output`
  * `events` struct.
  *
@@ -111,3 +128,11 @@ bsi_output_add_listener(struct bsi_output* bsi_output,
                         struct wl_listener* bsi_listener_memb,
                         struct wl_signal* bsi_signal_memb,
                         wl_notify_func_t func);
+
+/**
+ * @brief Remove all active listeners from the specified `bsi_output`.
+ *
+ * @param bsi_output The output.
+ */
+void
+bsi_output_listeners_unlink_all(struct bsi_output* bsi_output);

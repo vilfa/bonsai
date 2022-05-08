@@ -17,10 +17,10 @@ struct bsi_inputs
     struct wlr_seat* wlr_seat;
 
     size_t len_pointers;
-    struct wl_list inputs_pointers;
+    struct wl_list pointers;
 
     size_t len_keyboards;
-    struct wl_list inputs_keyboards;
+    struct wl_list keyboards;
 };
 
 /**
@@ -44,6 +44,8 @@ enum bsi_input_pointer_listener_mask
     BSI_INPUT_POINTER_LISTENER_HOLD_END = 1 << 12,
 };
 
+#define bsi_input_pointer_listener_len 13
+
 /**
  * @brief Holds a single input pointer and its event listeners.
  *
@@ -56,6 +58,8 @@ struct bsi_input_pointer
 
     // TODO: Add handlers for these events.
     uint32_t active_listeners;
+    struct wl_list* active_links[bsi_input_pointer_listener_len];
+    size_t len_active_links;
     struct
     {
         struct wl_listener motion;          // TODO
@@ -89,6 +93,8 @@ enum bsi_input_keyboard_listener_mask
     BSI_INPUT_KEYBOARD_LISTENER_DESTROY = 1 << 4,
 };
 
+#define bsi_input_keyboard_listener_len 5
+
 /**
  * @brief Holds a single input keyboard and its event listeners.
  *
@@ -100,6 +106,8 @@ struct bsi_input_keyboard
 
     // TODO: Add handlers for these events.
     uint32_t active_listeners;
+    struct wl_list* active_links[bsi_input_keyboard_listener_len];
+    size_t len_active_links;
     struct
     {
         struct wl_listener key;         // TODO
@@ -180,7 +188,19 @@ bsi_inputs_len_pointers(struct bsi_inputs* bsi_inputs);
 size_t
 bsi_inputs_len_keyboard(struct bsi_inputs* bsi_inputs);
 
-// TODO: Implement this.
+/**
+ * @brief Initializes a preallocated `bsi_input_pointer`.
+ *
+ * @param bsi_input_pointer Input pointer to initialize.
+ * @param bsi_server The server.
+ * @param wlr_input_device Input device data.
+ * @return struct bsi_input_pointer* Pointer to initialized struct.
+ */
+struct bsi_input_pointer*
+bsi_input_pointer_init(struct bsi_input_pointer* bsi_input_pointer,
+                       struct bsi_server* bsi_server,
+                       struct wlr_input_device* wlr_input_device);
+
 /**
  * @brief Adds a listener `func` for the specified member of the
  * `bsi_input_pointer` `events` struct.
@@ -200,7 +220,28 @@ bsi_input_pointer_add_listener(
     struct wl_signal* bsi_signal_memb,
     wl_notify_func_t func);
 
-// TODO: Implement this.
+/**
+ * @brief Unlinks all active listeners for the specified `bsi_input_pointer`.
+ *
+ * @param bsi_input_pointer The input pointer.
+ */
+void
+bsi_input_pointer_listeners_unlink_all(
+    struct bsi_input_pointer* bsi_input_pointer);
+
+/**
+ * @brief Initializes a preallocated `bsi_input_keyboard`.
+ *
+ * @param bsi_input_keyboard The input keyboard.
+ * @param bsi_server The server.
+ * @param wlr_input_device Input device data.
+ * @return struct bsi_input_keyboard*
+ */
+struct bsi_input_keyboard*
+bsi_input_keyboard_init(struct bsi_input_keyboard* bsi_input_keyboard,
+                        struct bsi_server* bsi_server,
+                        struct wlr_input_device* wlr_input_device);
+
 /**
  * @brief Adds a listener `func` for the specified member of the
  * `bsi_input_keyboard` `events` struct.
@@ -208,8 +249,8 @@ bsi_input_pointer_add_listener(
  * @param bsi_input_keyboard The input keyboard.
  * @param bsi_listener_memb Pointer to a listener to initialize with func (a
  * member of the `events` anonymus struct).
- * @param bsi_signal_memb Pointer to signal which the listener handles (usually
- * a member of the `events` struct of its parent).
+ * @param bsi_signal_memb Pointer to signal which the listener handles
+ * (usually a member of the `events` struct of its parent).
  * @param func The listener function.
  */
 void
@@ -219,3 +260,12 @@ bsi_input_keyboard_add_listener(
     struct wl_listener* bsi_listener_memb,
     struct wl_signal* bsi_signal_memb,
     wl_notify_func_t func);
+
+/**
+ * @brief Unlinks all active listeners for the specified `bsi_input_keyboard`.
+ *
+ * @param bsi_input_keyboard The input keyboard.
+ */
+void
+bsi_input_keyboard_listeners_unlink_all(
+    struct bsi_input_keyboard* bsi_input_keyboard);
