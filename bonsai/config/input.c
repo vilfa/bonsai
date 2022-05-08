@@ -48,11 +48,19 @@ bsi_inputs_remove_pointer(struct bsi_inputs* bsi_inputs,
 
     --bsi_inputs->len_pointers;
     wl_list_remove(&bsi_input_pointer->link);
-    wl_list_remove(&bsi_input_pointer->cursor_motion.link);
-    wl_list_remove(&bsi_input_pointer->cursor_motion_absolute.link);
-    wl_list_remove(&bsi_input_pointer->cursor_button.link);
-    wl_list_remove(&bsi_input_pointer->cursor_axis.link);
-    wl_list_remove(&bsi_input_pointer->cursor_frame.link);
+    wl_list_remove(&bsi_input_pointer->events.motion.link);
+    wl_list_remove(&bsi_input_pointer->events.motion_absolute.link);
+    wl_list_remove(&bsi_input_pointer->events.button.link);
+    wl_list_remove(&bsi_input_pointer->events.axis.link);
+    wl_list_remove(&bsi_input_pointer->events.frame.link);
+    wl_list_remove(&bsi_input_pointer->events.swipe_begin.link);
+    wl_list_remove(&bsi_input_pointer->events.swipe_update.link);
+    wl_list_remove(&bsi_input_pointer->events.swipe_end.link);
+    wl_list_remove(&bsi_input_pointer->events.pinch_begin.link);
+    wl_list_remove(&bsi_input_pointer->events.pinch_update.link);
+    wl_list_remove(&bsi_input_pointer->events.pinch_end.link);
+    wl_list_remove(&bsi_input_pointer->events.hold_begin.link);
+    wl_list_remove(&bsi_input_pointer->events.hold_end.link);
     free(bsi_input_pointer);
 }
 
@@ -90,8 +98,11 @@ bsi_inputs_remove_keyboard(struct bsi_inputs* bsi_inputs,
 
     --bsi_inputs->len_keyboards;
     wl_list_remove(&bsi_input_keyboard->link);
-    wl_list_remove(&bsi_input_keyboard->key.link);
-    wl_list_remove(&bsi_input_keyboard->modifier.link);
+    wl_list_remove(&bsi_input_keyboard->events.key.link);
+    wl_list_remove(&bsi_input_keyboard->events.modifiers.link);
+    wl_list_remove(&bsi_input_keyboard->events.keymap.link);
+    wl_list_remove(&bsi_input_keyboard->events.repeat_info.link);
+    wl_list_remove(&bsi_input_keyboard->events.destroy.link);
     free(bsi_input_keyboard);
 }
 

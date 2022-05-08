@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <wayland-server-core.h>
 #include <wayland-util.h>
@@ -23,6 +24,27 @@ struct bsi_inputs
 };
 
 /**
+ * @brief Holds all possible listener types for `bsi_input_pointer`.
+ *
+ */
+enum bsi_input_pointer_listener_mask
+{
+    BSI_INPUT_POINTER_LISTENER_MOTION = 1 << 0,
+    BSI_INPUT_POINTER_LISTENER_MOTION_ABSOLUTE = 1 << 1,
+    BSI_INPUT_POINTER_LISTENER_BUTTON = 1 << 2,
+    BSI_INPUT_POINTER_LISTENER_AXIS = 1 << 3,
+    BSI_INPUT_POINTER_LISTENER_FRAME = 1 << 4,
+    BSI_INPUT_POINTER_LISTENER_SWIPE_BEGIN = 1 << 5,
+    BSI_INPUT_POINTER_LISTENER_SWIPE_UPDATE = 1 << 6,
+    BSI_INPUT_POINTER_LISTENER_SWIPE_END = 1 << 7,
+    BSI_INPUT_POINTER_LISTENER_PINCH_BEGIN = 1 << 8,
+    BSI_INPUT_POINTER_LISTENER_PINCH_UPDATE = 1 << 9,
+    BSI_INPUT_POINTER_LISTENER_PINCH_END = 1 << 10,
+    BSI_INPUT_POINTER_LISTENER_HOLD_BEGIN = 1 << 11,
+    BSI_INPUT_POINTER_LISTENER_HOLD_END = 1 << 12,
+};
+
+/**
  * @brief Holds a single input pointer and its event listeners.
  *
  */
@@ -33,13 +55,38 @@ struct bsi_input_pointer
     struct wlr_input_device* wlr_input_device;
 
     // TODO: Add handlers for these events.
-    struct wl_listener cursor_motion;
-    struct wl_listener cursor_motion_absolute;
-    struct wl_listener cursor_button;
-    struct wl_listener cursor_axis;
-    struct wl_listener cursor_frame;
+    uint32_t active_listeners;
+    struct
+    {
+        struct wl_listener motion;          // TODO
+        struct wl_listener motion_absolute; // TODO
+        struct wl_listener button;          // TODO
+        struct wl_listener axis;            // TODO
+        struct wl_listener frame;           // TODO
+        struct wl_listener swipe_begin;     // TODO
+        struct wl_listener swipe_update;    // TODO
+        struct wl_listener swipe_end;       // TODO
+        struct wl_listener pinch_begin;     // TODO
+        struct wl_listener pinch_update;    // TODO
+        struct wl_listener pinch_end;       // TODO
+        struct wl_listener hold_begin;      // TODO
+        struct wl_listener hold_end;        // TODO
+    } events;
 
     struct wl_list link;
+};
+
+/**
+ * @brief Holds all possible listener types for `bsi_input_keyboard`.
+ *
+ */
+enum bsi_input_keyboard_listener_mask
+{
+    BSI_INPUT_KEYBOARD_LISTENER_KEY = 1 << 0,
+    BSI_INPUT_KEYBOARD_LISTENER_MODIFIERS = 1 << 1,
+    BSI_INPUT_KEYBOARD_LISTENER_KEYMAP = 1 << 2,
+    BSI_INPUT_KEYBOARD_LISTENER_REPEAT_INFO = 1 << 3,
+    BSI_INPUT_KEYBOARD_LISTENER_DESTROY = 1 << 4,
 };
 
 /**
@@ -52,8 +99,15 @@ struct bsi_input_keyboard
     struct wlr_input_device* wlr_input_device;
 
     // TODO: Add handlers for these events.
-    struct wl_listener key;
-    struct wl_listener modifier;
+    uint32_t active_listeners;
+    struct
+    {
+        struct wl_listener key;         // TODO
+        struct wl_listener modifiers;   // TODO
+        struct wl_listener keymap;      // TODO
+        struct wl_listener repeat_info; // TODO
+        struct wl_listener destroy;     // TODO
+    } events;
 
     struct wl_list link;
 };
@@ -125,3 +179,43 @@ bsi_inputs_len_pointers(struct bsi_inputs* bsi_inputs);
  */
 size_t
 bsi_inputs_len_keyboard(struct bsi_inputs* bsi_inputs);
+
+// TODO: Implement this.
+/**
+ * @brief Adds a listener `func` for the specified member of the
+ * `bsi_input_pointer` `events` struct.
+ *
+ * @param bsi_input_pointer The input pointer.
+ * @param bsi_listener_memb Pointer to a listener to initialize with func (a
+ * member of the `events` anonymus struct).
+ * @param bsi_signal_memb Pointer to signal which the listener handles (usually
+ * a member of the `events` struct of its parent).
+ * @param func The listener function.
+ */
+void
+bsi_input_pointer_add_listener(
+    struct bsi_input_pointer* bsi_input_pointer,
+    enum bsi_input_pointer_listener_mask listener_type,
+    struct wl_listener* bsi_listener_memb,
+    struct wl_signal* bsi_signal_memb,
+    wl_notify_func_t func);
+
+// TODO: Implement this.
+/**
+ * @brief Adds a listener `func` for the specified member of the
+ * `bsi_input_keyboard` `events` struct.
+ *
+ * @param bsi_input_keyboard The input keyboard.
+ * @param bsi_listener_memb Pointer to a listener to initialize with func (a
+ * member of the `events` anonymus struct).
+ * @param bsi_signal_memb Pointer to signal which the listener handles (usually
+ * a member of the `events` struct of its parent).
+ * @param func The listener function.
+ */
+void
+bsi_input_keyboard_add_listener(
+    struct bsi_input_keyboard* bsi_input_keyboard,
+    enum bsi_input_keyboard_listener_mask listener_type,
+    struct wl_listener* bsi_listener_memb,
+    struct wl_signal* bsi_signal_memb,
+    wl_notify_func_t func);

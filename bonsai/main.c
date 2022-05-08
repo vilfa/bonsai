@@ -35,7 +35,7 @@ bsi_output_destroy_notify(struct wl_listener* listener,
                           __attribute__((unused)) void* data)
 {
     struct bsi_output* bsi_output =
-        wl_container_of(listener, bsi_output, destroy);
+        wl_container_of(listener, bsi_output, events.destroy);
 
     bsi_outputs_remove(&bsi_output->bsi_server->bsi_outputs, bsi_output);
 }
@@ -45,7 +45,7 @@ bsi_output_frame_notify(struct wl_listener* listener,
                         __attribute((unused)) void* data)
 {
     struct bsi_output* bsi_output =
-        wl_container_of(listener, bsi_output, frame);
+        wl_container_of(listener, bsi_output, events.frame);
     struct wlr_scene* wlr_scene = bsi_output->bsi_server->wlr_scene;
 
     struct wlr_scene_output* wlr_scene_output =
@@ -61,8 +61,8 @@ static void
 bsi_listeners_new_output_notify(struct wl_listener* listener, void* data)
 {
     struct wlr_output* wlr_output = data;
-    struct bsi_server* bsi_server =
-        wl_container_of(listener, bsi_server, bsi_listeners.new_output);
+    struct bsi_server* bsi_server = wl_container_of(
+        listener, bsi_server, bsi_listeners.wlr_backend.new_output);
 
     wlr_output_init_render(
         wlr_output, bsi_server->wlr_allocator, bsi_server->wlr_renderer);
@@ -78,13 +78,24 @@ bsi_listeners_new_output_notify(struct wl_listener* listener, void* data)
 
     struct timespec now = bsi_util_timespec_get();
 
+    // TODO: Consider adding an init function for bsi_output.
     struct bsi_output* bsi_output = calloc(1, sizeof(struct bsi_output));
+    bsi_output->active_listeners = 0;
     bsi_output->bsi_server = bsi_server;
     bsi_output->wlr_output = wlr_output;
     bsi_output->last_frame = now;
 
-    bsi_output_add_destroy_listener(bsi_output, bsi_output_destroy_notify);
-    bsi_output_add_frame_listener(bsi_output, bsi_output_frame_notify);
+    bsi_output_add_listener(bsi_output,
+                            BSI_OUTPUT_LISTENER_DESTROY,
+                            &bsi_output->events.destroy,
+                            &bsi_output->wlr_output->events.destroy,
+                            bsi_output_destroy_notify);
+
+    bsi_output_add_listener(bsi_output,
+                            BSI_OUTPUT_LISTENER_FRAME,
+                            &bsi_output->events.frame,
+                            &bsi_output->wlr_output->events.frame,
+                            bsi_output_frame_notify);
 
     bsi_outputs_add(&bsi_server->bsi_outputs, bsi_output);
     wlr_output_layout_add_auto(bsi_server->wlr_output_layout, wlr_output);
@@ -94,25 +105,29 @@ static void
 bsi_listeners_new_input_notify(struct wl_listener* listener, void* data)
 {
     struct wlr_input_device* wlr_input_device = data;
-    struct bsi_server* bsi_server =
-        wl_container_of(listener, bsi_server, bsi_listeners.new_input);
+    struct bsi_server* bsi_server = wl_container_of(
+        listener, bsi_server, bsi_listeners.wlr_backend.new_input);
 
     switch (wlr_input_device->type) {
         case WLR_INPUT_DEVICE_POINTER: {
+            // TODO: Consider adding an init function for bsi_input_pointer.
             struct bsi_input_pointer* bsi_input_pointer =
                 calloc(1, sizeof(struct bsi_input_pointer));
             bsi_input_pointer->bsi_server = bsi_server;
             bsi_input_pointer->wlr_cursor = bsi_server->wlr_cursor;
             bsi_input_pointer->wlr_input_device = wlr_input_device;
+            bsi_input_pointer->active_listeners = 0;
             bsi_inputs_add_pointer(&bsi_server->bsi_inputs, bsi_input_pointer);
             wlr_log(WLR_DEBUG, "Added new pointer input device");
             break;
         }
         case WLR_INPUT_DEVICE_KEYBOARD: {
+            // TODO: Consider adding an init function for bsi_input_keyboard.
             struct bsi_input_keyboard* bsi_input_keyboard =
                 calloc(1, sizeof(struct bsi_input_keyboard));
             bsi_input_keyboard->bsi_server = bsi_server;
             bsi_input_keyboard->wlr_input_device = wlr_input_device;
+            bsi_input_keyboard->active_listeners = 0;
             bsi_inputs_add_keyboard(&bsi_server->bsi_inputs,
                                     bsi_input_keyboard);
             wlr_log(WLR_DEBUG, "Added new keyboard input device");
@@ -120,7 +135,7 @@ bsi_listeners_new_input_notify(struct wl_listener* listener, void* data)
         }
         default:
             wlr_log(WLR_INFO,
-                    "Unsupported new input device type: %d",
+                    "Unsupported new input device: type %d",
                     wlr_input_device->type);
             break;
     }
@@ -149,8 +164,8 @@ static void
 bsi_listeners_new_xdg_surface_notify(struct wl_listener* listener, void* data)
 {
     __attribute__((unused)) struct wlr_xdg_surface* wlr_xdg_surface = data;
-    struct bsi_server* bsi_server =
-        wl_container_of(listener, bsi_server, bsi_listeners.new_xdg_surface);
+    struct bsi_server* bsi_server = wl_container_of(
+        listener, bsi_server, bsi_listeners.wlr_xdg_shell.new_surface);
 
     // TODO: Implement this.
 }
@@ -251,16 +266,25 @@ main(void)
     bsi_listeners_init(&bsi_listeners);
     server.bsi_listeners = bsi_listeners;
 
-    bsi_listeners_add_new_output_notify(&server.bsi_listeners,
-                                        bsi_listeners_new_output_notify);
+    bsi_listeners_add_listener(&server.bsi_listeners,
+                               BSI_LISTENERS_BACKEND_NEW_OUTPUT,
+                               &server.bsi_listeners.wlr_backend.new_output,
+                               &server.wlr_backend->events.new_output,
+                               bsi_listeners_new_output_notify);
     wlr_log(WLR_DEBUG, "Attached bsi_new_output_notify listener");
 
-    bsi_listeners_add_new_input_notify(&server.bsi_listeners,
-                                       bsi_listeners_new_input_notify);
+    bsi_listeners_add_listener(&server.bsi_listeners,
+                               BSI_LISTENERS_BACKEND_NEW_INPUT,
+                               &server.bsi_listeners.wlr_backend.new_input,
+                               &server.wlr_backend->events.new_input,
+                               bsi_listeners_new_input_notify);
     wlr_log(WLR_DEBUG, "Attached bsi_new_input_notify listener");
 
-    bsi_listeners_add_new_xdg_surface_notify(
-        &server.bsi_listeners, bsi_listeners_new_xdg_surface_notify);
+    bsi_listeners_add_listener(&server.bsi_listeners,
+                               BSI_LISTENERS_XDG_SHELL_NEW_SURFACE,
+                               &server.bsi_listeners.wlr_xdg_shell.new_surface,
+                               &server.wlr_xdg_shell->events.new_surface,
+                               bsi_listeners_new_xdg_surface_notify);
     wlr_log(WLR_DEBUG, "Attached bsi_new_xdg_surface_notify listener");
 
     server.wl_socket = wl_display_add_socket_auto(server.wl_display);

@@ -1,44 +1,75 @@
 #pragma once
 
+#include <stdint.h>
 #include <wayland-server-core.h>
 #include <wayland-server.h>
 
 /**
- * @brief Gives information about the active listeners in bsi_listeners.
+ * @brief Holds all possible listener types in `bsi_listeners`.
  *
  */
 enum bsi_listeners_mask
 {
-    BSI_LISTENER_OUTPUT = 1 << 0,
-    BSI_LISTENER_INPUT = 1 << 1,
-    BSI_LISTENER_XDG_SURFACE = 1 << 2,
-    BSI_LISTENER_REQUEST_SET_CURSOR = 1 << 3,
-    BSI_LISTENER_REQUEST_SET_SELECTION = 1 << 4,
+    /* wlr_backend */
+    BSI_LISTENERS_BACKEND_NEW_OUTPUT = 1 << 0,
+    BSI_LISTENERS_BACKEND_NEW_INPUT = 1 << 1,
+    BSI_LISTENERS_BACKEND_DESTROY = 1 << 2,
+    /* wlr_seat */
+    BSI_LISTENERS_SEAT_REQUEST_SET_CURSOR = 1 << 3,
+    BSI_LISTENERS_SEAT_REQUEST_SET_SELECTION = 1 << 4,
+    /* wlr_xdg_shell */
+    BSI_LISTENERS_XDG_SHELL_NEW_SURFACE = 1 << 5,
 };
 
 /**
- * @brief Holds all signal listeners that belong to the server.
+ * @brief Holds signal listeners for all the globals that belong to the server.
  *
  */
 struct bsi_listeners
 {
     struct bsi_server* bsi_server;
-
     uint32_t active_listeners;
 
-    /* bsi_outputs */
-    struct wl_listener new_output;
-    /* bsi_inputs / wlr_seat */
-    struct wl_listener new_input;
-    // TODO: Add handlers for these two events.
-    struct wl_listener request_set_cursor;
-    struct wl_listener request_set_selection;
-    /* wlr_xdg_surface */
-    struct wl_listener new_xdg_surface;
+    // TODO: Add handlers for these events.
+    struct
+    {
+        struct wl_listener new_output;
+        struct wl_listener new_input;
+        struct wl_listener destroy; // TODO
+    } wlr_backend;
 
-    // TODO: Add handlers for wlr_backend->events
-    // TODO: Add handlers for wlr_seat->events
-    // TODO: Add handlers for wlr_xdg_shell->events
+    // TODO: Add handlers for these events.
+    struct
+    {
+        struct wl_listener pointer_grab_begin; // TODO
+        struct wl_listener pointer_grab_end;   // TODO
+
+        struct wl_listener keyboard_grab_begin; // TODO
+        struct wl_listener keyboard_grab_end;   // TODO
+
+        struct wl_listener touch_grab_begin; // TODO
+        struct wl_listener touch_grab_end;   // TODO
+
+        struct wl_listener request_set_cursor; // TODO
+
+        struct wl_listener request_set_selection; // TODO
+        struct wl_listener set_selection;         // TODO
+
+        struct wl_listener request_set_primary_selection; // TODO
+        struct wl_listener set_primary_selection;         // TODO
+
+        struct wl_listener request_start_drag; // TODO
+        struct wl_listener start_drag;         // TODO
+
+        struct wl_listener destroy; // TODO
+    } wlr_seat;
+
+    // TODO: Add handlers for these events.
+    struct
+    {
+        struct wl_listener new_surface;
+        struct wl_listener destroy; // TODO
+    } wlr_xdg_shell;
 };
 
 /**
@@ -51,52 +82,20 @@ struct bsi_listeners*
 bsi_listeners_init(struct bsi_listeners* bsi_listeners);
 
 /**
- * @brief Adds a `new output` listener to the server listeners.
+ * @brief A generic function that support adding any type of listener defined in
+ * `bsi_listeners_mask` to the server listeners.
  *
- * @param bsi_listeners Pointer to server listeners.
- * @param func Listener function.
+ * @param bsi_listeners Pointer to server listeners struct.
+ * @param bsi_listener_type Type of listener to add.
+ * @param bsi_listeners_memb Pointer to a listener to initialize with func (a
+ * member of one of the `bsi_listeners` anonymus structs).
+ * @param bsi_signal_memb Pointer to signal which the listener handles (usually
+ * a member of the `events` struct of its parent).
+ * @param func The listener func.
  */
 void
-bsi_listeners_add_new_output_notify(struct bsi_listeners* bsi_listeners,
-                                    wl_notify_func_t func);
-
-/**
- * @brief Adds a `new input` listener to the server listeners.
- *
- * @param bsi_listeners Pointer to server listeners.
- * @param func Listener function.
- */
-void
-bsi_listeners_add_new_input_notify(struct bsi_listeners* bsi_listeners,
-                                   wl_notify_func_t func);
-
-/**
- * @brief Adds a `request set cursor` listener to the server listeners.
- *
- * @param bsi_listeners Pointer to server listeners.
- * @param func Listener function.
- */
-void
-bsi_listeners_add_request_set_cursor_notify(struct bsi_listeners* bsi_listeners,
-                                            wl_notify_func_t func);
-
-/**
- * @brief Adds a `request set selection` listener to the server listeners.
- *
- * @param bsi_listeners Pointer to server listeners.
- * @param func Listener function.
- */
-void
-bsi_listeners_add_request_set_selection_notify(
-    struct bsi_listeners* bsi_listeners,
-    wl_notify_func_t func);
-
-/**
- * @brief Adds a `new xdg surface` listener to the server listeners.
- *
- * @param bsi_listeners Pointer to server listeners.
- * @param func Listener func.
- */
-void
-bsi_listeners_add_new_xdg_surface_notify(struct bsi_listeners* bsi_listeners,
-                                         wl_notify_func_t func);
+bsi_listeners_add_listener(struct bsi_listeners* bsi_listeners,
+                           enum bsi_listeners_mask bsi_listener_type,
+                           struct wl_listener* bsi_listener_memb,
+                           struct wl_signal* bsi_signal_memb,
+                           wl_notify_func_t func);

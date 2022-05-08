@@ -37,8 +37,17 @@ bsi_outputs_remove(struct bsi_outputs* bsi_outputs,
 
     --bsi_outputs->len;
     wl_list_remove(&bsi_output->link);
-    wl_list_remove(&bsi_output->destroy.link);
-    wl_list_remove(&bsi_output->frame.link);
+    wl_list_remove(&bsi_output->events.frame.link);
+    wl_list_remove(&bsi_output->events.damage.link);
+    wl_list_remove(&bsi_output->events.needs_frame.link);
+    wl_list_remove(&bsi_output->events.precommit.link);
+    wl_list_remove(&bsi_output->events.commit.link);
+    wl_list_remove(&bsi_output->events.present.link);
+    wl_list_remove(&bsi_output->events.bind.link);
+    wl_list_remove(&bsi_output->events.enable.link);
+    wl_list_remove(&bsi_output->events.mode.link);
+    wl_list_remove(&bsi_output->events.description.link);
+    wl_list_remove(&bsi_output->events.destroy.link);
     free(bsi_output);
 }
 
@@ -51,22 +60,16 @@ bsi_outputs_len(struct bsi_outputs* bsi_outputs)
 }
 
 void
-bsi_output_add_destroy_listener(struct bsi_output* bsi_output,
-                                wl_notify_func_t func)
+bsi_output_add_listener(struct bsi_output* bsi_output,
+                        enum bsi_output_listener_mask listener_type,
+                        struct wl_listener* bsi_listener_memb,
+                        struct wl_signal* bsi_signal_memb,
+                        wl_notify_func_t func)
 {
     assert(bsi_output);
+    assert(func);
 
-    bsi_output->destroy.notify = func;
-    wl_signal_add(&bsi_output->wlr_output->events.destroy,
-                  &bsi_output->destroy);
-}
-
-void
-bsi_output_add_frame_listener(struct bsi_output* bsi_output,
-                              wl_notify_func_t func)
-{
-    assert(bsi_output);
-
-    bsi_output->frame.notify = func;
-    wl_signal_add(&bsi_output->wlr_output->events.frame, &bsi_output->frame);
+    bsi_output->active_listeners |= listener_type;
+    bsi_listener_memb->notify = func;
+    wl_signal_add(bsi_signal_memb, bsi_listener_memb);
 }

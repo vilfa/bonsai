@@ -18,6 +18,16 @@ struct bsi_outputs
 };
 
 /**
+ * @brief Holds all possible active listener types for `bsi_output`.
+ *
+ */
+enum bsi_output_listener_mask
+{
+    BSI_OUTPUT_LISTENER_FRAME = 1 << 0,
+    BSI_OUTPUT_LISTENER_DESTROY = 1 << 1,
+};
+
+/**
  * @brief Represents a single output and its event listeners.
  *
  */
@@ -27,8 +37,22 @@ struct bsi_output
     struct wlr_output* wlr_output;
     struct timespec last_frame;
 
-    struct wl_listener destroy;
-    struct wl_listener frame;
+    // TODO: Add handlers for these events.
+    uint32_t active_listeners;
+    struct
+    {
+        struct wl_listener frame;
+        struct wl_listener damage;      // TODO
+        struct wl_listener needs_frame; // TODO
+        struct wl_listener precommit;   // TODO
+        struct wl_listener commit;      // TODO
+        struct wl_listener present;     // TODO
+        struct wl_listener bind;        // TODO
+        struct wl_listener enable;      // TODO
+        struct wl_listener mode;        // TODO
+        struct wl_listener description; // TODO
+        struct wl_listener destroy;
+    } events;
 
     struct wl_list link;
 };
@@ -71,21 +95,19 @@ size_t
 bsi_outputs_len(struct bsi_outputs* bsi_outputs);
 
 /**
- * @brief Adds a destroy listener to a single server output.
+ * @brief Add a listener `func` for the specified member of the `bsi_output`
+ * `events` struct.
  *
  * @param bsi_output The output.
+ * @param bsi_listener_memb Pointer to a listener to initialize with func (a
+ * member of the `events` anonymus struct).
+ * @param bsi_signal_memb Pointer to signal which the listener handles (usually
+ * a member of the `events` struct of its parent).
  * @param func The listener function.
  */
 void
-bsi_output_add_destroy_listener(struct bsi_output* bsi_output,
-                                wl_notify_func_t func);
-
-/**
- * @brief Adds a frame listener to a single server output.
- *
- * @param bsi_output The output.
- * @param func The listener function.
- */
-void
-bsi_output_add_frame_listener(struct bsi_output* bsi_output,
-                              wl_notify_func_t func);
+bsi_output_add_listener(struct bsi_output* bsi_output,
+                        enum bsi_output_listener_mask listener_type,
+                        struct wl_listener* bsi_listener_memb,
+                        struct wl_signal* bsi_signal_memb,
+                        wl_notify_func_t func);
