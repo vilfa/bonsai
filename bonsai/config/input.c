@@ -128,7 +128,7 @@ bsi_input_pointer_init(struct bsi_input_pointer* bsi_input_pointer,
 void
 bsi_input_pointer_add_listener(
     struct bsi_input_pointer* bsi_input_pointer,
-    enum bsi_input_pointer_listener_mask listener_type,
+    enum bsi_input_pointer_listener_mask bsi_listener_type,
     struct wl_listener* bsi_listener_memb,
     struct wl_signal* bsi_signal_memb,
     wl_notify_func_t func)
@@ -137,7 +137,7 @@ bsi_input_pointer_add_listener(
     assert(func);
 
     bsi_listener_memb->notify = func;
-    bsi_input_pointer->active_listeners |= listener_type;
+    bsi_input_pointer->active_listeners |= bsi_listener_type;
     bsi_input_pointer->active_links[bsi_input_pointer->len_active_links++] =
         &bsi_listener_memb->link;
 
@@ -174,7 +174,7 @@ bsi_input_keyboard_init(struct bsi_input_keyboard* bsi_input_keyboard,
 void
 bsi_input_keyboard_add_listener(
     struct bsi_input_keyboard* bsi_input_keyboard,
-    enum bsi_input_keyboard_listener_mask listener_type,
+    enum bsi_input_keyboard_listener_mask bsi_listener_type,
     struct wl_listener* bsi_listener_memb,
     struct wl_signal* bsi_signal_memb,
     wl_notify_func_t func)
@@ -183,7 +183,7 @@ bsi_input_keyboard_add_listener(
     assert(func);
 
     bsi_listener_memb->notify = func;
-    bsi_input_keyboard->active_listeners |= listener_type;
+    bsi_input_keyboard->active_listeners |= bsi_listener_type;
     bsi_input_keyboard->active_links[bsi_input_keyboard->len_active_links++] =
         &bsi_listener_memb->link;
 

@@ -73,7 +73,7 @@ bsi_output_init(struct bsi_output* bsi_output,
 
 void
 bsi_output_add_listener(struct bsi_output* bsi_output,
-                        enum bsi_output_listener_mask listener_type,
+                        enum bsi_output_listener_mask bsi_listener_type,
                         struct wl_listener* bsi_listener_memb,
                         struct wl_signal* bsi_signal_memb,
                         wl_notify_func_t func)
@@ -82,7 +82,7 @@ bsi_output_add_listener(struct bsi_output* bsi_output,
     assert(func);
 
     bsi_listener_memb->notify = func;
-    bsi_output->active_listeners |= listener_type;
+    bsi_output->active_listeners |= bsi_listener_type;
     bsi_output->active_links[bsi_output->len_active_links++] =
         &bsi_listener_memb->link;
 

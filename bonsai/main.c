@@ -25,7 +25,7 @@
 #include "bonsai/config/input.h"
 #include "bonsai/config/output.h"
 #include "bonsai/config/signal.h"
-#include "bonsai/scene.h"
+#include "bonsai/scene/view.h"
 #include "bonsai/server.h"
 #include "bonsai/util.h"
 
@@ -196,16 +196,56 @@ bsi_listeners_new_xdg_surface_notify(struct wl_listener* listener, void* data)
             wlr_scene_xdg_surface_create(parent_node, wlr_xdg_surface);
     } else if (wlr_xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
         struct bsi_view* bsi_view = calloc(1, sizeof(struct bsi_view));
-        bsi_view->bsi_server = bsi_server;
-        bsi_view->wlr_xdg_surface = wlr_xdg_surface;
-        bsi_view->active_listeners = 0;
-        bsi_view->len_active_links = 0;
-        /* Create a new node from the root server node. */
-        bsi_view->wlr_scene_node = wlr_scene_xdg_surface_create(
-            &bsi_view->bsi_server->wlr_scene->node, bsi_view->wlr_xdg_surface);
-        bsi_view->wlr_scene_node->data = bsi_view;
-        wlr_xdg_surface->data = bsi_view->wlr_scene_node;
-        // TODO: Add event handlers.
+        bsi_view_init(bsi_view, bsi_server, wlr_xdg_surface);
+
+        // TODO: Implement event handlers for wlr_xdg_surface.
+        bsi_view_add_listener(bsi_view,
+                              BSI_VIEW_LISTENER_DESTROY_XDG_SURFACE,
+                              bsi_view->events.destroy_xdg_surface,
+                              bsi_view->wlr_xdg_surface->events.destroy,
+                              bsi_view_destroy_xdg_surface_notify);
+
+        bsi_view_add_listener(bsi_view,
+                              BSI_VIEW_LISTENER_PING_TIMEOUT,
+                              bsi_view->events.ping_timeout,
+                              bsi_view->wlr_xdg_surface->events.ping_timeout,
+                              bsi_view_ping_timeout_notify);
+
+        bsi_view_add_listener(bsi_view,
+                              BSI_VIEW_LISTENER_NEW_POPUP,
+                              bsi_view->events.new_popup,
+                              bsi_view->wlr_xdg_surface->events.new_popup,
+                              bsi_view_new_popup_notify);
+
+        bsi_view_add_listener(bsi_view,
+                              BSI_VIEW_LISTENER_MAP,
+                              bsi_view->events.map,
+                              bsi_view->wlr_xdg_surface->events.map,
+                              bsi_view_map_notify);
+
+        bsi_view_add_listener(bsi_view,
+                              BSI_VIEW_LISTENER_UNMAP,
+                              bsi_view->events.unmap,
+                              bsi_view->wlr_xdg_surface->events.unmap,
+                              bsi_view_unmap_notify);
+
+        bsi_view_add_listener(bsi_view,
+                              BSI_VIEW_LISTENER_CONFIGURE,
+                              bsi_view->events.configure,
+                              bsi_view->wlr_xdg_surface->events.configure,
+                              bsi_view_configure_notify);
+
+        bsi_view_add_listener(bsi_view,
+                              BSI_VIEW_LISTENER_ACK_CONFIGURE,
+                              bsi_view->events.ack_configure,
+                              bsi_view->wlr_xdg_surface->events.ack_configure,
+                              bsi_view_ack_configure_notify);
+
+        bsi_view_add_listener(bsi_view,
+                              BSI_VIEW_LISTENER_DESTROY_SCENE_NODE,
+                              bsi_view->events.destroy_scene_node,
+                              bsi_view->wlr_scene_node->events.destroy,
+                              bsi_view_destroy_scene_node_notify);
     } else {
         wlr_log(WLR_DEBUG,
                 "Got unsupported wlr_xdg_surface from client: type %d",

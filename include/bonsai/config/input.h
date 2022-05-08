@@ -206,6 +206,7 @@ bsi_input_pointer_init(struct bsi_input_pointer* bsi_input_pointer,
  * `bsi_input_pointer` `events` struct.
  *
  * @param bsi_input_pointer The input pointer.
+ * @param bsi_listener_type Type of listener to add.
  * @param bsi_listener_memb Pointer to a listener to initialize with func (a
  * member of the `events` anonymus struct).
  * @param bsi_signal_memb Pointer to signal which the listener handles (usually
@@ -215,7 +216,7 @@ bsi_input_pointer_init(struct bsi_input_pointer* bsi_input_pointer,
 void
 bsi_input_pointer_add_listener(
     struct bsi_input_pointer* bsi_input_pointer,
-    enum bsi_input_pointer_listener_mask listener_type,
+    enum bsi_input_pointer_listener_mask bsi_listener_type,
     struct wl_listener* bsi_listener_memb,
     struct wl_signal* bsi_signal_memb,
     wl_notify_func_t func);
@@ -247,6 +248,7 @@ bsi_input_keyboard_init(struct bsi_input_keyboard* bsi_input_keyboard,
  * `bsi_input_keyboard` `events` struct.
  *
  * @param bsi_input_keyboard The input keyboard.
+ * @param bsi_listener_type Type of listener to add.
  * @param bsi_listener_memb Pointer to a listener to initialize with func (a
  * member of the `events` anonymus struct).
  * @param bsi_signal_memb Pointer to signal which the listener handles
@@ -256,7 +258,7 @@ bsi_input_keyboard_init(struct bsi_input_keyboard* bsi_input_keyboard,
 void
 bsi_input_keyboard_add_listener(
     struct bsi_input_keyboard* bsi_input_keyboard,
-    enum bsi_input_keyboard_listener_mask listener_type,
+    enum bsi_input_keyboard_listener_mask bsi_listener_type,
     struct wl_listener* bsi_listener_memb,
     struct wl_signal* bsi_signal_memb,
     wl_notify_func_t func);

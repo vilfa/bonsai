@@ -52,8 +52,41 @@ struct bsi_view
     struct wl_list link;
 };
 
-void
-bsi_view_init(); // TODO
+/**
+ * @brief Initializes a preallocated `bsi_view` representing a scene node.
+ *
+ * @param bsi_view The view.
+ * @param bsi_server The server.
+ * @param wlr_xdg_surface The xdg surface data.
+ * @return struct bsi_view* Inititalized `bsi_view`.
+ */
+struct bsi_view*
+bsi_view_init(struct bsi_view* bsi_view,
+              struct bsi_server* bsi_server,
+              struct wlr_xdg_surface* wlr_xdg_surface);
 
+/**
+ * @brief Adds a listener to the scene node represented by `bsi_view`.
+ *
+ * @param bsi_view The view.
+ * @param bsi_listener_type Type of listener to add.
+ * @param bsi_listeners_memb Pointer to a listener to initialize with func (a
+ * member of one of the `bsi_listeners` anonymus structs).
+ * @param bsi_signal_memb Pointer to signal which the listener handles (usually
+ * a member of the `events` struct of its parent).
+ * @param func The listener func.
+ */
 void
-bsi_view_listener_unlink_all(); // TODO
+bsi_view_add_listener(struct bsi_view* bsi_view,
+                      enum bsi_view_listener_mask bsi_listener_type,
+                      struct wl_listener* bsi_listener_memb,
+                      struct wl_signal* bsi_signal_memb,
+                      wl_notify_func_t func);
+
+/**
+ * @brief Unlinks all active listeners from a `bsi_view`.
+ *
+ * @param bsi_view The view.
+ */
+void
+bsi_view_listener_unlink_all(struct bsi_view* bsi_view);

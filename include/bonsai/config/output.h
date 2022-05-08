@@ -116,6 +116,7 @@ bsi_output_init(struct bsi_output* bsi_output,
  * `events` struct.
  *
  * @param bsi_output The output.
+ * @param bsi_listener_type Type of listener to add.
  * @param bsi_listener_memb Pointer to a listener to initialize with func (a
  * member of the `events` anonymus struct).
  * @param bsi_signal_memb Pointer to signal which the listener handles (usually
@@ -124,7 +125,7 @@ bsi_output_init(struct bsi_output* bsi_output,
  */
 void
 bsi_output_add_listener(struct bsi_output* bsi_output,
-                        enum bsi_output_listener_mask listener_type,
+                        enum bsi_output_listener_mask bsi_listener_type,
                         struct wl_listener* bsi_listener_memb,
                         struct wl_signal* bsi_signal_memb,
                         wl_notify_func_t func);

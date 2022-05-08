@@ -6,6 +6,8 @@ bonsai_src = files(
     'config/input.c',
     'config/output.c',
     'config/signal.c',
+
+    'scene/view.c',
 )
 
 bonsai_dep = [
