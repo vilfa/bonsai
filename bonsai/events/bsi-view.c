@@ -139,6 +139,9 @@ bsi_view_request_move_notify(
     __attribute__((unused)) void* data)
 {
     wlr_log(WLR_DEBUG, "Got request_move event from wlr_xdg_toplevel");
+
+    // TODO: Check event serial to make sure client can't do this any time.
+
 #warning "Not implemented"
 }
 
@@ -148,6 +151,9 @@ bsi_view_request_resize_notify(
     __attribute__((unused)) void* data)
 {
     wlr_log(WLR_DEBUG, "Got request_resize event from wlr_xdg_toplevel");
+
+    // TODO: Check event serial to make sure client can't do this any time.
+
 #warning "Not implemented"
 }
 

@@ -1,7 +1,9 @@
 bonsai_src = files(
     'main.c',
 
+    'server.c',
     'util.c',
+    'cursor.c',
 
     'config/input.c',
     'config/output.c',

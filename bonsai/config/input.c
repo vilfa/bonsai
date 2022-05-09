@@ -119,7 +119,6 @@ bsi_input_pointer_init(struct bsi_input_pointer* bsi_input_pointer,
     bsi_input_pointer->bsi_server = bsi_server;
     bsi_input_pointer->wlr_cursor = bsi_server->wlr_cursor;
     bsi_input_pointer->wlr_input_device = wlr_input_device;
-    bsi_input_pointer->cursor_mode = 0;
     bsi_input_pointer->active_listeners = 0;
     bsi_input_pointer->len_active_links = 0;
 

@@ -3,6 +3,7 @@
 #include "bonsai/config/input.h"
 #include "bonsai/config/output.h"
 #include "bonsai/config/signal.h"
+#include "bonsai/cursor.h"
 #include "bonsai/scene/view.h"
 
 /**
@@ -31,6 +32,7 @@ struct bsi_server
     struct bsi_inputs bsi_inputs;
     struct bsi_views bsi_views;
     struct bsi_listeners bsi_listeners;
+    struct bsi_cursor bsi_cursor;
 };
 
 // TODO: Implement this.
@@ -42,3 +44,11 @@ struct bsi_server
  */
 struct bsi_server*
 bsi_server_init(struct bsi_server* bsi_server);
+
+/**
+ * @brief Cleans everything up and exists with 0.
+ *
+ * @param bsi_server The server.
+ */
+void
+bsi_server_exit(struct bsi_server* bsi_server);

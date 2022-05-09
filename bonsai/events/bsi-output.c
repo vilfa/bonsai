@@ -116,6 +116,13 @@ bsi_output_destroy_notify(struct wl_listener* listener,
 
     struct bsi_output* bsi_output =
         wl_container_of(listener, bsi_output, events.destroy);
+    struct bsi_server* bsi_server = bsi_output->bsi_server;
 
-    bsi_outputs_remove(&bsi_output->bsi_server->bsi_outputs, bsi_output);
+    bsi_outputs_remove(&bsi_server->bsi_outputs, bsi_output);
+
+    // TODO: Probably exit if we have no more outputs?
+    if (bsi_outputs_len(&bsi_server->bsi_outputs) == 0) {
+        wlr_log(WLR_INFO, "Out of outputs, exiting");
+        bsi_server_exit(bsi_server);
+    }
 }

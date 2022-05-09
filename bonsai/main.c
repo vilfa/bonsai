@@ -25,6 +25,7 @@
 #include "bonsai/config/input.h"
 #include "bonsai/config/output.h"
 #include "bonsai/config/signal.h"
+#include "bonsai/cursor.h"
 #include "bonsai/events.h"
 #include "bonsai/scene/view.h"
 #include "bonsai/server.h"
@@ -126,6 +127,10 @@ main(void)
     bsi_views_init(&bsi_views);
     server.bsi_views = bsi_views;
 
+    struct bsi_cursor bsi_cursor;
+    bsi_cursor_init(&bsi_cursor, &server);
+    server.bsi_cursor = bsi_cursor;
+
     struct bsi_listeners bsi_listeners;
     bsi_listeners_init(&bsi_listeners);
     server.bsi_listeners = bsi_listeners;
@@ -145,7 +150,6 @@ main(void)
                                &server.bsi_listeners.wlr_backend.destroy,
                                &server.wlr_backend->events.destroy,
                                bsi_listeners_backend_destroy_notify);
-
     bsi_listeners_add_listener(
         &server.bsi_listeners,
         BSI_LISTENERS_SEAT_POINTER_GRAB_BEGIN,

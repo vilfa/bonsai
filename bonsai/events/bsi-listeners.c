@@ -24,7 +24,7 @@ void
 bsi_listeners_backend_new_output_notify(struct wl_listener* listener,
                                         void* data)
 {
-    wlr_log(WLR_DEBUG, "Got new_output event from wlr_backend");
+    wlr_log(WLR_DEBUG, "Got event new_output from wlr_backend");
 
     struct wlr_output* wlr_output = data;
     struct bsi_server* bsi_server = wl_container_of(
@@ -32,6 +32,8 @@ bsi_listeners_backend_new_output_notify(struct wl_listener* listener,
 
     wlr_output_init_render(
         wlr_output, bsi_server->wlr_allocator, bsi_server->wlr_renderer);
+
+    // TODO: Allow user to pick output mode.
 
     if (!wl_list_empty(&wlr_output->modes)) {
         struct wlr_output_mode* mode =
@@ -108,7 +110,7 @@ bsi_listeners_backend_new_output_notify(struct wl_listener* listener,
 void
 bsi_listeners_backend_new_input_notify(struct wl_listener* listener, void* data)
 {
-    wlr_log(WLR_DEBUG, "Got new_input event from wlr_backend");
+    wlr_log(WLR_DEBUG, "Got event new_input from wlr_backend");
 
     struct wlr_input_device* wlr_input_device = data;
     struct bsi_server* bsi_server = wl_container_of(
@@ -275,23 +277,12 @@ void
 bsi_listeners_backend_destroy_notify(struct wl_listener* listener,
                                      __attribute__((unused)) void* data)
 {
-    wlr_log(WLR_DEBUG, "Got destroy event from wlr_backend, exiting");
+    wlr_log(WLR_DEBUG, "Got event destroy from wlr_backend, exiting");
 
     struct bsi_server* bsi_server = wl_container_of(
         listener, bsi_server, bsi_listeners.wlr_backend.destroy);
 
-    // TODO: Add cleanup functions for other server members.
-
-    wlr_renderer_destroy(bsi_server->wlr_renderer);
-    wlr_allocator_destroy(bsi_server->wlr_allocator);
-    wlr_output_layout_destroy(bsi_server->wlr_output_layout);
-    wlr_seat_destroy(bsi_server->wlr_seat);
-    wlr_cursor_destroy(bsi_server->wlr_cursor);
-    wlr_xcursor_manager_destroy(bsi_server->wlr_xcursor_manager);
-    wl_display_destroy_clients(bsi_server->wl_display);
-    wl_display_destroy(bsi_server->wl_display);
-
-    exit(EXIT_SUCCESS);
+    bsi_server_exit(bsi_server);
 }
 
 void
@@ -299,7 +290,7 @@ bsi_listeners_seat_pointer_grab_begin_notify(
     __attribute__((unused)) struct wl_listener* listener,
     __attribute__((unused)) void* data)
 {
-    wlr_log(WLR_DEBUG, "Got pointer_grab_begin event from wlr_seat");
+    wlr_log(WLR_DEBUG, "Got event pointer_grab_begin from wlr_seat");
 #warning "Not implemented"
 }
 
@@ -308,7 +299,7 @@ bsi_listeners_seat_pointer_grab_end_notify(
     __attribute__((unused)) struct wl_listener* listener,
     __attribute__((unused)) void* data)
 {
-    wlr_log(WLR_DEBUG, "Got pointer_grab_end event from wlr_seat");
+    wlr_log(WLR_DEBUG, "Got event pointer_grab_end from wlr_seat");
 #warning "Not implemented"
 }
 
@@ -317,7 +308,7 @@ bsi_listeners_seat_keyboard_grab_begin_notify(
     __attribute__((unused)) struct wl_listener* listener,
     __attribute__((unused)) void* data)
 {
-    wlr_log(WLR_DEBUG, "Got keyboard_grab_begin event from wlr_seat");
+    wlr_log(WLR_DEBUG, "Got event keyboard_grab_begin from wlr_seat");
 #warning "Not implemented"
 }
 
@@ -326,7 +317,7 @@ bsi_listeners_seat_keyboard_grab_end_notify(
     __attribute__((unused)) struct wl_listener* listener,
     __attribute__((unused)) void* data)
 {
-    wlr_log(WLR_DEBUG, "Got keyboard_grab_end event from wlr_seat");
+    wlr_log(WLR_DEBUG, "Got event keyboard_grab_end from wlr_seat");
 #warning "Not implemented"
 }
 
@@ -335,7 +326,7 @@ bsi_listeners_seat_touch_grab_begin_notify(
     __attribute__((unused)) struct wl_listener* listener,
     __attribute__((unused)) void* data)
 {
-    wlr_log(WLR_DEBUG, "Got touch_grab_begin event from wlr_seat");
+    wlr_log(WLR_DEBUG, "Got event touch_grab_begin from wlr_seat");
 #warning "Not implemented"
 }
 
@@ -344,7 +335,7 @@ bsi_listeners_seat_touch_grab_end_notify(
     __attribute__((unused)) struct wl_listener* listener,
     __attribute__((unused)) void* data)
 {
-    wlr_log(WLR_DEBUG, "Got touch_grab_end event from wlr_seat");
+    wlr_log(WLR_DEBUG, "Got event touch_grab_end from wlr_seat");
 #warning "Not implemented"
 }
 
@@ -353,7 +344,7 @@ bsi_listeners_seat_request_set_cursor_notify(
     __attribute__((unused)) struct wl_listener* listener,
     __attribute__((unused)) void* data)
 {
-    wlr_log(WLR_DEBUG, "Got request_set_cursor event from wlr_seat");
+    wlr_log(WLR_DEBUG, "Got event request_set_cursor from wlr_seat");
 #warning "Not implemented"
 }
 
@@ -362,7 +353,7 @@ bsi_listeners_seat_request_set_selection_notify(
     __attribute__((unused)) struct wl_listener* listener,
     __attribute__((unused)) void* data)
 {
-    wlr_log(WLR_DEBUG, "Got request_set_selection event from wlr_seat");
+    wlr_log(WLR_DEBUG, "Got event request_set_selection from wlr_seat");
 #warning "Not implemented"
 }
 
@@ -371,7 +362,7 @@ bsi_listeners_seat_set_selection_notify(
     __attribute__((unused)) struct wl_listener* listener,
     __attribute__((unused)) void* data)
 {
-    wlr_log(WLR_DEBUG, "Got set_selection event from wlr_seat");
+    wlr_log(WLR_DEBUG, "Got event set_selection from wlr_seat");
 #warning "Not implemented"
 }
 
@@ -380,7 +371,7 @@ bsi_listeners_seat_request_set_primary_selection_notify(
     __attribute__((unused)) struct wl_listener* listener,
     __attribute__((unused)) void* data)
 {
-    wlr_log(WLR_DEBUG, "Got request_set_primary_selection event from wlr_seat");
+    wlr_log(WLR_DEBUG, "Got event request_set_primary_selection from wlr_seat");
 #warning "Not implemented"
 }
 
@@ -389,7 +380,7 @@ bsi_listeners_seat_set_primary_selection_notify(
     __attribute__((unused)) struct wl_listener* listener,
     __attribute__((unused)) void* data)
 {
-    wlr_log(WLR_DEBUG, "Got set_primary_selection event from wlr_seat");
+    wlr_log(WLR_DEBUG, "Got event set_primary_selection from wlr_seat");
 #warning "Not implemented"
 }
 
@@ -398,7 +389,7 @@ bsi_listeners_seat_request_start_drag_notify(
     __attribute__((unused)) struct wl_listener* listener,
     __attribute__((unused)) void* data)
 {
-    wlr_log(WLR_DEBUG, "Got request_start_drag event from wlr_seat");
+    wlr_log(WLR_DEBUG, "Got event request_start_drag from wlr_seat");
 #warning "Not implemented"
 }
 
@@ -407,7 +398,7 @@ bsi_listeners_seat_start_drag_notify(
     __attribute__((unused)) struct wl_listener* listener,
     __attribute__((unused)) void* data)
 {
-    wlr_log(WLR_DEBUG, "Got start_drag event from wlr_seat");
+    wlr_log(WLR_DEBUG, "Got event start_drag from wlr_seat");
 #warning "Not implemented"
 }
 
@@ -416,7 +407,7 @@ bsi_listeners_seat_destroy_notify(
     __attribute__((unused)) struct wl_listener* listener,
     __attribute__((unused)) void* data)
 {
-    wlr_log(WLR_DEBUG, "Got destroy event from wlr_seat");
+    wlr_log(WLR_DEBUG, "Got event destroy from wlr_seat");
 #warning "Not implemented"
 }
 
@@ -424,7 +415,7 @@ void
 bsi_listeners_xdg_shell_new_surface_notify(struct wl_listener* listener,
                                            void* data)
 {
-    wlr_log(WLR_DEBUG, "Got new_surface event from wlr_xdg_shell");
+    wlr_log(WLR_DEBUG, "Got event new_surface from wlr_xdg_shell");
 
     struct wlr_xdg_surface* wlr_xdg_surface = data;
     struct bsi_server* bsi_server = wl_container_of(
@@ -432,10 +423,13 @@ bsi_listeners_xdg_shell_new_surface_notify(struct wl_listener* listener,
 
     /* Firstly check if wlr_xdg_surface is a popup surface. If it is not a popup
      * surface, then it is a toplevel surface */
+    // TODO: Rework this.
     if (wlr_xdg_surface->role == WLR_XDG_SURFACE_ROLE_POPUP) {
         struct wlr_xdg_surface* parent =
             wlr_xdg_surface_from_wlr_surface(wlr_xdg_surface->popup->parent);
         struct wlr_scene_node* parent_node = parent->data;
+        /* Create a scene node for the newly created wlr_xdg_surface, and attach
+         * it to its parent, so it renders. */
         wlr_xdg_surface->data =
             wlr_scene_xdg_surface_create(parent_node, wlr_xdg_surface);
     } else if (wlr_xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL) {

@@ -44,7 +44,7 @@ enum bsi_view_listener_mask
 #define bsi_view_listener_len 17
 
 /**
- * @brief Represents a single scene node in the compositor scene graph.
+ * @brief Represents all surfaces of a single application.
  *
  */
 struct bsi_view

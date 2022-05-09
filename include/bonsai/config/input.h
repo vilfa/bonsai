@@ -47,17 +47,6 @@ enum bsi_input_pointer_listener_mask
 #define bsi_input_pointer_listener_len 13
 
 /**
- * @brief Holds all possible modes for a cursor.
- *
- */
-enum bsi_cursor_mode
-{
-    BSI_CURSOR_NORMAL,
-    BSI_CURSOR_MOVE,
-    BSI_CURSOR_RESIZE,
-};
-
-/**
  * @brief Holds a single input pointer and its event listeners.
  *
  */
@@ -66,7 +55,6 @@ struct bsi_input_pointer
     struct bsi_server* bsi_server;
     struct wlr_cursor* wlr_cursor;
     struct wlr_input_device* wlr_input_device;
-    uint32_t cursor_mode;
 
     uint32_t active_listeners;
     struct wl_list* active_links[bsi_input_pointer_listener_len];
