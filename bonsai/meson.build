@@ -8,6 +8,10 @@ bonsai_src = files(
     'config/signal.c',
 
     'scene/view.c',
+
+    'events/listeners.c',
+    'events/output.c',
+    'events/view.c',
 )
 
 bonsai_dep = [

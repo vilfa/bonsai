@@ -1,0 +1,35 @@
+#pragma once
+
+#include <wayland-server-core.h>
+
+typedef void
+bsi_notify_func_t(struct wl_listener*, void*);
+
+/* All `bsi_listeners` listeners. */
+bsi_notify_func_t bsi_listeners_new_output_notify;
+bsi_notify_func_t bsi_listeners_new_input_notify;
+bsi_notify_func_t bsi_listeners_destroy_notify;
+bsi_notify_func_t bsi_listeners_new_xdg_surface_notify;
+
+/* All `bsi_view` listeners. */
+bsi_notify_func_t bsi_view_destroy_xdg_surface_notify;
+bsi_notify_func_t bsi_view_destroy_scene_node_notify;
+bsi_notify_func_t bsi_view_ping_timeout_notify;
+bsi_notify_func_t bsi_view_new_popup_notify;
+bsi_notify_func_t bsi_view_map_notify;
+bsi_notify_func_t bsi_view_unmap_notify;
+bsi_notify_func_t bsi_view_configure_notify;
+bsi_notify_func_t bsi_view_ack_configure_notify;
+bsi_notify_func_t bsi_view_request_maximize_notify;
+bsi_notify_func_t bsi_view_request_fullscreen_notify;
+bsi_notify_func_t bsi_view_request_minimize_notify;
+bsi_notify_func_t bsi_view_request_move_notify;
+bsi_notify_func_t bsi_view_request_resize_notify;
+bsi_notify_func_t bsi_view_request_show_window_menu_notify;
+bsi_notify_func_t bsi_view_set_parent_notify;
+bsi_notify_func_t bsi_view_set_title_notify;
+bsi_notify_func_t bsi_view_set_app_id_notify;
+
+/* All `bsi_output` listeners. */
+bsi_notify_func_t bsi_output_destroy_notify;
+bsi_notify_func_t bsi_output_frame_notify;

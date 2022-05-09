@@ -4,11 +4,22 @@
 #include <wayland-util.h>
 
 /**
+ * @brief Holds all the views the server owns.
+ *
+ */
+struct bsi_views
+{
+    size_t len;
+    struct wl_list views;
+};
+
+/**
  * @brief Holds all possible active listener types for `bsi_view`.
  *
  */
 enum bsi_view_listener_mask
 {
+    /* wlr_xdg_surface */
     BSI_VIEW_LISTENER_DESTROY_XDG_SURFACE = 1 << 0,
     BSI_VIEW_LISTENER_PING_TIMEOUT = 1 << 1,
     BSI_VIEW_LISTENER_NEW_POPUP = 1 << 2,
@@ -16,7 +27,18 @@ enum bsi_view_listener_mask
     BSI_VIEW_LISTENER_UNMAP = 1 << 4,
     BSI_VIEW_LISTENER_CONFIGURE = 1 << 5,
     BSI_VIEW_LISTENER_ACK_CONFIGURE = 1 << 6,
-    BSI_VIEW_LISTENER_DESTROY_SCENE_NODE = 1 << 7,
+    /* wlr_xdg_toplevel */
+    BSI_VIEW_LISTENER_REQUEST_MAXIMIZE = 1 << 7,
+    BSI_VIEW_LISTENER_REQUEST_FULLSCREEN = 1 << 8,
+    BSI_VIEW_LISTENER_REQUEST_MINIMIZE = 1 << 9,
+    BSI_VIEW_LISTENER_REQUEST_MOVE = 1 << 10,
+    BSI_VIEW_LISTENER_REQUEST_RESIZE = 1 << 11,
+    BSI_VIEW_LISTENER_REQUEST_SHOW_WINDOW_MENU = 1 << 12,
+    BSI_VIEW_LISTENER_SET_PARENT = 1 << 13,
+    BSI_VIEW_LISTENER_SET_TITLE = 1 << 14,
+    BSI_VIEW_LISTENER_SET_APP_ID = 1 << 15,
+    /* wlr_scene_node */
+    BSI_VIEW_LISTENER_DESTROY_SCENE_NODE = 1 << 16,
 };
 
 #define bsi_view_listener_len 8
@@ -38,19 +60,65 @@ struct bsi_view
     struct
     {
         /* wlr_xdg_surface */
-        struct wl_listener destroy_xdg_surface; // TODO
-        struct wl_listener ping_timeout;        // TODO
-        struct wl_listener new_popup;           // TODO
-        struct wl_listener map;                 // TODO
-        struct wl_listener unmap;               // TODO
-        struct wl_listener configure;           // TODO
-        struct wl_listener ack_configure;       // TODO
+        struct wl_listener destroy_xdg_surface;
+        struct wl_listener ping_timeout;
+        struct wl_listener new_popup;
+        struct wl_listener map;
+        struct wl_listener unmap;
+        struct wl_listener configure;
+        struct wl_listener ack_configure;
+        /* wlr_xdg_toplevel */
+        struct wl_listener request_maximize;         // TODO
+        struct wl_listener request_fullscreen;       // TODO
+        struct wl_listener request_minimize;         // TODO
+        struct wl_listener request_move;             // TODO
+        struct wl_listener request_resize;           // TODO
+        struct wl_listener request_show_window_menu; // TODO
+        struct wl_listener set_parent;               // TODO
+        struct wl_listener set_title;                // TODO
+        struct wl_listener set_app_id;               // TODO
         /* wlr_scene_node */
-        struct wl_listener destroy_scene_node; // TODO
+        struct wl_listener destroy_scene_node;
     } events;
 
     struct wl_list link;
 };
+
+/**
+ * @brief Initializes a preallocated `bsi_views`.
+ *
+ * @param bsi_views The views.
+ * @return struct bsi_views* The initialized views.
+ */
+struct bsi_views*
+bsi_views_init(struct bsi_views* bsi_views);
+
+/**
+ * @brief Adds a view to the server views.
+ *
+ * @param bsi_views The views.
+ * @param bsi_view The view to add.
+ */
+void
+bsi_views_add(struct bsi_views* bsi_views, struct bsi_view* bsi_view);
+
+/**
+ * @brief Removes a view from the server views.
+ *
+ * @param bsi_views The views.
+ * @param bsi_view The view to remove.
+ */
+void
+bsi_views_remove(struct bsi_views* bsi_views, struct bsi_view* bsi_view);
+
+/**
+ * @brief First calls `bsi_views_remove` and then `free` for the passed view.
+ *
+ * @param bsi_views The views.
+ * @param bsi_view The view to free.
+ */
+void
+bsi_views_free(struct bsi_views* bsi_views, struct bsi_view* bsi_view);
 
 /**
  * @brief Initializes a preallocated `bsi_view` representing a scene node.
@@ -64,6 +132,14 @@ struct bsi_view*
 bsi_view_init(struct bsi_view* bsi_view,
               struct bsi_server* bsi_server,
               struct wlr_xdg_surface* wlr_xdg_surface);
+
+/**
+ * @brief Focuses the view in the server scene graph.
+ *
+ * @param bsi_view The view.
+ */
+void
+bsi_view_focus(struct bsi_view* bsi_view);
 
 /**
  * @brief Adds a listener to the scene node represented by `bsi_view`.

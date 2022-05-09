@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdbool.h>
 #include <wayland-server-core.h>
 #include <wayland-util.h>
 #include <wlr/types/wlr_scene.h>
@@ -6,6 +7,44 @@
 
 #include "bonsai/scene/view.h"
 #include "bonsai/server.h"
+
+struct bsi_views*
+bsi_views_init(struct bsi_views* bsi_views)
+{
+    assert(bsi_views);
+
+    bsi_views->len = 0;
+    wl_list_init(&bsi_views->views);
+
+    return bsi_views;
+}
+
+void
+bsi_views_add(struct bsi_views* bsi_views, struct bsi_view* bsi_view)
+{
+    assert(bsi_views);
+    assert(bsi_view);
+
+    ++bsi_views->len;
+    wl_list_insert(&bsi_views->views, &bsi_view->link);
+}
+
+void
+bsi_views_remove(struct bsi_views* bsi_views, struct bsi_view* bsi_view)
+{
+    assert(bsi_views);
+    assert(bsi_view);
+
+    --bsi_views->len;
+    wl_list_remove(&bsi_view->link);
+}
+
+void
+bsi_views_free(struct bsi_views* bsi_views, struct bsi_view* bsi_view)
+{
+    bsi_views_remove(bsi_views, bsi_view);
+    free(bsi_view);
+}
 
 struct bsi_view*
 bsi_view_init(struct bsi_view* bsi_view,
@@ -27,6 +66,43 @@ bsi_view_init(struct bsi_view* bsi_view,
     wlr_xdg_surface->data = bsi_view->wlr_scene_node;
 
     return bsi_view;
+}
+
+void
+bsi_view_focus(struct bsi_view* bsi_view)
+{
+    assert(bsi_view);
+
+    struct bsi_server* bsi_server = bsi_view->bsi_server;
+    struct bsi_views* bsi_views = &bsi_server->bsi_views;
+    struct wlr_seat* wlr_seat = bsi_server->wlr_seat;
+    struct wlr_surface* prev_focused = wlr_seat->keyboard_state.focused_surface;
+
+    if (prev_focused == bsi_view->wlr_xdg_surface->surface)
+        return;
+
+    if (prev_focused) {
+        /* Deactivate the previously focused surface and notify the client. */
+        struct wlr_xdg_surface* prev_focused_xdg =
+            wlr_xdg_surface_from_wlr_surface(prev_focused);
+        wlr_xdg_toplevel_set_activated(prev_focused_xdg, false);
+    }
+
+    /* Move view to top. */
+    wlr_scene_node_raise_to_top(bsi_view->wlr_scene_node);
+    /* Add the view to the front of the list. */
+    bsi_views_remove(bsi_views, bsi_view);
+    bsi_views_add(bsi_views, bsi_view);
+    /* Activate the view surface. */
+    wlr_xdg_toplevel_set_activated(bsi_view->wlr_xdg_surface, true);
+    /* Tell seat to enter this surface with the keyboard. Don't touch the
+     * pointer. */
+    struct wlr_keyboard* wlr_keyboard = wlr_seat_get_keyboard(wlr_seat);
+    wlr_seat_keyboard_notify_enter(wlr_seat,
+                                   bsi_view->wlr_xdg_surface->surface,
+                                   wlr_keyboard->keycodes,
+                                   wlr_keyboard->num_keycodes,
+                                   &wlr_keyboard->modifiers);
 }
 
 void
