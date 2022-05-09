@@ -24,10 +24,19 @@ struct bsi_outputs
 enum bsi_output_listener_mask
 {
     BSI_OUTPUT_LISTENER_FRAME = 1 << 0,
-    BSI_OUTPUT_LISTENER_DESTROY = 1 << 1,
+    BSI_OUTPUT_LISTENER_DAMAGE = 1 << 1,
+    BSI_OUTPUT_LISTENER_NEEDS_FRAME = 1 << 2,
+    BSI_OUTPUT_LISTENER_PRECOMMIT = 1 << 3,
+    BSI_OUTPUT_LISTENER_COMMIT = 1 << 4,
+    BSI_OUTPUT_LISTENER_PRESENT = 1 << 5,
+    BSI_OUTPUT_LISTENER_BIND = 1 << 6,
+    BSI_OUTPUT_LISTENER_ENABLE = 1 << 7,
+    BSI_OUTPUT_LISTENER_MODE = 1 << 8,
+    BSI_OUTPUT_LISTENER_DESCRIPTION = 1 << 9,
+    BSI_OUTPUT_LISTENER_DESTROY = 1 << 10,
 };
 
-#define bsi_output_listener_len 2
+#define bsi_output_listener_len 11
 
 /**
  * @brief Represents a single output and its event listeners.
@@ -39,22 +48,21 @@ struct bsi_output
     struct wlr_output* wlr_output;
     struct timespec last_frame;
 
-    // TODO: Add handlers for these events.
     uint32_t active_listeners;
     struct wl_list* active_links[bsi_output_listener_len];
     size_t len_active_links;
     struct
     {
         struct wl_listener frame;
-        struct wl_listener damage;      // TODO
-        struct wl_listener needs_frame; // TODO
-        struct wl_listener precommit;   // TODO
-        struct wl_listener commit;      // TODO
-        struct wl_listener present;     // TODO
-        struct wl_listener bind;        // TODO
-        struct wl_listener enable;      // TODO
-        struct wl_listener mode;        // TODO
-        struct wl_listener description; // TODO
+        struct wl_listener damage;
+        struct wl_listener needs_frame;
+        struct wl_listener precommit;
+        struct wl_listener commit;
+        struct wl_listener present;
+        struct wl_listener bind;
+        struct wl_listener enable;
+        struct wl_listener mode;
+        struct wl_listener description;
         struct wl_listener destroy;
     } events;
 

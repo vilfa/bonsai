@@ -9,9 +9,10 @@ bonsai_src = files(
 
     'scene/view.c',
 
-    'events/listeners.c',
-    'events/output.c',
-    'events/view.c',
+    'events/bsi-listeners.c',
+    'events/bsi-output.c',
+    'events/bsi-input.c',
+    'events/bsi-view.c',
 )
 
 bonsai_dep = [

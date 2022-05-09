@@ -15,13 +15,26 @@ enum bsi_listeners_mask
     BSI_LISTENERS_BACKEND_NEW_INPUT = 1 << 1,
     BSI_LISTENERS_BACKEND_DESTROY = 1 << 2,
     /* wlr_seat */
-    BSI_LISTENERS_SEAT_REQUEST_SET_CURSOR = 1 << 3,
-    BSI_LISTENERS_SEAT_REQUEST_SET_SELECTION = 1 << 4,
+    BSI_LISTENERS_SEAT_POINTER_GRAB_BEGIN = 1 << 3,
+    BSI_LISTENERS_SEAT_POINTER_GRAB_END = 1 << 4,
+    BSI_LISTENERS_SEAT_KEYBOARD_GRAB_BEGIN = 1 << 5,
+    BSI_LISTENERS_SEAT_KEYBOARD_GRAB_END = 1 << 6,
+    BSI_LISTENERS_SEAT_TOUCH_GRAB_BEGIN = 1 << 7,
+    BSI_LISTENERS_SEAT_TOUCH_GRAB_END = 1 << 8,
+    BSI_LISTENERS_SEAT_REQUEST_SET_CURSOR = 1 << 9,
+    BSI_LISTENERS_SEAT_REQUEST_SET_SELECTION = 1 << 10,
+    BSI_LISTENERS_SEAT_SET_SELECTION = 1 << 11,
+    BSI_LISTENERS_SEAT_REQUEST_SET_PRIMARY_SELECTION = 1 << 12,
+    BSI_LISTENERS_SEAT_SET_PRIMARY_SELECTION = 1 << 13,
+    BSI_LISTENERS_SEAT_REQUEST_START_DRAG = 1 << 14,
+    BSI_LISTENERS_SEAT_START_DRAG = 1 << 15,
+    BSI_LISTENERS_SEAT_DESTROY = 1 << 16,
     /* wlr_xdg_shell */
-    BSI_LISTENERS_XDG_SHELL_NEW_SURFACE = 1 << 5,
+    BSI_LISTENERS_XDG_SHELL_NEW_SURFACE = 1 << 17,
+    BSI_LISTENERS_XDG_SHELL_DESTROY = 1 << 18,
 };
 
-#define bsi_listeners_len 6
+#define bsi_listeners_len 19
 
 /**
  * @brief Holds signal listeners for all the globals that belong to the server.
@@ -42,37 +55,28 @@ struct bsi_listeners
         struct wl_listener destroy;
     } wlr_backend;
 
-    // TODO: Add handlers for these events.
     struct
     {
-        struct wl_listener pointer_grab_begin; // TODO
-        struct wl_listener pointer_grab_end;   // TODO
-
-        struct wl_listener keyboard_grab_begin; // TODO
-        struct wl_listener keyboard_grab_end;   // TODO
-
-        struct wl_listener touch_grab_begin; // TODO
-        struct wl_listener touch_grab_end;   // TODO
-
-        struct wl_listener request_set_cursor; // TODO
-
-        struct wl_listener request_set_selection; // TODO
-        struct wl_listener set_selection;         // TODO
-
-        struct wl_listener request_set_primary_selection; // TODO
-        struct wl_listener set_primary_selection;         // TODO
-
-        struct wl_listener request_start_drag; // TODO
-        struct wl_listener start_drag;         // TODO
-
-        struct wl_listener destroy; // TODO
+        struct wl_listener pointer_grab_begin;
+        struct wl_listener pointer_grab_end;
+        struct wl_listener keyboard_grab_begin;
+        struct wl_listener keyboard_grab_end;
+        struct wl_listener touch_grab_begin;
+        struct wl_listener touch_grab_end;
+        struct wl_listener request_set_cursor;
+        struct wl_listener request_set_selection;
+        struct wl_listener set_selection;
+        struct wl_listener request_set_primary_selection;
+        struct wl_listener set_primary_selection;
+        struct wl_listener request_start_drag;
+        struct wl_listener start_drag;
+        struct wl_listener destroy;
     } wlr_seat;
 
-    // TODO: Add handlers for these events.
     struct
     {
         struct wl_listener new_surface;
-        struct wl_listener destroy; // TODO
+        struct wl_listener destroy;
     } wlr_xdg_shell;
 };
 

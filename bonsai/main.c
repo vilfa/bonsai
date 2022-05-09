@@ -134,29 +134,106 @@ main(void)
                                BSI_LISTENERS_BACKEND_NEW_OUTPUT,
                                &server.bsi_listeners.wlr_backend.new_output,
                                &server.wlr_backend->events.new_output,
-                               bsi_listeners_new_output_notify);
-    wlr_log(WLR_DEBUG, "Attached bsi_new_output_notify listener");
-
+                               bsi_listeners_backend_new_output_notify);
     bsi_listeners_add_listener(&server.bsi_listeners,
                                BSI_LISTENERS_BACKEND_NEW_INPUT,
                                &server.bsi_listeners.wlr_backend.new_input,
                                &server.wlr_backend->events.new_input,
-                               bsi_listeners_new_input_notify);
-    wlr_log(WLR_DEBUG, "Attached bsi_new_input_notify listener");
-
+                               bsi_listeners_backend_new_input_notify);
     bsi_listeners_add_listener(&server.bsi_listeners,
                                BSI_LISTENERS_BACKEND_DESTROY,
                                &server.bsi_listeners.wlr_backend.destroy,
                                &server.wlr_backend->events.destroy,
-                               bsi_listeners_destroy_notify);
-    wlr_log(WLR_DEBUG, "Attached bsi_destroy_notify listener");
+                               bsi_listeners_backend_destroy_notify);
+
+    bsi_listeners_add_listener(
+        &server.bsi_listeners,
+        BSI_LISTENERS_SEAT_POINTER_GRAB_BEGIN,
+        &server.bsi_listeners.wlr_seat.pointer_grab_begin,
+        &server.wlr_seat->events.pointer_grab_begin,
+        bsi_listeners_seat_pointer_grab_begin_notify);
+    bsi_listeners_add_listener(&server.bsi_listeners,
+                               BSI_LISTENERS_SEAT_POINTER_GRAB_END,
+                               &server.bsi_listeners.wlr_seat.pointer_grab_end,
+                               &server.wlr_seat->events.pointer_grab_end,
+                               bsi_listeners_seat_pointer_grab_end_notify);
+    bsi_listeners_add_listener(
+        &server.bsi_listeners,
+        BSI_LISTENERS_SEAT_KEYBOARD_GRAB_BEGIN,
+        &server.bsi_listeners.wlr_seat.keyboard_grab_begin,
+        &server.wlr_seat->events.keyboard_grab_begin,
+        bsi_listeners_seat_keyboard_grab_begin_notify);
+    bsi_listeners_add_listener(&server.bsi_listeners,
+                               BSI_LISTENERS_SEAT_KEYBOARD_GRAB_END,
+                               &server.bsi_listeners.wlr_seat.keyboard_grab_end,
+                               &server.wlr_seat->events.keyboard_grab_end,
+                               bsi_listeners_seat_keyboard_grab_end_notify);
+    bsi_listeners_add_listener(&server.bsi_listeners,
+                               BSI_LISTENERS_SEAT_TOUCH_GRAB_BEGIN,
+                               &server.bsi_listeners.wlr_seat.touch_grab_begin,
+                               &server.wlr_seat->events.touch_grab_begin,
+                               bsi_listeners_seat_touch_grab_begin_notify);
+    bsi_listeners_add_listener(&server.bsi_listeners,
+                               BSI_LISTENERS_SEAT_TOUCH_GRAB_END,
+                               &server.bsi_listeners.wlr_seat.touch_grab_end,
+                               &server.wlr_seat->events.touch_grab_end,
+                               bsi_listeners_seat_touch_grab_end_notify);
+    bsi_listeners_add_listener(
+        &server.bsi_listeners,
+        BSI_LISTENERS_SEAT_REQUEST_SET_CURSOR,
+        &server.bsi_listeners.wlr_seat.request_set_cursor,
+        &server.wlr_seat->events.request_set_cursor,
+        bsi_listeners_seat_request_set_cursor_notify);
+    bsi_listeners_add_listener(
+        &server.bsi_listeners,
+        BSI_LISTENERS_SEAT_REQUEST_SET_SELECTION,
+        &server.bsi_listeners.wlr_seat.request_set_selection,
+        &server.wlr_seat->events.request_set_selection,
+        bsi_listeners_seat_request_set_selection_notify);
+    bsi_listeners_add_listener(&server.bsi_listeners,
+                               BSI_LISTENERS_SEAT_SET_SELECTION,
+                               &server.bsi_listeners.wlr_seat.set_selection,
+                               &server.wlr_seat->events.set_selection,
+                               bsi_listeners_seat_set_selection_notify);
+    bsi_listeners_add_listener(
+        &server.bsi_listeners,
+        BSI_LISTENERS_SEAT_REQUEST_SET_PRIMARY_SELECTION,
+        &server.bsi_listeners.wlr_seat.request_set_primary_selection,
+        &server.wlr_seat->events.request_set_primary_selection,
+        bsi_listeners_seat_request_set_primary_selection_notify);
+    bsi_listeners_add_listener(
+        &server.bsi_listeners,
+        BSI_LISTENERS_SEAT_SET_PRIMARY_SELECTION,
+        &server.bsi_listeners.wlr_seat.set_primary_selection,
+        &server.wlr_seat->events.set_primary_selection,
+        bsi_listeners_seat_set_primary_selection_notify);
+    bsi_listeners_add_listener(
+        &server.bsi_listeners,
+        BSI_LISTENERS_SEAT_REQUEST_START_DRAG,
+        &server.bsi_listeners.wlr_seat.request_start_drag,
+        &server.wlr_seat->events.request_start_drag,
+        bsi_listeners_seat_request_start_drag_notify);
+    bsi_listeners_add_listener(&server.bsi_listeners,
+                               BSI_LISTENERS_SEAT_START_DRAG,
+                               &server.bsi_listeners.wlr_seat.start_drag,
+                               &server.wlr_seat->events.start_drag,
+                               bsi_listeners_seat_start_drag_notify);
+    bsi_listeners_add_listener(&server.bsi_listeners,
+                               BSI_LISTENERS_SEAT_DESTROY,
+                               &server.bsi_listeners.wlr_seat.destroy,
+                               &server.wlr_seat->events.destroy,
+                               bsi_listeners_seat_destroy_notify);
 
     bsi_listeners_add_listener(&server.bsi_listeners,
                                BSI_LISTENERS_XDG_SHELL_NEW_SURFACE,
                                &server.bsi_listeners.wlr_xdg_shell.new_surface,
                                &server.wlr_xdg_shell->events.new_surface,
-                               bsi_listeners_new_xdg_surface_notify);
-    wlr_log(WLR_DEBUG, "Attached bsi_new_xdg_surface_notify listener");
+                               bsi_listeners_xdg_shell_new_surface_notify);
+    bsi_listeners_add_listener(&server.bsi_listeners,
+                               BSI_LISTENERS_XDG_SHELL_DESTROY,
+                               &server.bsi_listeners.wlr_xdg_shell.destroy,
+                               &server.wlr_xdg_shell->events.destroy,
+                               bsi_listeners_xdg_shell_destroy_notify);
 
     server.wl_socket = wl_display_add_socket_auto(server.wl_display);
     assert(server.wl_socket);

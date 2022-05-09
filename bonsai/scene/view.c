@@ -40,9 +40,9 @@ bsi_views_remove(struct bsi_views* bsi_views, struct bsi_view* bsi_view)
 }
 
 void
-bsi_views_free(struct bsi_views* bsi_views, struct bsi_view* bsi_view)
+bsi_views_free(__attribute__((unused)) struct bsi_views* bsi_views,
+               struct bsi_view* bsi_view)
 {
-    bsi_views_remove(bsi_views, bsi_view);
     free(bsi_view);
 }
 

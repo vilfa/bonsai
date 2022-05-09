@@ -41,7 +41,7 @@ enum bsi_view_listener_mask
     BSI_VIEW_LISTENER_DESTROY_SCENE_NODE = 1 << 16,
 };
 
-#define bsi_view_listener_len 8
+#define bsi_view_listener_len 17
 
 /**
  * @brief Represents a single scene node in the compositor scene graph.
@@ -53,7 +53,6 @@ struct bsi_view
     struct wlr_xdg_surface* wlr_xdg_surface;
     struct wlr_scene_node* wlr_scene_node;
 
-    // TODO: Add handlers for these events.
     uint32_t active_listeners;
     struct wl_list* active_links[bsi_view_listener_len];
     size_t len_active_links;
@@ -68,15 +67,15 @@ struct bsi_view
         struct wl_listener configure;
         struct wl_listener ack_configure;
         /* wlr_xdg_toplevel */
-        struct wl_listener request_maximize;         // TODO
-        struct wl_listener request_fullscreen;       // TODO
-        struct wl_listener request_minimize;         // TODO
-        struct wl_listener request_move;             // TODO
-        struct wl_listener request_resize;           // TODO
-        struct wl_listener request_show_window_menu; // TODO
-        struct wl_listener set_parent;               // TODO
-        struct wl_listener set_title;                // TODO
-        struct wl_listener set_app_id;               // TODO
+        struct wl_listener request_maximize;
+        struct wl_listener request_fullscreen;
+        struct wl_listener request_minimize;
+        struct wl_listener request_move;
+        struct wl_listener request_resize;
+        struct wl_listener request_show_window_menu;
+        struct wl_listener set_parent;
+        struct wl_listener set_title;
+        struct wl_listener set_app_id;
         /* wlr_scene_node */
         struct wl_listener destroy_scene_node;
     } events;
@@ -112,7 +111,8 @@ void
 bsi_views_remove(struct bsi_views* bsi_views, struct bsi_view* bsi_view);
 
 /**
- * @brief First calls `bsi_views_remove` and then `free` for the passed view.
+ * @brief Calls `free` for the passed view. Take care to remove the view by
+ * calling `bsi_views_remove` before calling this.
  *
  * @param bsi_views The views.
  * @param bsi_view The view to free.

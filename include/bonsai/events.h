@@ -5,13 +5,29 @@
 typedef void
 bsi_notify_func_t(struct wl_listener*, void*);
 
-/* All `bsi_listeners` listeners. */
-extern bsi_notify_func_t bsi_listeners_new_output_notify;
-extern bsi_notify_func_t bsi_listeners_new_input_notify;
-extern bsi_notify_func_t bsi_listeners_destroy_notify;
-extern bsi_notify_func_t bsi_listeners_new_xdg_surface_notify;
+/* bsi_listeners */
+extern bsi_notify_func_t bsi_listeners_backend_new_output_notify;
+extern bsi_notify_func_t bsi_listeners_backend_new_input_notify;
+extern bsi_notify_func_t bsi_listeners_backend_destroy_notify;
+extern bsi_notify_func_t bsi_listeners_seat_pointer_grab_begin_notify;
+extern bsi_notify_func_t bsi_listeners_seat_pointer_grab_end_notify;
+extern bsi_notify_func_t bsi_listeners_seat_keyboard_grab_begin_notify;
+extern bsi_notify_func_t bsi_listeners_seat_keyboard_grab_end_notify;
+extern bsi_notify_func_t bsi_listeners_seat_touch_grab_begin_notify; // Skipped.
+extern bsi_notify_func_t bsi_listeners_seat_touch_grab_end_notify;   // Skipped.
+extern bsi_notify_func_t bsi_listeners_seat_request_set_cursor_notify;
+extern bsi_notify_func_t bsi_listeners_seat_request_set_selection_notify;
+extern bsi_notify_func_t bsi_listeners_seat_set_selection_notify;
+extern bsi_notify_func_t
+    bsi_listeners_seat_request_set_primary_selection_notify;
+extern bsi_notify_func_t bsi_listeners_seat_set_primary_selection_notify;
+extern bsi_notify_func_t bsi_listeners_seat_request_start_drag_notify;
+extern bsi_notify_func_t bsi_listeners_seat_start_drag_notify;
+extern bsi_notify_func_t bsi_listeners_seat_destroy_notify;
+extern bsi_notify_func_t bsi_listeners_xdg_shell_new_surface_notify;
+extern bsi_notify_func_t bsi_listeners_xdg_shell_destroy_notify;
 
-/* All `bsi_view` listeners. */
+/* bsi_view */
 extern bsi_notify_func_t bsi_view_destroy_xdg_surface_notify;
 extern bsi_notify_func_t bsi_view_destroy_scene_node_notify;
 extern bsi_notify_func_t bsi_view_ping_timeout_notify;
@@ -30,6 +46,35 @@ extern bsi_notify_func_t bsi_view_set_parent_notify;
 extern bsi_notify_func_t bsi_view_set_title_notify;
 extern bsi_notify_func_t bsi_view_set_app_id_notify;
 
-/* All `bsi_output` listeners. */
-extern bsi_notify_func_t bsi_output_destroy_notify;
+/* bsi_output */
 extern bsi_notify_func_t bsi_output_frame_notify;
+extern bsi_notify_func_t bsi_output_damage_notify;
+extern bsi_notify_func_t bsi_output_needs_frame_notify;
+extern bsi_notify_func_t bsi_output_precommit_notify;
+extern bsi_notify_func_t bsi_output_commit_notify;
+extern bsi_notify_func_t bsi_output_present_notify;
+extern bsi_notify_func_t bsi_output_bind_notify;
+extern bsi_notify_func_t bsi_output_enable_notify;
+extern bsi_notify_func_t bsi_output_mode_notify;
+extern bsi_notify_func_t bsi_output_description_notify;
+extern bsi_notify_func_t bsi_output_destroy_notify;
+
+/* bsi_input_{pointer,keyboard} */
+extern bsi_notify_func_t bsi_input_pointer_motion_notify;
+extern bsi_notify_func_t bsi_input_pointer_motion_absolute_notify;
+extern bsi_notify_func_t bsi_input_pointer_button_notify;
+extern bsi_notify_func_t bsi_input_pointer_axis_notify;
+extern bsi_notify_func_t bsi_input_pointer_frame_notify;
+extern bsi_notify_func_t bsi_input_pointer_swipe_begin_notify;
+extern bsi_notify_func_t bsi_input_pointer_swipe_update_notify;
+extern bsi_notify_func_t bsi_input_pointer_swipe_end_notify;
+extern bsi_notify_func_t bsi_input_pointer_pinch_begin_notify;
+extern bsi_notify_func_t bsi_input_pointer_pinch_update_notify;
+extern bsi_notify_func_t bsi_input_pointer_pinch_end_notify;
+extern bsi_notify_func_t bsi_input_pointer_hold_begin_notify;
+extern bsi_notify_func_t bsi_input_pointer_hold_end_notify;
+extern bsi_notify_func_t bsi_input_keyboard_key_notify;
+extern bsi_notify_func_t bsi_input_keyboard_modifiers_notify;
+extern bsi_notify_func_t bsi_input_keyboard_keymap_notify;
+extern bsi_notify_func_t bsi_input_keyboard_repeat_info_notify;
+extern bsi_notify_func_t bsi_input_keyboard_destroy_notify;
