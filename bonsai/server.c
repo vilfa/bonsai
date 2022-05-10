@@ -22,6 +22,5 @@ bsi_server_exit(struct bsi_server* bsi_server)
 {
     assert(bsi_server);
 
-    // TODO: This is probably not the correct way to exit.
-    exit(EXIT_SUCCESS);
+    wl_display_terminate(bsi_server->wl_display);
 }

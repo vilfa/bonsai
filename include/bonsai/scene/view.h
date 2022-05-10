@@ -1,5 +1,6 @@
 #pragma once
 
+#include "bonsai/cursor.h"
 #include <wayland-server-core.h>
 #include <wayland-util.h>
 
@@ -52,6 +53,10 @@ struct bsi_view
     struct bsi_server* bsi_server;
     struct wlr_xdg_surface* wlr_xdg_surface;
     struct wlr_scene_node* wlr_scene_node;
+
+    char* app_id;
+    char* app_title;
+    double x, y;
 
     uint32_t active_listeners;
     struct wl_list* active_links[bsi_view_listener_len];
@@ -126,7 +131,7 @@ bsi_view_init(struct bsi_view* bsi_view,
 /**
  * @brief Destroys (calls `free`) on the passed view.
  *
- * @param bsi_view The view to free.
+ * @param bsi_view The view to destroy.
  */
 void
 bsi_view_destroy(struct bsi_view* bsi_view);
@@ -138,6 +143,36 @@ bsi_view_destroy(struct bsi_view* bsi_view);
  */
 void
 bsi_view_focus(struct bsi_view* bsi_view);
+
+/**
+ * @brief Sets the app id for this view.
+ *
+ * @param bsi_view The view.
+ * @param app_id The app id.
+ */
+void
+bsi_view_set_app_id(struct bsi_view* bsi_view, const char* app_id);
+
+/**
+ * @brief Sets the app title for this view.
+ *
+ * @param bsi_view The view.
+ * @param app_title The title.
+ */
+void
+bsi_view_set_app_title(struct bsi_view* bsi_view, const char* app_title);
+
+/**
+ * @brief Begins interaction with a surface in the view.
+ *
+ * @param bsi_view The view.
+ * @param bsi_cursor_mode The cursor mode.
+ * @param edges If this is a resize event, the edges from the resize event.
+ */
+void
+bsi_view_interactive_begin(struct bsi_view* bsi_view,
+                           enum bsi_cursor_mode bsi_cursor_mode,
+                           uint32_t edges);
 
 /**
  * @brief Adds a listener to the scene node represented by `bsi_view`.

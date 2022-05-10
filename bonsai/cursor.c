@@ -4,6 +4,9 @@
 #include <wlr/types/wlr_scene.h>
 #include <wlr/types/wlr_seat.h>
 #include <wlr/types/wlr_xcursor_manager.h>
+#include <wlr/types/wlr_xdg_shell.h>
+#include <wlr/util/box.h>
+#include <wlr/util/edges.h>
 
 #include "bonsai/cursor.h"
 #include "bonsai/server.h"
@@ -110,9 +113,14 @@ bsi_cursor_process_view_move(struct bsi_cursor* bsi_cursor,
     assert(bsi_cursor);
     assert(bsi_cursor_event.motion);
 
+    struct bsi_server* bsi_server = bsi_cursor->bsi_server;
+    struct bsi_view* bsi_view = bsi_cursor->grabbed_view;
     struct wlr_event_pointer_motion* event = bsi_cursor_event.motion;
 
-#warning "Not implemented"
+    bsi_view->x = bsi_server->wlr_cursor->x - bsi_cursor->grab_x;
+    bsi_view->y = bsi_server->wlr_cursor->y - bsi_cursor->grab_y;
+    wlr_scene_node_set_position(
+        bsi_view->wlr_scene_node, bsi_view->x, bsi_view->y);
 }
 
 void
@@ -122,7 +130,54 @@ bsi_cursor_process_view_resize(struct bsi_cursor* bsi_cursor,
     assert(bsi_cursor);
     assert(bsi_cursor_event.motion);
 
+    // TODO: In a more fleshed-out compositor, you'd wait for the client to
+    // prepare a buffer at the new size, then commit any movement that was
+    // prepared.
+
+    struct bsi_server* bsi_server = bsi_cursor->bsi_server;
+    struct bsi_view* bsi_view = bsi_server->bsi_cursor.grabbed_view;
     struct wlr_event_pointer_motion* event = bsi_cursor_event.motion;
 
-#warning "Not implemented"
+    // TODO: Not sure what is happening here.
+    double border_x = bsi_server->wlr_cursor->x - bsi_cursor->grab_x;
+    double border_y = bsi_server->wlr_cursor->y - bsi_cursor->grab_y;
+    int32_t new_left = bsi_cursor->grab_geobox.x;
+    int32_t new_right =
+        bsi_cursor->grab_geobox.x + bsi_cursor->grab_geobox.width;
+    int32_t new_top = bsi_cursor->grab_geobox.y;
+    int32_t new_bottom =
+        bsi_cursor->grab_geobox.y + bsi_cursor->grab_geobox.height;
+
+    /* We are constraining the size of the surface to at least 1px width and
+     * height? Coordinates start from the top left corner.*/
+    if (bsi_cursor->resize_edges & WLR_EDGE_TOP) {
+        new_top = border_y;
+        if (new_top >= new_bottom)
+            new_top = new_bottom - 1;
+    } else if (bsi_cursor->resize_edges & WLR_EDGE_BOTTOM) {
+        new_bottom = border_y;
+        if (new_bottom <= new_top)
+            new_bottom = new_top + 1;
+    }
+
+    if (bsi_cursor->resize_edges & WLR_EDGE_LEFT) {
+        new_left = border_x;
+        if (new_left >= new_right)
+            new_left = new_right - 1;
+    } else if (bsi_cursor->resize_edges & WLR_EDGE_RIGHT) {
+        new_right = border_x;
+        if (new_right <= new_left)
+            new_right = new_left + 1;
+    }
+
+    struct wlr_box box;
+    wlr_xdg_surface_get_geometry(bsi_view->wlr_xdg_surface, &box);
+    bsi_view->x = new_left - box.x;
+    bsi_view->y = new_top - box.y;
+    wlr_scene_node_set_position(
+        bsi_view->wlr_scene_node, bsi_view->x, bsi_view->y);
+
+    int32_t new_width = new_right - new_left;
+    int32_t new_height = new_bottom - new_top;
+    wlr_xdg_toplevel_set_size(bsi_view->wlr_xdg_surface, new_width, new_height);
 }
