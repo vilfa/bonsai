@@ -39,13 +39,6 @@ bsi_views_remove(struct bsi_views* bsi_views, struct bsi_view* bsi_view)
     wl_list_remove(&bsi_view->link);
 }
 
-void
-bsi_views_free(__attribute__((unused)) struct bsi_views* bsi_views,
-               struct bsi_view* bsi_view)
-{
-    free(bsi_view);
-}
-
 struct bsi_view*
 bsi_view_init(struct bsi_view* bsi_view,
               struct bsi_server* bsi_server,
@@ -66,6 +59,14 @@ bsi_view_init(struct bsi_view* bsi_view,
     wlr_xdg_surface->data = bsi_view->wlr_scene_node;
 
     return bsi_view;
+}
+
+void
+bsi_view_destroy(struct bsi_view* bsi_view)
+{
+    assert(bsi_view);
+
+    free(bsi_view);
 }
 
 void

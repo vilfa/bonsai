@@ -88,7 +88,8 @@ void
 bsi_outputs_add(struct bsi_outputs* bsi_outputs, struct bsi_output* bsi_output);
 
 /**
- * @brief Removes an output from the known server outputs.
+ * @brief Removes an output from the known server outputs. Make sure to destroy
+ * the output.
  *
  * @param bsi_outputs Pointer to server outputs struct.
  * @param bsi_output Pointer to output.
@@ -120,6 +121,14 @@ bsi_output_init(struct bsi_output* bsi_output,
                 struct wlr_output* wlr_output);
 
 /**
+ * @brief Destroys (calls `free`) on an output.
+ *
+ * @param bsi_output The output.
+ */
+void
+bsi_output_destroy(struct bsi_output* bsi_output);
+
+/**
  * @brief Add a listener `func` for the specified member of the `bsi_output`
  * `events` struct.
  *
@@ -132,7 +141,7 @@ bsi_output_init(struct bsi_output* bsi_output,
  * @param func The listener function.
  */
 void
-bsi_output_add_listener(struct bsi_output* bsi_output,
+bsi_output_listener_add(struct bsi_output* bsi_output,
                         enum bsi_output_listener_mask bsi_listener_type,
                         struct wl_listener* bsi_listener_memb,
                         struct wl_signal* bsi_signal_memb,

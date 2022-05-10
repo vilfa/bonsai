@@ -62,17 +62,6 @@ struct bsi_cursor*
 bsi_cursor_init(struct bsi_cursor* bsi_cursor, struct bsi_server* bsi_server);
 
 /**
-
- *
- * @param bsi_cursor
- * @param server_root
- * @param surface_at Pointer to `wlr_surface*` to set to the surface under the
- * cursor.
- * @param bsi_cursor_event Cursor event.
- * @return struct bsi_view* The view at the cursor coordinates.
- */
-
-/**
  * @brief Returns the `bsi_view` at the cursor event surface coordinates. Pass a
  * pointer to a preallocated `wlr_surface*` variable to get the specific
  * wlr_surface, that is under the cursor and is a member of the view.

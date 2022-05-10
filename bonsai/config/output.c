@@ -40,7 +40,6 @@ bsi_outputs_remove(struct bsi_outputs* bsi_outputs,
     --bsi_outputs->len;
     wl_list_remove(&bsi_output->link);
     bsi_output_listeners_unlink_all(bsi_output);
-    free(bsi_output);
 }
 
 size_t
@@ -72,7 +71,15 @@ bsi_output_init(struct bsi_output* bsi_output,
 }
 
 void
-bsi_output_add_listener(struct bsi_output* bsi_output,
+bsi_output_destroy(struct bsi_output* bsi_output)
+{
+    assert(bsi_output);
+
+    free(bsi_output);
+}
+
+void
+bsi_output_listener_add(struct bsi_output* bsi_output,
                         enum bsi_output_listener_mask bsi_listener_type,
                         struct wl_listener* bsi_listener_memb,
                         struct wl_signal* bsi_signal_memb,

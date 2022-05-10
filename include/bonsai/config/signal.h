@@ -102,11 +102,11 @@ bsi_listeners_init(struct bsi_listeners* bsi_listeners);
  * @param func The listener func.
  */
 void
-bsi_listeners_add_listener(struct bsi_listeners* bsi_listeners,
-                           enum bsi_listeners_mask bsi_listener_type,
-                           struct wl_listener* bsi_listener_memb,
-                           struct wl_signal* bsi_signal_memb,
-                           wl_notify_func_t func);
+bsi_listeners_add(struct bsi_listeners* bsi_listeners,
+                  enum bsi_listeners_mask bsi_listener_type,
+                  struct wl_listener* bsi_listener_memb,
+                  struct wl_signal* bsi_signal_memb,
+                  wl_notify_func_t func);
 
 /**
  * @brief Unlinks all active listeners belonging to the server.

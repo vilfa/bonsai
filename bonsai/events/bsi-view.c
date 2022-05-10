@@ -25,7 +25,8 @@ bsi_view_destroy_xdg_surface_notify(struct wl_listener* listener,
     struct bsi_views* bsi_views = &bsi_view->bsi_server->bsi_views;
 
     bsi_view_listener_unlink_all(bsi_view);
-    bsi_views_free(bsi_views, bsi_view);
+    bsi_views_remove(bsi_views, bsi_view);
+    bsi_view_destroy(bsi_view);
 }
 
 void
@@ -39,7 +40,8 @@ bsi_view_destroy_scene_node_notify(struct wl_listener* listener,
     struct bsi_views* bsi_views = &bsi_view->bsi_server->bsi_views;
 
     bsi_view_listener_unlink_all(bsi_view);
-    bsi_views_free(bsi_views, bsi_view);
+    bsi_views_remove(bsi_views, bsi_view);
+    bsi_view_destroy(bsi_view);
 }
 
 void

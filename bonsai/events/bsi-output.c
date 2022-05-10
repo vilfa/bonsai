@@ -119,6 +119,7 @@ bsi_output_destroy_notify(struct wl_listener* listener,
     struct bsi_server* bsi_server = bsi_output->bsi_server;
 
     bsi_outputs_remove(&bsi_server->bsi_outputs, bsi_output);
+    bsi_output_destroy(bsi_output);
 
     // TODO: Probably exit if we have no more outputs?
     if (bsi_outputs_len(&bsi_server->bsi_outputs) == 0) {

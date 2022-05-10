@@ -135,17 +135,18 @@ bsi_inputs_init(struct bsi_inputs* bsi_inputs, struct wlr_seat* wlr_seat);
  * @param bsi_input_pointer Pointer to pointer to add.
  */
 void
-bsi_inputs_add_pointer(struct bsi_inputs* bsi_inputs,
+bsi_inputs_pointer_add(struct bsi_inputs* bsi_inputs,
                        struct bsi_input_pointer* bsi_input_pointer);
 
 /**
- * @brief Remove a pointer from the server inputs.
+ * @brief Remove a pointer from the server inputs. Make sure to destroy the
+ * pointer.
  *
  * @param bsi_inputs Pointer to server inputs struct.
  * @param bsi_input_pointer Pointer to pointer to remove.
  */
 void
-bsi_inputs_remove_pointer(struct bsi_inputs* bsi_inputs,
+bsi_inputs_pointer_remove(struct bsi_inputs* bsi_inputs,
                           struct bsi_input_pointer* bsi_input_pointer);
 
 /**
@@ -155,17 +156,18 @@ bsi_inputs_remove_pointer(struct bsi_inputs* bsi_inputs,
  * @param bsi_input_keyboard Pointer to keyboard to add.
  */
 void
-bsi_inputs_add_keyboard(struct bsi_inputs* bsi_inputs,
+bsi_inputs_keyboard_add(struct bsi_inputs* bsi_inputs,
                         struct bsi_input_keyboard* bsi_input_keyboard);
 
 /**
- * @brief Remove a keyboard from the server struct.
+ * @brief Remove a keyboard from the server struct. Make sure to destroy the
+ * keyboard.
  *
  * @param bsi_inputs Pointer to server inputs struct.
  * @param bsi_input_keyboard Pointer to keyboard to remove.
  */
 void
-bsi_inputs_remove_keyboard(struct bsi_inputs* bsi_inputs,
+bsi_inputs_keyboard_remove(struct bsi_inputs* bsi_inputs,
                            struct bsi_input_keyboard* bsi_input_keyboard);
 
 /**
@@ -184,7 +186,7 @@ bsi_inputs_len_pointers(struct bsi_inputs* bsi_inputs);
  * @return size_t The number of server input keyboards.
  */
 size_t
-bsi_inputs_len_keyboard(struct bsi_inputs* bsi_inputs);
+bsi_inputs_len_keyboards(struct bsi_inputs* bsi_inputs);
 
 /**
  * @brief Initializes a preallocated `bsi_input_pointer`.
@@ -200,6 +202,14 @@ bsi_input_pointer_init(struct bsi_input_pointer* bsi_input_pointer,
                        struct wlr_input_device* wlr_input_device);
 
 /**
+ * @brief Destroys (calls `free`) on the input pointer.
+ *
+ * @param bsi_input_pointer The input pointer to destroy.
+ */
+void
+bsi_input_pointer_destroy(struct bsi_input_pointer* bsi_input_pointer);
+
+/**
  * @brief Adds a listener `func` for the specified member of the
  * `bsi_input_pointer` `events` struct.
  *
@@ -212,7 +222,7 @@ bsi_input_pointer_init(struct bsi_input_pointer* bsi_input_pointer,
  * @param func The listener function.
  */
 void
-bsi_input_pointer_add_listener(
+bsi_input_pointer_listener_add(
     struct bsi_input_pointer* bsi_input_pointer,
     enum bsi_input_pointer_listener_mask bsi_listener_type,
     struct wl_listener* bsi_listener_memb,
@@ -242,6 +252,14 @@ bsi_input_keyboard_init(struct bsi_input_keyboard* bsi_input_keyboard,
                         struct wlr_input_device* wlr_input_device);
 
 /**
+ * @brief Destroys (calls `free`) on the keyboard.
+ *
+ * @param bsi_input_keyboard The keyboard to destroy.
+ */
+void
+bsi_input_keyboard_destroy(struct bsi_input_keyboard* bsi_input_keyboard);
+
+/**
  * @brief Adds a listener `func` for the specified member of the
  * `bsi_input_keyboard` `events` struct.
  *
@@ -254,7 +272,7 @@ bsi_input_keyboard_init(struct bsi_input_keyboard* bsi_input_keyboard,
  * @param func The listener function.
  */
 void
-bsi_input_keyboard_add_listener(
+bsi_input_keyboard_listener_add(
     struct bsi_input_keyboard* bsi_input_keyboard,
     enum bsi_input_keyboard_listener_mask bsi_listener_type,
     struct wl_listener* bsi_listener_memb,

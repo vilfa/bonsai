@@ -25,7 +25,7 @@ bsi_inputs_init(struct bsi_inputs* bsi_inputs, struct wlr_seat* wlr_seat)
 }
 
 void
-bsi_inputs_add_pointer(struct bsi_inputs* bsi_inputs,
+bsi_inputs_pointer_add(struct bsi_inputs* bsi_inputs,
                        struct bsi_input_pointer* bsi_input_pointer)
 {
     assert(bsi_inputs);
@@ -41,7 +41,7 @@ bsi_inputs_add_pointer(struct bsi_inputs* bsi_inputs,
 }
 
 void
-bsi_inputs_remove_pointer(struct bsi_inputs* bsi_inputs,
+bsi_inputs_pointer_remove(struct bsi_inputs* bsi_inputs,
                           struct bsi_input_pointer* bsi_input_pointer)
 {
     assert(bsi_inputs);
@@ -50,11 +50,10 @@ bsi_inputs_remove_pointer(struct bsi_inputs* bsi_inputs,
     --bsi_inputs->len_pointers;
     wl_list_remove(&bsi_input_pointer->link);
     bsi_input_pointer_listeners_unlink_all(bsi_input_pointer);
-    free(bsi_input_pointer);
 }
 
 void
-bsi_inputs_add_keyboard(struct bsi_inputs* bsi_inputs,
+bsi_inputs_keyboard_add(struct bsi_inputs* bsi_inputs,
                         struct bsi_input_keyboard* bsi_input_keyboard)
 {
     assert(bsi_inputs);
@@ -79,7 +78,7 @@ bsi_inputs_add_keyboard(struct bsi_inputs* bsi_inputs,
 }
 
 void
-bsi_inputs_remove_keyboard(struct bsi_inputs* bsi_inputs,
+bsi_inputs_keyboard_remove(struct bsi_inputs* bsi_inputs,
                            struct bsi_input_keyboard* bsi_input_keyboard)
 {
     assert(bsi_inputs);
@@ -88,7 +87,6 @@ bsi_inputs_remove_keyboard(struct bsi_inputs* bsi_inputs,
     --bsi_inputs->len_keyboards;
     wl_list_remove(&bsi_input_keyboard->link);
     bsi_input_keyboard_listeners_unlink_all(bsi_input_keyboard);
-    free(bsi_input_keyboard);
 }
 
 size_t
@@ -100,7 +98,7 @@ bsi_inputs_len_pointers(struct bsi_inputs* bsi_inputs)
 }
 
 size_t
-bsi_inputs_len_keyboard(struct bsi_inputs* bsi_inputs)
+bsi_inputs_len_keyboards(struct bsi_inputs* bsi_inputs)
 {
     assert(bsi_inputs);
 
@@ -126,7 +124,15 @@ bsi_input_pointer_init(struct bsi_input_pointer* bsi_input_pointer,
 }
 
 void
-bsi_input_pointer_add_listener(
+bsi_input_pointer_destroy(struct bsi_input_pointer* bsi_input_pointer)
+{
+    assert(bsi_input_pointer);
+
+    free(bsi_input_pointer);
+}
+
+void
+bsi_input_pointer_listener_add(
     struct bsi_input_pointer* bsi_input_pointer,
     enum bsi_input_pointer_listener_mask bsi_listener_type,
     struct wl_listener* bsi_listener_memb,
@@ -172,7 +178,15 @@ bsi_input_keyboard_init(struct bsi_input_keyboard* bsi_input_keyboard,
 }
 
 void
-bsi_input_keyboard_add_listener(
+bsi_input_keyboard_destroy(struct bsi_input_keyboard* bsi_input_keyboard)
+{
+    assert(bsi_input_keyboard);
+
+    free(bsi_input_keyboard);
+}
+
+void
+bsi_input_keyboard_listener_add(
     struct bsi_input_keyboard* bsi_input_keyboard,
     enum bsi_input_keyboard_listener_mask bsi_listener_type,
     struct wl_listener* bsi_listener_memb,

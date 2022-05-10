@@ -111,16 +111,6 @@ void
 bsi_views_remove(struct bsi_views* bsi_views, struct bsi_view* bsi_view);
 
 /**
- * @brief Calls `free` for the passed view. Take care to remove the view by
- * calling `bsi_views_remove` before calling this.
- *
- * @param bsi_views The views.
- * @param bsi_view The view to free.
- */
-void
-bsi_views_free(struct bsi_views* bsi_views, struct bsi_view* bsi_view);
-
-/**
  * @brief Initializes a preallocated `bsi_view` representing a scene node.
  *
  * @param bsi_view The view.
@@ -132,6 +122,14 @@ struct bsi_view*
 bsi_view_init(struct bsi_view* bsi_view,
               struct bsi_server* bsi_server,
               struct wlr_xdg_surface* wlr_xdg_surface);
+
+/**
+ * @brief Destroys (calls `free`) on the passed view.
+ *
+ * @param bsi_view The view to free.
+ */
+void
+bsi_view_destroy(struct bsi_view* bsi_view);
 
 /**
  * @brief Focuses the view in the server scene graph.

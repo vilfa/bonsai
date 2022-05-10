@@ -234,11 +234,18 @@ bsi_input_keyboard_repeat_info_notify(
 #warning "Not implemented"
 }
 
+// TODO: A pointer destroy listener? Idk why a keyboard has one, pointer not.
+
 void
-bsi_input_keyboard_destroy_notify(
-    __attribute__((unused)) struct wl_listener* listener,
-    __attribute__((unused)) void* data)
+bsi_input_keyboard_destroy_notify(struct wl_listener* listener,
+                                  __attribute__((unused)) void* data)
 {
     wlr_log(WLR_DEBUG, "Got event destroy from wlr_input_device");
-#warning "Not implemented"
+
+    struct bsi_input_keyboard* bsi_input_keyboard =
+        wl_container_of(listener, bsi_input_keyboard, events.destroy);
+    struct bsi_inputs* bsi_inputs = &bsi_input_keyboard->bsi_server->bsi_inputs;
+
+    bsi_inputs_keyboard_remove(bsi_inputs, bsi_input_keyboard);
+    bsi_input_keyboard_destroy(bsi_input_keyboard);
 }
