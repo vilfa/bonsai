@@ -1,6 +1,6 @@
 /**
  * @file bsi-output.c
- * @brief Contains all event listeners for `bsi_output`.
+ * @brief Contains all event handlers for `bsi_output`.
  *
  *
  */

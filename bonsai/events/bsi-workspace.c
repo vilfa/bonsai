@@ -1,3 +1,9 @@
+/**
+ * @file bsi-workspace.c
+ * @brief Contains all event handlers for `bsi_workspace`.
+ *
+ *
+ */
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 

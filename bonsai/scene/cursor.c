@@ -165,7 +165,7 @@ bsi_cursor_process_view_resize(struct bsi_cursor* bsi_cursor,
         bsi_cursor->grab_geobox.y + bsi_cursor->grab_geobox.height;
 
     /* We are constraining the size of the surface to at least 1px width and
-     * height? Coordinates start from the top left corner.*/
+     * height? Coordinates start from the top left corner. */
     if (bsi_cursor->resize_edges & WLR_EDGE_TOP) {
         new_top = border_y;
         if (new_top >= new_bottom)

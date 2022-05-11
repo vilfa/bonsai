@@ -1,6 +1,6 @@
 /**
  * @file bsi-listeners.c
- * @brief Contains all event listeners for `bsi_listeners`.
+ * @brief Contains all event handlers for `bsi_listeners`.
  *
  *
  */
@@ -528,9 +528,12 @@ bsi_listeners_xdg_shell_new_surface_notify(struct wl_listener* listener,
             bsi_workspaces_get_active(&bsi_server->bsi_workspaces);
         bsi_view_init(bsi_view, bsi_server, wlr_xdg_surface, workspace_active);
         bsi_workspace_view_add(workspace_active, bsi_view);
+        wlr_log(
+            WLR_INFO, "Attached view to workspace %s", workspace_active->name);
         wlr_log(WLR_INFO,
-                "Attached view to workspace %s",
-                bsi_view->bsi_workspace->name);
+                "Workspace %s now has %ld views",
+                workspace_active->name,
+                workspace_active->len_views);
         bsi_view_listener_add(bsi_view,
                               BSI_VIEW_LISTENER_DESTROY_XDG_SURFACE,
                               &bsi_view->events.destroy_xdg_surface,

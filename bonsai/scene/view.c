@@ -154,6 +154,8 @@ bsi_view_interactive_begin(struct bsi_view* bsi_view,
                            enum bsi_cursor_mode bsi_cursor_mode,
                            uint32_t edges)
 {
+    assert(bsi_view);
+
     /* Sets up an interactive move or resize operation. The compositor consumes
      * these events. */
     struct bsi_server* bsi_server = bsi_view->bsi_server;

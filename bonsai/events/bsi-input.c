@@ -1,6 +1,6 @@
 /**
  * @file bsi-input.c
- * @brief Holds all event listeners for `bsi_input_{pointer,keyboard}`.
+ * @brief Holds all event handlers for `bsi_input_{pointer,keyboard}`.
  *
  *
  */

@@ -1,6 +1,6 @@
 /**
  * @file bsi-view.c
- * @brief Contains all event listeners for `bsi_view`.
+ * @brief Contains all event handlers for `bsi_view`.
  *
  *
  *
@@ -31,10 +31,19 @@ bsi_view_destroy_xdg_surface_notify(struct wl_listener* listener,
     struct bsi_view* bsi_view =
         wl_container_of(listener, bsi_view, events.destroy_xdg_surface);
     struct bsi_views* bsi_views = &bsi_view->bsi_server->bsi_views;
+    struct bsi_workspace* bsi_workspace = bsi_view->bsi_workspace;
 
     bsi_view_listener_unlink_all(bsi_view);
     bsi_views_remove(bsi_views, bsi_view);
-    bsi_workspace_view_remove(bsi_view->bsi_workspace, bsi_view);
+    bsi_workspace_view_remove(bsi_workspace, bsi_view);
+
+#ifdef GIMME_ALL_VIEW_EVENTS
+    wlr_log(WLR_DEBUG,
+            "Workspace %s now has %ld views",
+            bsi_workspace->name,
+            bsi_workspace->len_views);
+#endif
+
     bsi_view_destroy(bsi_view);
 }
 
@@ -243,6 +252,7 @@ bsi_view_set_parent_notify(struct wl_listener* listener, void* data)
         wl_container_of(listener, bsi_view, events.set_parent);
     struct wlr_xdg_surface* wlr_xdg_surface = data;
 
+    // TODO: This causes a crash :(.
     wlr_xdg_toplevel_set_parent(bsi_view->wlr_xdg_surface, wlr_xdg_surface);
 
 #warning "Not implemented"
