@@ -1,6 +1,6 @@
 #pragma once
 
-#include "bonsai/cursor.h"
+#include "bonsai/scene/cursor.h"
 #include <wayland-server-core.h>
 #include <wayland-util.h>
 

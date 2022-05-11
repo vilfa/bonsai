@@ -5,6 +5,8 @@
  *
  */
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <wayland-server-core.h>
 #include <wayland-util.h>
 #include <wlr/render/allocator.h>
@@ -24,6 +26,7 @@
 #include "bonsai/config/signal.h"
 #include "bonsai/events.h"
 #include "bonsai/scene/view.h"
+#include "bonsai/scene/workspace.h"
 #include "bonsai/server.h"
 
 void
@@ -58,7 +61,6 @@ bsi_listeners_backend_new_output_notify(struct wl_listener* listener,
                             &bsi_output->events.frame,
                             &bsi_output->wlr_output->events.frame,
                             bsi_output_frame_notify);
-
     bsi_output_listener_add(bsi_output,
                             BSI_OUTPUT_LISTENER_DAMAGE,
                             &bsi_output->events.damage,
@@ -111,6 +113,21 @@ bsi_listeners_backend_new_output_notify(struct wl_listener* listener,
                             bsi_output_destroy_notify);
 
     wlr_output_layout_add_auto(bsi_server->wlr_output_layout, wlr_output);
+
+    /* Attach a workspace to the output. */
+    struct bsi_workspaces* bsi_workspaces = &bsi_server->bsi_workspaces;
+
+    char workspace_name[25];
+    struct bsi_workspace* bsi_workspace =
+        calloc(1, sizeof(struct bsi_workspace));
+    sprintf(workspace_name, "Workspace %ld", bsi_workspaces->len + 1);
+    bsi_workspace_init(bsi_workspace, bsi_server, bsi_output, workspace_name);
+    bsi_workspaces_add(bsi_workspaces, bsi_workspace);
+
+    wlr_log(WLR_INFO,
+            "Attached %s to output %s",
+            bsi_workspace->name,
+            bsi_output->wlr_output->name);
 }
 
 void

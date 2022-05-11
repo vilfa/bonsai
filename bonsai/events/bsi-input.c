@@ -13,8 +13,8 @@
 #include <wlr/util/log.h>
 
 #include "bonsai/config/input.h"
-#include "bonsai/cursor.h"
 #include "bonsai/events.h"
+#include "bonsai/scene/cursor.h"
 #include "bonsai/scene/view.h"
 #include "bonsai/server.h"
 

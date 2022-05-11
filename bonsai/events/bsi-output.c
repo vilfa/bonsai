@@ -34,75 +34,63 @@ bsi_output_frame_notify(struct wl_listener* listener,
 }
 
 void
-bsi_output_damage_notify(__attribute__((unused)) struct wl_listener* listener,
-                         __attribute__((unused)) void* data)
+bsi_output_damage_notify(struct wl_listener* listener, void* data)
 {
     wlr_log(WLR_DEBUG, "Got event damage from wlr_output");
 #warning "Not implemented"
 }
 
 void
-bsi_output_needs_frame_notify(
-    __attribute__((unused)) struct wl_listener* listener,
-    __attribute__((unused)) void* data)
+bsi_output_needs_frame_notify(struct wl_listener* listener, void* data)
 {
     wlr_log(WLR_DEBUG, "Got event needs_frame from wlr_output");
 #warning "Not implemented"
 }
 
 void
-bsi_output_precommit_notify(
-    __attribute__((unused)) struct wl_listener* listener,
-    __attribute__((unused)) void* data)
+bsi_output_precommit_notify(struct wl_listener* listener, void* data)
 {
     wlr_log(WLR_DEBUG, "Got event precommit from wlr_output");
 #warning "Not implemented"
 }
 
 void
-bsi_output_commit_notify(__attribute__((unused)) struct wl_listener* listener,
-                         __attribute__((unused)) void* data)
+bsi_output_commit_notify(struct wl_listener* listener, void* data)
 {
     wlr_log(WLR_DEBUG, "Got event commit from wlr_output");
 #warning "Not implemented"
 }
 
 void
-bsi_output_present_notify(__attribute__((unused)) struct wl_listener* listener,
-                          __attribute__((unused)) void* data)
+bsi_output_present_notify(struct wl_listener* listener, void* data)
 {
     wlr_log(WLR_DEBUG, "Got event present from wlr_output");
 #warning "Not implemented"
 }
 
 void
-bsi_output_bind_notify(__attribute__((unused)) struct wl_listener* listener,
-                       __attribute__((unused)) void* data)
+bsi_output_bind_notify(struct wl_listener* listener, void* data)
 {
     wlr_log(WLR_DEBUG, "Got event bind from wlr_output");
 #warning "Not implemented"
 }
 
 void
-bsi_output_enable_notify(__attribute__((unused)) struct wl_listener* listener,
-                         __attribute__((unused)) void* data)
+bsi_output_enable_notify(struct wl_listener* listener, void* data)
 {
     wlr_log(WLR_DEBUG, "Got event enable from wlr_output");
 #warning "Not implemented"
 }
 
 void
-bsi_output_mode_notify(__attribute__((unused)) struct wl_listener* listener,
-                       __attribute__((unused)) void* data)
+bsi_output_mode_notify(struct wl_listener* listener, void* data)
 {
     wlr_log(WLR_DEBUG, "Got event mode from wlr_output");
 #warning "Not implemented"
 }
 
 void
-bsi_output_description_notify(
-    __attribute__((unused)) struct wl_listener* listener,
-    __attribute__((unused)) void* data)
+bsi_output_description_notify(struct wl_listener* listener, void* data)
 {
     wlr_log(WLR_DEBUG, "Got event description from wlr_output");
 #warning "Not implemented"

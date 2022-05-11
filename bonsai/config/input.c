@@ -9,6 +9,9 @@
 #include "bonsai/config/input.h"
 #include "bonsai/server.h"
 
+// TODO: Something wierd with software cursor, when not using the laptop
+// touchpad, but using the connected mouse.
+
 struct bsi_inputs*
 bsi_inputs_init(struct bsi_inputs* bsi_inputs, struct wlr_seat* wlr_seat)
 {

@@ -1,15 +1,15 @@
 bonsai_src = files(
     'main.c',
-
     'server.c',
     'util.c',
-    'cursor.c',
 
     'config/input.c',
     'config/output.c',
     'config/signal.c',
 
     'scene/view.c',
+    'scene/cursor.c',
+    'scene/workspace.c',
 
     'events/bsi-listeners.c',
     'events/bsi-output.c',

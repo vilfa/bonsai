@@ -8,7 +8,7 @@
 #include <wlr/util/box.h>
 #include <wlr/util/edges.h>
 
-#include "bonsai/cursor.h"
+#include "bonsai/scene/cursor.h"
 #include "bonsai/server.h"
 
 struct bsi_cursor*

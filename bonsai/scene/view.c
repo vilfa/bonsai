@@ -10,7 +10,7 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/edges.h>
 
-#include "bonsai/cursor.h"
+#include "bonsai/scene/cursor.h"
 #include "bonsai/scene/view.h"
 #include "bonsai/server.h"
 
@@ -43,7 +43,11 @@ bsi_views_remove(struct bsi_views* bsi_views, struct bsi_view* bsi_view)
     assert(bsi_views);
     assert(bsi_view);
 
-    // TODO: Remove view from the scene graph.
+    // TODO: Add minimized, maximized, etc states to view. Also check
+    // wlr_xdg_surface,...
+
+    if (bsi_view->link.prev == NULL || bsi_view->link.next == NULL)
+        return;
 
     --bsi_views->len;
     wl_list_remove(&bsi_view->link);
