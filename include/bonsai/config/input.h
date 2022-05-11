@@ -172,24 +172,6 @@ bsi_inputs_keyboard_remove(struct bsi_inputs* bsi_inputs,
                            struct bsi_input_keyboard* bsi_input_keyboard);
 
 /**
- * @brief Gets the number of server input pointers.
- *
- * @param bsi_inputs Pointer to server inputs struct.
- * @return size_t The number of server input pointers.
- */
-size_t
-bsi_inputs_len_pointers(struct bsi_inputs* bsi_inputs);
-
-/**
- * @brief Gets the number of server input keyboards.
- *
- * @param bsi_inputs Pointer to server inputs struct.
- * @return size_t The number of server input keyboards.
- */
-size_t
-bsi_inputs_len_keyboards(struct bsi_inputs* bsi_inputs);
-
-/**
  * @brief Initializes a preallocated `bsi_input_pointer`.
  *
  * @param bsi_input_pointer Input pointer to initialize.

@@ -42,14 +42,6 @@ bsi_outputs_remove(struct bsi_outputs* bsi_outputs,
     bsi_output_listeners_unlink_all(bsi_output);
 }
 
-size_t
-bsi_outputs_len(struct bsi_outputs* bsi_outputs)
-{
-    assert(bsi_outputs);
-
-    return bsi_outputs->len;
-}
-
 struct bsi_output*
 bsi_output_init(struct bsi_output* bsi_output,
                 struct bsi_server* bsi_server,

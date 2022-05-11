@@ -99,15 +99,6 @@ bsi_outputs_remove(struct bsi_outputs* bsi_outputs,
                    struct bsi_output* bsi_output);
 
 /**
- * @brief Gets the size of the known server outputs.
- *
- * @param bsi_outputs Pointer to server outputs struct.
- * @return size_t The number of outputs.
- */
-size_t
-bsi_outputs_len(struct bsi_outputs* bsi_outputs);
-
-/**
  * @brief Initializes a preallocated bsi_output.
  *
  * @param bsi_output The bsi_output.

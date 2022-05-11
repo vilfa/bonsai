@@ -84,22 +84,6 @@ bsi_inputs_keyboard_remove(struct bsi_inputs* bsi_inputs,
     bsi_input_keyboard_listeners_unlink_all(bsi_input_keyboard);
 }
 
-size_t
-bsi_inputs_len_pointers(struct bsi_inputs* bsi_inputs)
-{
-    assert(bsi_inputs);
-
-    return bsi_inputs->len_pointers;
-}
-
-size_t
-bsi_inputs_len_keyboards(struct bsi_inputs* bsi_inputs)
-{
-    assert(bsi_inputs);
-
-    return bsi_inputs->len_keyboards;
-}
-
 struct bsi_input_pointer*
 bsi_input_pointer_init(struct bsi_input_pointer* bsi_input_pointer,
                        struct bsi_server* bsi_server,

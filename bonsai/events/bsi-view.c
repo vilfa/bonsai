@@ -21,7 +21,8 @@
 #define GIMME_ALL_VIEW_EVENTS
 
 void
-bsi_view_destroy_xdg_surface_notify(struct wl_listener* listener, void* data)
+bsi_view_destroy_xdg_surface_notify(struct wl_listener* listener,
+                                    __attribute__((unused)) void* data)
 {
 #ifdef GIMME_ALL_VIEW_EVENTS
     wlr_log(WLR_DEBUG, "Got event destroy from wlr_xdg_surface");
@@ -38,7 +39,8 @@ bsi_view_destroy_xdg_surface_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_view_destroy_scene_node_notify(struct wl_listener* listener, void* data)
+bsi_view_destroy_scene_node_notify(struct wl_listener* listener,
+                                   __attribute__((unused)) void* data)
 {
 #ifdef GIMME_ALL_VIEW_EVENTS
     wlr_log(WLR_DEBUG, "Got event destroy from wlr_scene_node");
@@ -46,7 +48,6 @@ bsi_view_destroy_scene_node_notify(struct wl_listener* listener, void* data)
 
     struct bsi_view* bsi_view =
         wl_container_of(listener, bsi_view, events.destroy_scene_node);
-    struct bsi_views* bsi_views = &bsi_view->bsi_server->bsi_views;
 
     bsi_view_listener_unlink_all(bsi_view);
     /* Should also work if e.g. you close a window on another workspace with
@@ -75,7 +76,8 @@ bsi_view_new_popup_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_view_map_notify(struct wl_listener* listener, void* data)
+bsi_view_map_notify(struct wl_listener* listener,
+                    __attribute__((unused)) void* data)
 {
 #ifdef GIMME_ALL_VIEW_EVENTS
     wlr_log(WLR_DEBUG, "Got event map from wlr_xdg_surface");
@@ -89,7 +91,8 @@ bsi_view_map_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_view_unmap_notify(struct wl_listener* listener, void* data)
+bsi_view_unmap_notify(struct wl_listener* listener,
+                      __attribute__((unused)) void* data)
 {
 #ifdef GIMME_ALL_VIEW_EVENTS
     wlr_log(WLR_DEBUG, "Got event unmap from wlr_xdg_surface");
@@ -112,9 +115,7 @@ bsi_view_configure_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_view_ack_configure_notify(
-    __attribute__((unused)) struct wl_listener* listener,
-    __attribute__((unused)) void* data)
+bsi_view_ack_configure_notify(struct wl_listener* listener, void* data)
 {
 #ifdef GIMME_ALL_VIEW_EVENTS
     wlr_log(WLR_DEBUG, "Got event ack_configure from wlr_xdg_surface");
@@ -123,20 +124,20 @@ bsi_view_ack_configure_notify(
 }
 
 void
-bsi_view_request_maximize_notify(
-    __attribute__((unused)) struct wl_listener* listener,
-    __attribute__((unused)) void* data)
+bsi_view_request_maximize_notify(struct wl_listener* listener, void* data)
 {
 #ifdef GIMME_ALL_VIEW_EVENTS
     wlr_log(WLR_DEBUG, "Got event request_maximize from wlr_xdg_toplevel");
 #endif
+
+    // TODO: This should probably take into account the panels and such stuff.
+    // Also take a look at
+    // https://gitlab.freedesktop.org/wlroots/wlr-protocols/-/blob/master/unstable/wlr-layer-shell-unstable-v1.xml
 #warning "Not implemented"
 }
 
 void
-bsi_view_request_fullscreen_notify(
-    __attribute__((unused)) struct wl_listener* listener,
-    __attribute__((unused)) void* data)
+bsi_view_request_fullscreen_notify(struct wl_listener* listener, void* data)
 {
 #ifdef GIMME_ALL_VIEW_EVENTS
     wlr_log(WLR_DEBUG, "Got event request_fullscreen from wlr_xdg_toplevel");
@@ -172,12 +173,13 @@ bsi_view_request_move_notify(struct wl_listener* listener, void* data)
         wl_container_of(listener, bsi_view, events.request_move);
     struct wlr_xdg_toplevel_move_event* event = data;
 
-    if (wlr_seat_client_validate_event_serial(event->seat, event->serial))
+    if (wlr_seat_client_validate_event_serial(event->seat, event->serial)) {
         bsi_view_interactive_begin(bsi_view, BSI_CURSOR_MOVE, 0);
-    else
+    } else {
 #ifdef GIMME_ALL_VIEW_EVENTS
         wlr_log(WLR_DEBUG, "Invalid request_move event serial, dropping");
 #endif
+    }
 }
 
 void
@@ -193,12 +195,13 @@ bsi_view_request_resize_notify(struct wl_listener* listener, void* data)
         wl_container_of(listener, bsi_view, events.request_resize);
     struct wlr_xdg_toplevel_resize_event* event = data;
 
-    if (wlr_seat_client_validate_event_serial(event->seat, event->serial))
+    if (wlr_seat_client_validate_event_serial(event->seat, event->serial)) {
         bsi_view_interactive_begin(bsi_view, BSI_CURSOR_RESIZE, event->edges);
-    else
+    } else {
 #ifdef GIMME_ALL_VIEW_EVENTS
         wlr_log(WLR_DEBUG, "Invalid request_resize event serial, dropping");
 #endif
+    }
 }
 
 void
@@ -214,16 +217,17 @@ bsi_view_request_show_window_menu_notify(struct wl_listener* listener,
         wl_container_of(listener, bsi_view, events.request_show_window_menu);
     struct wlr_xdg_toplevel_show_window_menu_event* event = data;
 
-    if (wlr_seat_client_validate_event_serial(event->seat, event->serial))
+    if (wlr_seat_client_validate_event_serial(event->seat, event->serial)) {
 // TODO: Handle show window menu
 #ifdef GIMME_ALL_VIEW_EVENTS
         wlr_log(WLR_DEBUG, "Validated serial");
 #endif
-    else
+    } else {
 #ifdef GIMME_ALL_VIEW_EVENTS
         wlr_log(WLR_DEBUG,
                 "Invalid request_show_window_menu event serial, dropping");
 #endif
+    }
 
 #warning "Not implemented"
 }

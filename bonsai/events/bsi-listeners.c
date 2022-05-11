@@ -284,26 +284,23 @@ bsi_listeners_backend_new_input_notify(struct wl_listener* listener, void* data)
 
     uint32_t capabilities = 0;
     size_t len_keyboards = 0, len_pointers = 0;
-    if ((len_pointers = bsi_inputs_len_pointers(&bsi_server->bsi_inputs)) > 0) {
+    if ((len_pointers = bsi_server->bsi_inputs.len_pointers) > 0) {
         capabilities |= WL_SEAT_CAPABILITY_POINTER;
 #ifdef GIMME_ALL_GLOBAL_EVENTS
         wlr_log(WLR_DEBUG, "Seat has capability: WL_SEAT_CAPABILITY_POINTER");
 #endif
     }
-    if ((len_keyboards = bsi_inputs_len_keyboards(&bsi_server->bsi_inputs)) >
-        0) {
+    if ((len_keyboards = bsi_server->bsi_inputs.len_keyboards) > 0) {
         capabilities |= WL_SEAT_CAPABILITY_KEYBOARD;
 #ifdef GIMME_ALL_GLOBAL_EVENTS
         wlr_log(WLR_DEBUG, "Seat has capability: WL_SEAT_CAPABILITY_KEYBOARD");
 #endif
     }
 
-    wlr_log(
 #ifdef GIMME_ALL_GLOBAL_EVENTS
+    wlr_log(
         WLR_DEBUG, "Server now has %ld input pointer devices", len_pointers);
-#endif
     wlr_log(
-#ifdef GIMME_ALL_GLOBAL_EVENTS
         WLR_DEBUG, "Server now has %ld input keyboard devices", len_keyboards);
 #endif
 
@@ -371,8 +368,6 @@ bsi_listeners_seat_touch_grab_begin_notify(
 {
 #ifdef GIMME_ALL_GLOBAL_EVENTS
     wlr_log(WLR_DEBUG, "Got event touch_grab_begin from wlr_seat");
-#endif
-#ifdef GIMME_ALL_GLOBAL_EVENTS
     wlr_log(WLR_DEBUG, "A touch device has grabbed focus, what the hell!?");
 #endif
 }
@@ -384,8 +379,6 @@ bsi_listeners_seat_touch_grab_end_notify(
 {
 #ifdef GIMME_ALL_GLOBAL_EVENTS
     wlr_log(WLR_DEBUG, "Got event touch_grab_end from wlr_seat");
-#endif
-#ifdef GIMME_ALL_GLOBAL_EVENTS
     wlr_log(WLR_DEBUG, "A touch device has ended focus grab, what the hell!?");
 #endif
 }
@@ -404,17 +397,18 @@ bsi_listeners_seat_request_set_cursor_notify(struct wl_listener* listener,
     struct wlr_seat_pointer_request_set_cursor_event* event = data;
 
     if (wlr_seat_client_validate_event_serial(event->seat_client,
-                                              event->serial))
+                                              event->serial)) {
 #ifdef GIMME_ALL_GLOBAL_EVENTS
         wlr_log(WLR_DEBUG, "Should set cursor");
 #endif
-    // TODO: Figure this out.
-    // wlr_cursor_set_surface(
-    // wlr_cursor, event->surface, event->hotspot_x, event->hotspot_y);
-    else
+        // TODO: Figure this out.
+        // wlr_cursor_set_surface(
+        // wlr_cursor, event->surface, event->hotspot_x, event->hotspot_y);
+    } else {
 #ifdef GIMME_ALL_GLOBAL_EVENTS
         wlr_log(WLR_DEBUG, "Invalid request_set_cursor event serial, dropping");
 #endif
+    }
 }
 
 void
@@ -441,8 +435,6 @@ bsi_listeners_seat_set_selection_notify(
 {
 #ifdef GIMME_ALL_GLOBAL_EVENTS
     wlr_log(WLR_DEBUG, "Got event set_selection from wlr_seat");
-#endif
-#ifdef GIMME_ALL_GLOBAL_EVENTS
     wlr_log(WLR_DEBUG, "Set selection for seat");
 #endif
 }
@@ -472,8 +464,6 @@ bsi_listeners_seat_set_primary_selection_notify(
 {
 #ifdef GIMME_ALL_GLOBAL_EVENTS
     wlr_log(WLR_DEBUG, "Got event set_primary_selection from wlr_seat");
-#endif
-#ifdef GIMME_ALL_GLOBAL_EVENTS
     wlr_log(WLR_DEBUG, "Set primary selection for seat");
 #endif
 }
@@ -495,8 +485,6 @@ bsi_listeners_seat_start_drag_notify(
 {
 #ifdef GIMME_ALL_GLOBAL_EVENTS
     wlr_log(WLR_DEBUG, "Got event start_drag from wlr_seat");
-#endif
-#ifdef GIMME_ALL_GLOBAL_EVENTS
     wlr_log(WLR_DEBUG, "Started drag for seat");
 #endif
 }
