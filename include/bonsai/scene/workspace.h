@@ -16,11 +16,6 @@ struct bsi_workspaces
     // TODO: Maybe limiting the amount of workspaces isn't a bad idea?
     size_t len;
     struct wl_list workspaces;
-
-    struct
-    {
-        struct wl_signal active;
-    } events;
 };
 
 /**
@@ -41,6 +36,11 @@ struct bsi_workspace
     // TODO: Figure this out.
     size_t len_views;
     struct wl_list views;
+
+    struct
+    {
+        struct wl_signal active;
+    } events;
 
     struct wl_list link;
 };

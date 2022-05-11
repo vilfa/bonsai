@@ -78,3 +78,6 @@ extern bsi_notify_func_t bsi_input_keyboard_modifiers_notify;
 extern bsi_notify_func_t bsi_input_keyboard_keymap_notify;
 extern bsi_notify_func_t bsi_input_keyboard_repeat_info_notify;
 extern bsi_notify_func_t bsi_input_keyboard_destroy_notify;
+
+/* bsi_workspace */
+extern bsi_notify_func_t bsi_workspace_active_notify;

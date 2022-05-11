@@ -32,6 +32,8 @@ enum bsi_listeners_mask
     /* wlr_xdg_shell */
     BSI_LISTENERS_XDG_SHELL_NEW_SURFACE = 1 << 17,
     BSI_LISTENERS_XDG_SHELL_DESTROY = 1 << 18,
+    /* bsi_workspace */
+    BSI_LISTENERS_WORKSPACE_ACTIVE = 1 << 19,
 };
 
 #define bsi_listeners_len 19
@@ -78,6 +80,11 @@ struct bsi_listeners
         struct wl_listener new_surface;
         struct wl_listener destroy;
     } wlr_xdg_shell;
+
+    struct
+    {
+        struct wl_listener active;
+    } bsi_workspace;
 };
 
 /**

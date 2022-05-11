@@ -11,6 +11,7 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 
+#include "bonsai/config/signal.h"
 #include "bonsai/events.h"
 #include "bonsai/scene/workspace.h"
 #include "bonsai/server.h"

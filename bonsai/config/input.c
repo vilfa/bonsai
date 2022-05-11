@@ -9,7 +9,7 @@
 #include "bonsai/config/input.h"
 #include "bonsai/server.h"
 
-// TODO: Something wierd with software cursor, when not using the laptop
+// TODO: Something weird with software cursor, when not using the laptop
 // touchpad, but using the connected mouse.
 
 struct bsi_inputs*
@@ -66,15 +66,7 @@ bsi_inputs_keyboard_add(struct bsi_inputs* bsi_inputs,
     ++bsi_inputs->len_keyboards;
     wl_list_insert(&bsi_inputs->keyboards, &bsi_input_keyboard->link);
 
-    struct xkb_context* xkb_context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-    struct xkb_keymap* xkb_keymap = xkb_keymap_new_from_names(
-        xkb_context, NULL, XKB_KEYMAP_COMPILE_NO_FLAGS);
-
-    wlr_keyboard_set_keymap(bsi_input_keyboard->wlr_input_device->keyboard,
-                            xkb_keymap);
-
-    xkb_keymap_unref(xkb_keymap);
-    xkb_context_unref(xkb_context);
+    bsi_input_keyboard_keymap_set(bsi_input_keyboard, NULL);
 
     wlr_seat_set_keyboard(bsi_inputs->wlr_seat,
                           bsi_input_keyboard->wlr_input_device);
@@ -178,6 +170,32 @@ bsi_input_keyboard_init(struct bsi_input_keyboard* bsi_input_keyboard,
     bsi_input_keyboard->len_active_links = 0;
 
     return bsi_input_keyboard;
+}
+
+void
+bsi_input_keyboard_keymap_set(struct bsi_input_keyboard* bsi_input_keyboard,
+                              const struct xkb_rule_names* xkb_rule_names)
+{
+    assert(bsi_input_keyboard);
+
+    struct xkb_context* xkb_context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+    struct xkb_keymap* xkb_keymap = xkb_keymap_new_from_names(
+        xkb_context, xkb_rule_names, XKB_KEYMAP_COMPILE_NO_FLAGS);
+
+    wlr_keyboard_set_keymap(bsi_input_keyboard->wlr_input_device->keyboard,
+                            xkb_keymap);
+
+    xkb_keymap_unref(xkb_keymap);
+    xkb_context_unref(xkb_context);
+}
+
+void
+bsi_input_keyboard_layout_set(struct bsi_input_keyboard* bsi_input_keyboard,
+                              const char* layout)
+{
+    assert(bsi_input_keyboard);
+
+    // TODO: Wat do?
 }
 
 void

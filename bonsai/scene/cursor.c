@@ -20,10 +20,24 @@ bsi_cursor_init(struct bsi_cursor* bsi_cursor, struct bsi_server* bsi_server)
     bsi_cursor->bsi_server = bsi_server;
     bsi_cursor->wlr_cursor = bsi_server->wlr_cursor;
     bsi_cursor->cursor_mode = BSI_CURSOR_NORMAL;
+    bsi_cursor->cursor_image = BSI_CURSOR_IMAGE_NORMAL;
     bsi_cursor->grab_x = 0.0;
     bsi_cursor->grab_y = 0.0;
 
     return bsi_cursor;
+}
+
+void
+bsi_cursor_image_set(struct bsi_cursor* bsi_cursor,
+                     enum bsi_cursor_image bsi_cursor_image)
+{
+    assert(bsi_cursor);
+
+    bsi_cursor->cursor_image = bsi_cursor_image;
+    wlr_xcursor_manager_set_cursor_image(
+        bsi_cursor->bsi_server->wlr_xcursor_manager,
+        bsi_cursor_image_map[bsi_cursor_image],
+        bsi_cursor->bsi_server->wlr_cursor);
 }
 
 struct bsi_view*
@@ -83,10 +97,7 @@ bsi_cursor_process_motion(struct bsi_cursor* bsi_cursor,
             /* The cursor is in an empty area, set the deafult cursor image.
              * This makes the cursor image appear when moving around the empty
              * desktop. */
-            wlr_xcursor_manager_set_cursor_image(
-                bsi_server->wlr_xcursor_manager,
-                "left_ptr",
-                bsi_server->wlr_cursor);
+            bsi_cursor_image_set(bsi_cursor, BSI_CURSOR_IMAGE_NORMAL);
         }
 
         if (surface_at) {
@@ -117,6 +128,8 @@ bsi_cursor_process_view_move(struct bsi_cursor* bsi_cursor,
     struct bsi_view* bsi_view = bsi_cursor->grabbed_view;
     struct wlr_event_pointer_motion* event = bsi_cursor_event.motion;
 
+    bsi_cursor_image_set(bsi_cursor, BSI_CURSOR_IMAGE_MOVE);
+
     bsi_view->x = bsi_server->wlr_cursor->x - bsi_cursor->grab_x;
     bsi_view->y = bsi_server->wlr_cursor->y - bsi_cursor->grab_y;
     wlr_scene_node_set_position(
@@ -129,6 +142,9 @@ bsi_cursor_process_view_resize(struct bsi_cursor* bsi_cursor,
 {
     assert(bsi_cursor);
     assert(bsi_cursor_event.motion);
+
+    // TODO: Make this less shit. Resizing shouldn't be able to move a window.
+    // Maybe somewhere between lines 206-212?
 
     // TODO: In a more fleshed-out compositor, you'd wait for the client to
     // prepare a buffer at the new size, then commit any movement that was
@@ -168,6 +184,24 @@ bsi_cursor_process_view_resize(struct bsi_cursor* bsi_cursor,
         new_right = border_x;
         if (new_right <= new_left)
             new_right = new_left + 1;
+    }
+
+    if (bsi_cursor->resize_edges & WLR_EDGE_TOP & WLR_EDGE_LEFT) {
+        bsi_cursor_image_set(bsi_cursor, BSI_CURSOR_IMAGE_RESIZE_TOP_LEFT);
+    } else if (bsi_cursor->resize_edges & WLR_EDGE_TOP & WLR_EDGE_RIGHT) {
+        bsi_cursor_image_set(bsi_cursor, BSI_CURSOR_IMAGE_RESIZE_TOP_RIGHT);
+    } else if (bsi_cursor->resize_edges & WLR_EDGE_BOTTOM & WLR_EDGE_LEFT) {
+        bsi_cursor_image_set(bsi_cursor, BSI_CURSOR_IMAGE_RESIZE_BOTTOM_LEFT);
+    } else if (bsi_cursor->resize_edges & WLR_EDGE_BOTTOM & WLR_EDGE_RIGHT) {
+        bsi_cursor_image_set(bsi_cursor, BSI_CURSOR_IMAGE_RESIZE_BOTTOM_RIGHT);
+    } else if (bsi_cursor->resize_edges & WLR_EDGE_TOP) {
+        bsi_cursor_image_set(bsi_cursor, BSI_CURSOR_IMAGE_RESIZE_TOP);
+    } else if (bsi_cursor->resize_edges & WLR_EDGE_BOTTOM) {
+        bsi_cursor_image_set(bsi_cursor, BSI_CURSOR_IMAGE_RESIZE_BOTTOM);
+    } else if (bsi_cursor->resize_edges & WLR_EDGE_LEFT) {
+        bsi_cursor_image_set(bsi_cursor, BSI_CURSOR_IMAGE_RESIZE_LEFT);
+    } else if (bsi_cursor->resize_edges & WLR_EDGE_RIGHT) {
+        bsi_cursor_image_set(bsi_cursor, BSI_CURSOR_IMAGE_RESIZE_RIGHT);
     }
 
     struct wlr_box box;

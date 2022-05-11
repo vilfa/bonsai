@@ -14,11 +14,15 @@
 #include "bonsai/server.h"
 #include "bonsai/util.h"
 
+// #define GIMME_ALL_OUTPUT_EVENTS
+
 void
 bsi_output_frame_notify(struct wl_listener* listener,
                         __attribute((unused)) void* data)
 {
+#ifdef GIMME_ALL_OUTPUT_EVENTS
     wlr_log(WLR_DEBUG, "Got event frame from wlr_output");
+#endif
 
     struct bsi_output* bsi_output =
         wl_container_of(listener, bsi_output, events.frame);
@@ -36,63 +40,81 @@ bsi_output_frame_notify(struct wl_listener* listener,
 void
 bsi_output_damage_notify(struct wl_listener* listener, void* data)
 {
+#ifdef GIMME_ALL_OUTPUT_EVENTS
     wlr_log(WLR_DEBUG, "Got event damage from wlr_output");
+#endif
 #warning "Not implemented"
 }
 
 void
 bsi_output_needs_frame_notify(struct wl_listener* listener, void* data)
 {
+#ifdef GIMME_ALL_OUTPUT_EVENTS
     wlr_log(WLR_DEBUG, "Got event needs_frame from wlr_output");
+#endif
 #warning "Not implemented"
 }
 
 void
 bsi_output_precommit_notify(struct wl_listener* listener, void* data)
 {
+#ifdef GIMME_ALL_OUTPUT_EVENTS
     wlr_log(WLR_DEBUG, "Got event precommit from wlr_output");
+#endif
 #warning "Not implemented"
 }
 
 void
 bsi_output_commit_notify(struct wl_listener* listener, void* data)
 {
+#ifdef GIMME_ALL_OUTPUT_EVENTS
     wlr_log(WLR_DEBUG, "Got event commit from wlr_output");
+#endif
 #warning "Not implemented"
 }
 
 void
 bsi_output_present_notify(struct wl_listener* listener, void* data)
 {
+#ifdef GIMME_ALL_OUTPUT_EVENTS
     wlr_log(WLR_DEBUG, "Got event present from wlr_output");
+#endif
 #warning "Not implemented"
 }
 
 void
 bsi_output_bind_notify(struct wl_listener* listener, void* data)
 {
+#ifdef GIMME_ALL_OUTPUT_EVENTS
     wlr_log(WLR_DEBUG, "Got event bind from wlr_output");
+#endif
 #warning "Not implemented"
 }
 
 void
 bsi_output_enable_notify(struct wl_listener* listener, void* data)
 {
+#ifdef GIMME_ALL_OUTPUT_EVENTS
     wlr_log(WLR_DEBUG, "Got event enable from wlr_output");
+#endif
 #warning "Not implemented"
 }
 
 void
 bsi_output_mode_notify(struct wl_listener* listener, void* data)
 {
+#ifdef GIMME_ALL_OUTPUT_EVENTS
     wlr_log(WLR_DEBUG, "Got event mode from wlr_output");
+#endif
 #warning "Not implemented"
 }
 
 void
 bsi_output_description_notify(struct wl_listener* listener, void* data)
 {
+#ifdef GIMME_ALL_OUTPUT_EVENTS
     wlr_log(WLR_DEBUG, "Got event description from wlr_output");
+#endif
 #warning "Not implemented"
 }
 
@@ -100,7 +122,9 @@ void
 bsi_output_destroy_notify(struct wl_listener* listener,
                           __attribute__((unused)) void* data)
 {
+#ifdef GIMME_ALL_OUTPUT_EVENTS
     wlr_log(WLR_DEBUG, "Got event destroy from wlr_output");
+#endif
 
     struct bsi_output* bsi_output =
         wl_container_of(listener, bsi_output, events.destroy);

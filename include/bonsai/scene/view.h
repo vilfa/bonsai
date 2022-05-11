@@ -1,6 +1,7 @@
 #pragma once
 
 #include "bonsai/scene/cursor.h"
+#include "bonsai/scene/workspace.h"
 #include <wayland-server-core.h>
 #include <wayland-util.h>
 
@@ -40,9 +41,11 @@ enum bsi_view_listener_mask
     BSI_VIEW_LISTENER_SET_APP_ID = 1 << 15,
     /* wlr_scene_node */
     BSI_VIEW_LISTENER_DESTROY_SCENE_NODE = 1 << 16,
+    /* bsi_workspaces */
+    BSI_VIEW_LISTENER_ACTIVE_WORKSPACE = 1 << 17,
 };
 
-#define bsi_view_listener_len 17
+#define bsi_view_listener_len 18
 
 /**
  * @brief Represents all surfaces of a single application.
@@ -56,6 +59,7 @@ struct bsi_view
 
     char* app_id;
     char* app_title;
+    struct bsi_workspace* bsi_workspace;
     double x, y;
 
     uint32_t active_listeners;
@@ -83,9 +87,12 @@ struct bsi_view
         struct wl_listener set_app_id;
         /* wlr_scene_node */
         struct wl_listener destroy_scene_node;
+        /* bsi_workspaces */
+        struct wl_listener active_workspace;
     } events;
 
     struct wl_list link;
+    struct wl_list link_workspace;
 };
 
 /**
@@ -126,7 +133,8 @@ bsi_views_remove(struct bsi_views* bsi_views, struct bsi_view* bsi_view);
 struct bsi_view*
 bsi_view_init(struct bsi_view* bsi_view,
               struct bsi_server* bsi_server,
-              struct wlr_xdg_surface* wlr_xdg_surface);
+              struct wlr_xdg_surface* wlr_xdg_surface,
+              struct bsi_workspace* bsi_workspace);
 
 /**
  * @brief Destroys (calls `free`) on the passed view.
@@ -186,7 +194,7 @@ bsi_view_interactive_begin(struct bsi_view* bsi_view,
  * @param func The listener func.
  */
 void
-bsi_view_add_listener(struct bsi_view* bsi_view,
+bsi_view_listener_add(struct bsi_view* bsi_view,
                       enum bsi_view_listener_mask bsi_listener_type,
                       struct wl_listener* bsi_listener_memb,
                       struct wl_signal* bsi_signal_memb,

@@ -10,6 +10,7 @@
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_pointer.h>
 #include <wlr/types/wlr_seat.h>
+#include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/util/log.h>
 
 #include "bonsai/config/input.h"
@@ -17,6 +18,9 @@
 #include "bonsai/scene/cursor.h"
 #include "bonsai/scene/view.h"
 #include "bonsai/server.h"
+
+// #define GIMME_ALL_POINTER_EVENTS
+#define GIMME_ALL_KEYBOARD_EVENTS
 
 void
 bsi_input_pointer_motion_notify(struct wl_listener* listener, void* data)
@@ -96,6 +100,7 @@ bsi_input_pointer_button_notify(struct wl_listener* listener, void* data)
         case WLR_BUTTON_RELEASED:
             /* Exit interactive mode. */
             bsi_cursor->cursor_mode = BSI_CURSOR_NORMAL;
+            bsi_cursor_image_set(bsi_cursor, BSI_CURSOR_IMAGE_NORMAL);
             break;
         case WLR_BUTTON_PRESSED:
             /* Focus a client that was clicked. */
@@ -196,6 +201,7 @@ bsi_input_pointer_pinch_begin_notify(struct wl_listener* listener, void* data)
 #ifdef GIMME_ALL_POINTER_EVENTS
     wlr_log(WLR_DEBUG, "Got event pinch_begin from wlr_input_device");
 #endif
+
 #warning "Not implemented"
 }
 
@@ -242,9 +248,16 @@ bsi_input_keyboard_key_notify(struct wl_listener* listener, void* data)
     wlr_log(WLR_DEBUG, "Got event key from wlr_input_device");
 #endif
 
-    // TODO: Server is primary handler.
+    struct bsi_input_keyboard* bsi_input_keyboard =
+        wl_container_of(listener, bsi_input_keyboard, events.key);
+    struct wlr_seat* wlr_seat = bsi_input_keyboard->bsi_server->wlr_seat;
+    struct wlr_event_keyboard_key* event = data;
 
-#warning "Not implemented"
+    // TODO: Server is primary handler. Handle server keybindings first.
+
+    /* Notify client of keys not handled by the server. */
+    wlr_seat_keyboard_notify_key(
+        wlr_seat, event->time_msec, event->keycode, event->state);
 }
 
 void
@@ -254,9 +267,16 @@ bsi_input_keyboard_modifiers_notify(struct wl_listener* listener, void* data)
     wlr_log(WLR_DEBUG, "Got event modifiers from wlr_input_device");
 #endif
 
-    // TODO: Server is primary handler.
+    struct bsi_input_keyboard* bsi_input_keyboard =
+        wl_container_of(listener, bsi_input_keyboard, events.modifiers);
+    struct wlr_seat* wlr_seat = bsi_input_keyboard->bsi_server->wlr_seat;
+    struct wlr_keyboard* wlr_keyboard =
+        bsi_input_keyboard->wlr_input_device->keyboard;
 
-#warning "Not implemented"
+    // TODO: Server is primary handler. Handle server keybindings first.
+
+    /* Notify client of keys not handled by the server. */
+    wlr_seat_keyboard_notify_modifiers(wlr_seat, &wlr_keyboard->modifiers);
 }
 
 void
@@ -266,8 +286,14 @@ bsi_input_keyboard_keymap_notify(struct wl_listener* listener, void* data)
     wlr_log(WLR_DEBUG, "Got event keymap from wlr_input_device");
 #endif
 
-    // TODO: Server is only handler.
+    struct bsi_input_keyboard* bsi_input_keyboard =
+        wl_container_of(listener, bsi_input_keyboard, events.keymap);
+    struct wlr_seat* wlr_seat = bsi_input_keyboard->bsi_server->wlr_seat;
+    struct wlr_keyboard* wlr_keyboard =
+        bsi_input_keyboard->wlr_input_device->keyboard;
 
+    // TODO: Wat do?
+    // TODO: Server is only handler?
 #warning "Not implemented"
 }
 
@@ -277,10 +303,15 @@ bsi_input_keyboard_repeat_info_notify(struct wl_listener* listener, void* data)
 #ifdef GIMME_ALL_KEYBOARD_EVENTS
     wlr_log(WLR_DEBUG, "Got event repeat_info from wlr_input_device");
 #endif
+
+    // TODO: Wat do?
+    // TODO: Server is only handler?
 #warning "Not implemented"
 }
 
-// TODO: A pointer destroy listener? Idk why a keyboard has one, pointer not.
+// TODO: A pointer destroy listener? Idk why a keyboard has one, pointer not. Or
+// should just everything be handled when a destroy events comes from
+// wlr_input_device?
 
 void
 bsi_input_keyboard_destroy_notify(struct wl_listener* listener, void* data)

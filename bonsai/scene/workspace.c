@@ -1,6 +1,6 @@
-#include <stdbool.h>
 #define _POSIX_C_SOURCE 200809L
 #include <assert.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <wayland-server-core.h>
@@ -8,6 +8,7 @@
 
 #include "bonsai/scene/workspace.h"
 #include "bonsai/server.h"
+#include "bonsai/util.h"
 
 struct bsi_workspaces*
 bsi_workspaces_init(struct bsi_workspaces* bsi_workspaces)
@@ -16,7 +17,6 @@ bsi_workspaces_init(struct bsi_workspaces* bsi_workspaces)
 
     bsi_workspaces->len = 0;
     wl_list_init(&bsi_workspaces->workspaces);
-    wl_signal_init(&bsi_workspaces->events.active);
 
     return bsi_workspaces;
 }
@@ -28,16 +28,17 @@ bsi_workspaces_add(struct bsi_workspaces* bsi_workspaces,
     assert(bsi_workspaces);
     assert(bsi_workspace);
 
-    struct bsi_workspace* workspace_active =
-        bsi_workspaces_get_active(bsi_workspaces);
-    assert(workspace_active);
+    if (bsi_workspaces->len > 0) {
+        struct bsi_workspace* workspace_active =
+            bsi_workspaces_get_active(bsi_workspaces);
+        assert(workspace_active);
+        bsi_workspace_set_active(workspace_active, false);
+        bsi_workspace_set_active(bsi_workspace, true);
+    }
 
     ++bsi_workspaces->len;
     wl_list_insert(&bsi_workspaces->workspaces, &bsi_workspace->link);
-    bsi_workspace_set_active(workspace_active, false);
-    wl_signal_emit(&bsi_workspaces->events.active, workspace_active);
     bsi_workspace_set_active(bsi_workspace, true);
-    wl_signal_emit(&bsi_workspaces->events.active, bsi_workspace);
 }
 
 void
@@ -63,7 +64,7 @@ bsi_workspaces_remove(struct bsi_workspaces* bsi_workspaces,
     /* Move all the views to adjacent workspace. */
     struct bsi_view* view;
     struct bsi_view* tmp;
-    wl_list_for_each_safe(view, tmp, &bsi_workspace->views, link)
+    wl_list_for_each_safe(view, tmp, &bsi_workspace->views, link_workspace)
     {
         // wl_list_remove(&view->link);
         bsi_workspace_view_move(bsi_workspace, workspace_adj, view);
@@ -73,9 +74,7 @@ bsi_workspaces_remove(struct bsi_workspaces* bsi_workspaces,
     --bsi_workspaces->len;
     wl_list_remove(&bsi_workspace->link);
     bsi_workspace_set_active(bsi_workspace, false);
-    wl_signal_emit(&bsi_workspaces->events.active, bsi_workspace);
     bsi_workspace_set_active(workspace_adj, true);
-    wl_signal_emit(&bsi_workspaces->events.active, workspace_adj);
 }
 
 struct bsi_workspace*
@@ -109,6 +108,11 @@ bsi_workspace_init(struct bsi_workspace* bsi_workspace,
     bsi_workspace->bsi_output = bsi_output;
     bsi_workspace->id = bsi_server->bsi_workspaces.len + 1;
     bsi_workspace->name = strdup(name);
+    bsi_workspace->active = false;
+
+    bsi_workspace->len_views = 0;
+    wl_list_init(&bsi_workspace->views);
+    wl_signal_init(&bsi_workspace->events.active);
 
     return bsi_workspace;
 }
@@ -128,6 +132,7 @@ bsi_workspace_set_active(struct bsi_workspace* bsi_workspace, bool active)
     assert(bsi_workspace);
 
     bsi_workspace->active = active;
+    wl_signal_emit(&bsi_workspace->events.active, bsi_workspace);
 }
 
 void
@@ -138,7 +143,7 @@ bsi_workspace_view_add(struct bsi_workspace* bsi_workspace,
     assert(bsi_view);
 
     ++bsi_workspace->len_views;
-    wl_list_insert(&bsi_workspace->views, &bsi_view->link);
+    wl_list_insert(&bsi_workspace->views, &bsi_view->link_workspace);
 }
 
 void
@@ -149,7 +154,7 @@ bsi_workspace_view_remove(struct bsi_workspace* bsi_workspace,
     assert(bsi_view);
 
     --bsi_workspace->len_views;
-    wl_list_remove(&bsi_view->link);
+    wl_list_remove(&bsi_view->link_workspace);
 }
 
 void

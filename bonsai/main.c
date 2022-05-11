@@ -31,9 +31,6 @@
 #include "bonsai/server.h"
 #include "bonsai/util.h"
 
-// #define GIMME_ALL_POINTER_EVENTS
-#define GIMME_ALL_KEYBOARD_EVENTS
-
 int
 main(void)
 {

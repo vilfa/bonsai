@@ -58,14 +58,17 @@ bsi_views_remove(struct bsi_views* bsi_views, struct bsi_view* bsi_view)
 struct bsi_view*
 bsi_view_init(struct bsi_view* bsi_view,
               struct bsi_server* bsi_server,
-              struct wlr_xdg_surface* wlr_xdg_surface)
+              struct wlr_xdg_surface* wlr_xdg_surface,
+              struct bsi_workspace* bsi_workspace)
 {
     assert(bsi_view);
     assert(bsi_server);
     assert(wlr_xdg_surface);
+    assert(bsi_workspace);
 
     bsi_view->bsi_server = bsi_server;
     bsi_view->wlr_xdg_surface = wlr_xdg_surface;
+    bsi_view->bsi_workspace = bsi_workspace;
     bsi_view->x = 0.0;
     bsi_view->y = 0.0;
     bsi_view->active_listeners = 0;
@@ -190,7 +193,7 @@ bsi_view_interactive_begin(struct bsi_view* bsi_view,
 }
 
 void
-bsi_view_add_listener(struct bsi_view* bsi_view,
+bsi_view_listener_add(struct bsi_view* bsi_view,
                       enum bsi_view_listener_mask bsi_listener_type,
                       struct wl_listener* bsi_listener_memb,
                       struct wl_signal* bsi_signal_memb,

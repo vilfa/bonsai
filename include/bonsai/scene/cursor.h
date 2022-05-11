@@ -16,6 +16,37 @@ enum bsi_cursor_mode
 };
 
 /**
+ * @brief Holds all possible cursor images.
+ *
+ */
+enum bsi_cursor_image
+{
+    BSI_CURSOR_IMAGE_NORMAL,
+    BSI_CURSOR_IMAGE_MOVE,
+    BSI_CURSOR_IMAGE_RESIZE_TOP,
+    BSI_CURSOR_IMAGE_RESIZE_TOP_LEFT,
+    BSI_CURSOR_IMAGE_RESIZE_TOP_RIGHT,
+    BSI_CURSOR_IMAGE_RESIZE_BOTTOM,
+    BSI_CURSOR_IMAGE_RESIZE_BOTTOM_LEFT,
+    BSI_CURSOR_IMAGE_RESIZE_BOTTOM_RIGHT,
+    BSI_CURSOR_IMAGE_RESIZE_LEFT,
+    BSI_CURSOR_IMAGE_RESIZE_RIGHT,
+};
+
+static const char* bsi_cursor_image_map[] = {
+    [BSI_CURSOR_IMAGE_NORMAL] = "left_ptr",
+    [BSI_CURSOR_IMAGE_MOVE] = "move",
+    [BSI_CURSOR_IMAGE_RESIZE_TOP] = "top_side",
+    [BSI_CURSOR_IMAGE_RESIZE_TOP_LEFT] = "top_left_corner",
+    [BSI_CURSOR_IMAGE_RESIZE_TOP_RIGHT] = "top_right_corner",
+    [BSI_CURSOR_IMAGE_RESIZE_BOTTOM] = "bottom_side",
+    [BSI_CURSOR_IMAGE_RESIZE_BOTTOM_LEFT] = "bottom_left_corner",
+    [BSI_CURSOR_IMAGE_RESIZE_BOTTOM_RIGHT] = "bottom_right_corner",
+    [BSI_CURSOR_IMAGE_RESIZE_LEFT] = "left_side",
+    [BSI_CURSOR_IMAGE_RESIZE_RIGHT] = "right_side",
+};
+
+/**
  * @brief Holds a single pointer event passed to various functions.
  *
  */
@@ -45,6 +76,7 @@ struct bsi_cursor
     struct wlr_cursor* wlr_cursor;
 
     uint32_t cursor_mode;
+    uint32_t cursor_image;
     struct bsi_view* grabbed_view;
     struct wlr_box grab_geobox;
     double grab_x, grab_y;
@@ -60,6 +92,16 @@ struct bsi_cursor
  */
 struct bsi_cursor*
 bsi_cursor_init(struct bsi_cursor* bsi_cursor, struct bsi_server* bsi_server);
+
+/**
+ * @brief Sets the specified cursor image.
+ *
+ * @param bsi_cursor The cursor.
+ * @param bsi_cursor_image The image.
+ */
+void
+bsi_cursor_image_set(struct bsi_cursor* bsi_cursor,
+                     enum bsi_cursor_image bsi_cursor_image);
 
 /**
  * @brief Returns the `bsi_view` at the cursor event surface coordinates. Pass a

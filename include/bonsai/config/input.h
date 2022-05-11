@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <wayland-server-core.h>
 #include <wayland-util.h>
+#include <xkbcommon/xkbcommon.h>
 
 /**
  * @brief Holds all inputs the server knows about via signal listeners. The
@@ -250,6 +251,27 @@ struct bsi_input_keyboard*
 bsi_input_keyboard_init(struct bsi_input_keyboard* bsi_input_keyboard,
                         struct bsi_server* bsi_server,
                         struct wlr_input_device* wlr_input_device);
+
+/**
+ * @brief Gets a keymap from the xkb context and sets it for the specified
+ * keyboard.
+ *
+ * @param bsi_input_keyboard The keyboard.
+ * @param xkb_rule_names The xkb keymap rules.
+ */
+void
+bsi_input_keyboard_keymap_set(struct bsi_input_keyboard* bsi_input_keyboard,
+                              const struct xkb_rule_names* xkb_rule_names);
+
+/**
+ * @brief Sets the layout for the specified input keyboard.
+ *
+ * @param bsi_input_keyboard The keyboard.
+ * @param layout The layout string.
+ */
+void
+bsi_input_keyboard_layout_set(struct bsi_input_keyboard* bsi_input_keyboard,
+                              const char* layout);
 
 /**
  * @brief Destroys (calls `free`) on the keyboard.

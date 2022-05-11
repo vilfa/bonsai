@@ -15,6 +15,7 @@ bonsai_src = files(
     'events/bsi-output.c',
     'events/bsi-input.c',
     'events/bsi-view.c',
+    'events/bsi-workspace.c',
 )
 
 bonsai_dep = [
