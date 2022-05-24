@@ -3,9 +3,9 @@
 #include "bonsai/config/input.h"
 #include "bonsai/config/output.h"
 #include "bonsai/config/signal.h"
-#include "bonsai/scene/cursor.h"
-#include "bonsai/scene/view.h"
-#include "bonsai/scene/workspace.h"
+#include "bonsai/desktop/cursor.h"
+#include "bonsai/desktop/view.h"
+#include "bonsai/desktop/workspace.h"
 
 /**
  * @brief Represents the compositor and its internal state.

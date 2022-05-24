@@ -25,11 +25,6 @@ dep_wayland_cursor = dependency('wayland-cursor', required : true)
 dep_wayland_egl = dependency('wayland-egl', required : true)
 dep_wayland_protocols = dependency('wayland-protocols', required : true)
 
-dep_libdev = dep_libudev
-if dep_libevdev.found()
-    dep_libdev = dep_libevdev
-endif
-
 ### Include dirs
 inc_default = include_directories('include')
 inc_protocols = include_directories('include/protocols')

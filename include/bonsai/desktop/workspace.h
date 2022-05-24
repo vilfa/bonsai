@@ -3,7 +3,7 @@
 #include <wayland-util.h>
 
 #include "bonsai/config/output.h"
-#include "bonsai/scene/view.h"
+#include "bonsai/desktop/view.h"
 
 struct bsi_server;
 

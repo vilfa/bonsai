@@ -6,7 +6,7 @@
 #include <wlr/types/wlr_xdg_shell.h>
 
 #include "bonsai/config/signal.h"
-#include "bonsai/scene/view.h"
+#include "bonsai/desktop/view.h"
 #include "bonsai/server.h"
 
 struct bsi_listeners*

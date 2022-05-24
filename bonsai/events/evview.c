@@ -12,10 +12,10 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 
+#include "bonsai/desktop/cursor.h"
+#include "bonsai/desktop/view.h"
+#include "bonsai/desktop/workspace.h"
 #include "bonsai/events.h"
-#include "bonsai/scene/cursor.h"
-#include "bonsai/scene/view.h"
-#include "bonsai/scene/workspace.h"
 #include "bonsai/server.h"
 
 #define GIMME_ALL_VIEW_EVENTS
@@ -85,8 +85,7 @@ bsi_view_new_popup_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_view_map_notify(struct wl_listener* listener,
-                    __attribute__((unused)) void* data)
+bsi_view_map_notify(struct wl_listener* listener, void* data)
 {
 #ifdef GIMME_ALL_VIEW_EVENTS
     wlr_log(WLR_DEBUG, "Got event map from wlr_xdg_surface");
@@ -94,7 +93,15 @@ bsi_view_map_notify(struct wl_listener* listener,
 
     struct bsi_view* bsi_view = wl_container_of(listener, bsi_view, events.map);
     struct bsi_views* bsi_views = &bsi_view->bsi_server->bsi_views;
+    struct wlr_xdg_surface* wlr_xdg_surface = data;
 
+    if (wlr_xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
+        struct wlr_xdg_toplevel_requested* requested =
+            &wlr_xdg_surface->toplevel->requested;
+        // TODO: Implement maximize for surface
+    }
+
+    bsi_view->mapped = true;
     bsi_views_add(bsi_views, bsi_view);
     bsi_view_focus(bsi_view);
 }
@@ -111,6 +118,7 @@ bsi_view_unmap_notify(struct wl_listener* listener,
         wl_container_of(listener, bsi_view, events.unmap);
     struct bsi_views* bsi_views = &bsi_view->bsi_server->bsi_views;
 
+    bsi_view->mapped = false;
     bsi_views_remove(bsi_views, bsi_view);
 }
 
@@ -142,7 +150,15 @@ bsi_view_request_maximize_notify(struct wl_listener* listener, void* data)
     // TODO: This should probably take into account the panels and such stuff.
     // Also take a look at
     // https://gitlab.freedesktop.org/wlroots/wlr-protocols/-/blob/master/unstable/wlr-layer-shell-unstable-v1.xml
-#warning "Not implemented"
+
+    struct bsi_view* bsi_view =
+        wl_container_of(listener, bsi_view, events.request_maximize);
+    struct wlr_xdg_surface* surface = bsi_view->wlr_xdg_surface;
+    bool maximized = data;
+
+    bsi_view_set_maximized(bsi_view, maximized);
+    /* This surface should now consider itself */
+    wlr_xdg_toplevel_set_maximized(surface, maximized);
 }
 
 void
@@ -151,12 +167,18 @@ bsi_view_request_fullscreen_notify(struct wl_listener* listener, void* data)
 #ifdef GIMME_ALL_VIEW_EVENTS
     wlr_log(WLR_DEBUG, "Got event request_fullscreen from wlr_xdg_toplevel");
 #endif
-#warning "Not implemented"
+
+    struct bsi_view* bsi_view =
+        wl_container_of(listener, bsi_view, events.request_fullscreen);
+    struct wlr_xdg_toplevel_set_fullscreen_event* event = data;
+
+    bsi_view_set_fullscreen(bsi_view, event->fullscreen);
+    /* This surface should now consider itself (un-)fullscreen. */
+    wlr_xdg_toplevel_set_fullscreen(event->surface, event->fullscreen);
 }
 
 void
-bsi_view_request_minimize_notify(struct wl_listener* listener,
-                                 __attribute__((unused)) void* data)
+bsi_view_request_minimize_notify(struct wl_listener* listener, void* data)
 {
 #ifdef GIMME_ALL_VIEW_EVENTS
     wlr_log(WLR_DEBUG, "Got event request_minimize from wlr_xdg_toplevel");
@@ -165,7 +187,11 @@ bsi_view_request_minimize_notify(struct wl_listener* listener,
     struct bsi_view* bsi_view =
         wl_container_of(listener, bsi_view, events.request_minimize);
     struct bsi_views* bsi_views = &bsi_view->bsi_server->bsi_views;
+    bool minimized = data;
 
+    // TODO: Is this right? I have no clue.
+
+    bsi_view_set_minimized(bsi_view, minimized);
     bsi_views_remove(bsi_views, bsi_view);
 }
 

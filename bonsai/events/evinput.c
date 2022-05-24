@@ -14,9 +14,9 @@
 #include <wlr/util/log.h>
 
 #include "bonsai/config/input.h"
+#include "bonsai/desktop/cursor.h"
+#include "bonsai/desktop/view.h"
 #include "bonsai/events.h"
-#include "bonsai/scene/cursor.h"
-#include "bonsai/scene/view.h"
 #include "bonsai/server.h"
 
 // #define GIMME_ALL_POINTER_EVENTS
@@ -306,6 +306,7 @@ bsi_input_keyboard_repeat_info_notify(struct wl_listener* listener, void* data)
 
     // TODO: Wat do?
     // TODO: Server is only handler?
+
 #warning "Not implemented"
 }
 

@@ -5,23 +5,25 @@ bonsai_src = files(
 
     'config/input.c',
     'config/output.c',
-    'config/signal.c',
+    'config/global.c',
 
-    'scene/view.c',
-    'scene/cursor.c',
-    'scene/workspace.c',
+    'desktop/view.c',
+    'desktop/cursor.c',
+    'desktop/workspace.c',
+    'desktop/layer.c',
 
-    'events/bsi-listeners.c',
-    'events/bsi-output.c',
-    'events/bsi-input.c',
-    'events/bsi-view.c',
-    'events/bsi-workspace.c',
+    'events/evglobal.c',
+    'events/evoutput.c',
+    'events/evinput.c',
+    'events/evview.c',
+    'events/evworkspace.c',
 )
 
 bonsai_dep = [
     dep_wlroots,
     dep_libinput,
-    dep_libdev,
+    dep_libudev,
+    dep_libevdev,
     dep_xkbcommon,
     dep_glesv2,
     dep_drm,

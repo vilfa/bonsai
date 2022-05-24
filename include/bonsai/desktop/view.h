@@ -1,7 +1,7 @@
 #pragma once
 
-#include "bonsai/scene/cursor.h"
-#include "bonsai/scene/workspace.h"
+#include "bonsai/desktop/cursor.h"
+#include "bonsai/desktop/workspace.h"
 #include <wayland-server-core.h>
 #include <wayland-util.h>
 
@@ -57,10 +57,19 @@ struct bsi_view
     struct wlr_xdg_surface* wlr_xdg_surface;
     struct wlr_scene_node* wlr_scene_node;
 
+    bool mapped;
+    bool maximized, minimized, fullscreen;
+
     char* app_id;
     char* app_title;
     struct bsi_workspace* bsi_workspace;
+
+    /* Note, that when the window goes fullscreen, minimized or maximized,
+     * this will hold the last state of the window that should be restored when
+     * restoring the window mode to normal. The helper function
+     * bsi_view_restore_prev() does just that. */
     double x, y;
+    uint32_t width, height;
 
     uint32_t active_listeners;
     struct wl_list* active_links[bsi_view_listener_len];
@@ -181,6 +190,18 @@ void
 bsi_view_interactive_begin(struct bsi_view* bsi_view,
                            enum bsi_cursor_mode bsi_cursor_mode,
                            uint32_t edges);
+
+void
+bsi_view_set_maximized(struct bsi_view* bsi_view, bool maximized);
+
+void
+bsi_view_set_minimized(struct bsi_view* bsi_view, bool minimized);
+
+void
+bsi_view_set_fullscreen(struct bsi_view* bsi_view, bool fullscreen);
+
+void
+bsi_view_restore_prev(struct bsi_view* bsi_view);
 
 /**
  * @brief Adds a listener to the scene node represented by `bsi_view`.

@@ -24,9 +24,9 @@
 
 #include "bonsai/config/input.h"
 #include "bonsai/config/signal.h"
+#include "bonsai/desktop/view.h"
+#include "bonsai/desktop/workspace.h"
 #include "bonsai/events.h"
-#include "bonsai/scene/view.h"
-#include "bonsai/scene/workspace.h"
 #include "bonsai/server.h"
 
 #define GIMME_ALL_GLOBAL_EVENTS

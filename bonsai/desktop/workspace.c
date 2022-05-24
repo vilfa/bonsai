@@ -6,7 +6,7 @@
 #include <wayland-server-core.h>
 #include <wayland-util.h>
 
-#include "bonsai/scene/workspace.h"
+#include "bonsai/desktop/workspace.h"
 #include "bonsai/server.h"
 #include "bonsai/util.h"
 

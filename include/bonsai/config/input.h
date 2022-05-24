@@ -120,6 +120,49 @@ struct bsi_input_keyboard
 };
 
 /**
+ * @brief Identifies all currently supported xkb layouts.
+ *
+ */
+enum bsi_input_keyboard_layout
+{
+    BSI_INPUT_KEYBOARD_LAYOUT_EN_US,
+    BSI_INPUT_KEYBOARD_LAYOUT_SI_SI,
+    BSI_INPUT_KEYBOARD_LAYOUT_SI_US,
+};
+
+#define bsi_input_keyboard_rules_len 3
+
+/**
+ * @brief Holds all currently supported xkb layout rules.
+ *
+ */
+// ! For documentation on this illusive thing, see xkeyboard-config(7).
+// TODO: Make this configuration available from somewhere.
+static const struct xkb_rule_names bsi_input_keyboard_rules[] = {
+    [BSI_INPUT_KEYBOARD_LAYOUT_EN_US] = {
+        .rules = NULL,
+        .model = "pc105",
+        .layout = "us",
+        .variant = NULL,
+        .options = "grp:win_space_toggle",
+    },
+    [BSI_INPUT_KEYBOARD_LAYOUT_SI_SI] = {
+        .rules = NULL,
+        .model = "pc105",
+        .layout = "si",
+        .variant = NULL,
+        .options = "grp:win_space_toggle",
+    },
+    [BSI_INPUT_KEYBOARD_LAYOUT_SI_US] = {
+        .rules = NULL,
+        .model = "pc105",
+        .layout = "si(us)",
+        .variant = NULL,
+        .options = "grp:win_space_toggle",
+    },
+};
+
+/**
  * @brief Initializes inputs for the given server seat.
  *
  * @param bsi_inputs Pointer to bsi_inputs server struct.
@@ -243,17 +286,8 @@ bsi_input_keyboard_init(struct bsi_input_keyboard* bsi_input_keyboard,
  */
 void
 bsi_input_keyboard_keymap_set(struct bsi_input_keyboard* bsi_input_keyboard,
-                              const struct xkb_rule_names* xkb_rule_names);
-
-/**
- * @brief Sets the layout for the specified input keyboard.
- *
- * @param bsi_input_keyboard The keyboard.
- * @param layout The layout string.
- */
-void
-bsi_input_keyboard_layout_set(struct bsi_input_keyboard* bsi_input_keyboard,
-                              const char* layout);
+                              const struct xkb_rule_names* xkb_rule_names,
+                              const size_t xkb_rule_names_len);
 
 /**
  * @brief Destroys (calls `free`) on the keyboard.

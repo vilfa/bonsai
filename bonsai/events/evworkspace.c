@@ -7,8 +7,8 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 
+#include "bonsai/desktop/view.h"
 #include "bonsai/events.h"
-#include "bonsai/scene/view.h"
 #include "bonsai/server.h"
 
 #define GIMME_ALL_WORKSPACE_EVENTS

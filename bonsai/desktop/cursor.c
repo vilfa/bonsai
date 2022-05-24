@@ -8,7 +8,8 @@
 #include <wlr/util/box.h>
 #include <wlr/util/edges.h>
 
-#include "bonsai/scene/cursor.h"
+#include "bonsai/desktop/cursor.h"
+#include "bonsai/desktop/view.h"
 #include "bonsai/server.h"
 
 struct bsi_cursor*
@@ -132,6 +133,10 @@ bsi_cursor_process_view_move(struct bsi_cursor* bsi_cursor,
 
     bsi_view->x = bsi_server->wlr_cursor->x - bsi_cursor->grab_x;
     bsi_view->y = bsi_server->wlr_cursor->y - bsi_cursor->grab_y;
+
+    if (bsi_view->maximized)
+        bsi_view_set_maximized(bsi_view, false);
+
     wlr_scene_node_set_position(
         bsi_view->wlr_scene_node, bsi_view->x, bsi_view->y);
 }

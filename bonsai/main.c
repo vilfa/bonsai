@@ -25,11 +25,14 @@
 #include "bonsai/config/input.h"
 #include "bonsai/config/output.h"
 #include "bonsai/config/signal.h"
+#include "bonsai/desktop/cursor.h"
+#include "bonsai/desktop/view.h"
 #include "bonsai/events.h"
-#include "bonsai/scene/cursor.h"
-#include "bonsai/scene/view.h"
 #include "bonsai/server.h"
 #include "bonsai/util.h"
+
+// TODO: Take a look at
+// https://gitlab.freedesktop.org/wlroots/wlroots/-/tree/master/examples
 
 int
 main(void)
@@ -48,6 +51,17 @@ main(void)
     if (setenv("WAYLAND_DISPLAY", server.wl_socket, true) != 0) {
         wlr_log(WLR_ERROR,
                 "Failed to set WAYLAND_DISPLAY env var: %s",
+                strerror(errno));
+        wlr_backend_destroy(server.wlr_backend);
+        wl_display_destroy(server.wl_display);
+        exit(EXIT_FAILURE);
+    }
+
+    if (setenv("WLR_NO_HARDWARE_CURSORS", "1", true) != 0) {
+        // Workaround for https://github.com/swaywm/wlroots/issues/3189
+        // TODO: Idk man these cursors are weird.
+        wlr_log(WLR_ERROR,
+                "Failed to set WLR_NO_HARDWARE_CURSORS env var: %s",
                 strerror(errno));
         wlr_backend_destroy(server.wlr_backend);
         wl_display_destroy(server.wl_display);
