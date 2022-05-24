@@ -153,12 +153,13 @@ bsi_view_request_maximize_notify(struct wl_listener* listener, void* data)
 
     struct bsi_view* bsi_view =
         wl_container_of(listener, bsi_view, events.request_maximize);
-    struct wlr_xdg_surface* surface = bsi_view->wlr_xdg_surface;
-    bool maximized = data;
+    struct wlr_xdg_surface* surface = data;
+    struct wlr_xdg_toplevel_requested* requested =
+        &surface->toplevel->requested;
 
-    bsi_view_set_maximized(bsi_view, maximized);
-    /* This surface should now consider itself */
-    wlr_xdg_toplevel_set_maximized(surface, maximized);
+    bsi_view_set_maximized(bsi_view, requested->maximized);
+    /* This surface should now consider itself maximized */
+    wlr_xdg_toplevel_set_maximized(surface, requested->maximized);
 }
 
 void
@@ -187,11 +188,13 @@ bsi_view_request_minimize_notify(struct wl_listener* listener, void* data)
     struct bsi_view* bsi_view =
         wl_container_of(listener, bsi_view, events.request_minimize);
     struct bsi_views* bsi_views = &bsi_view->bsi_server->bsi_views;
-    bool minimized = data;
+    struct wlr_xdg_surface* surface = data;
+    struct wlr_xdg_toplevel_requested* requested =
+        &surface->toplevel->requested;
 
     // TODO: Is this right? I have no clue.
 
-    bsi_view_set_minimized(bsi_view, minimized);
+    bsi_view_set_minimized(bsi_view, requested->minimized);
     bsi_views_remove(bsi_views, bsi_view);
 }
 

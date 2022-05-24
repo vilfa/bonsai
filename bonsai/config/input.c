@@ -203,10 +203,8 @@ bsi_input_keyboard_keymap_set(struct bsi_input_keyboard* bsi_input_keyboard,
             strcat(variants + strlen(variants), rs->variant);
             rs_len[3] = strlen(variants);
         }
-        if (rs->options != NULL &&
+        if (rs->options != NULL && rs_len[4] == 0 &&
             rs_len[4] + strlen(rs->options) < rs_len_max - 1) {
-            if (rs_len[4] != 0)
-                strcat(options + strlen(options), ",");
             strcat(options + strlen(options), rs->options);
             rs_len[4] = strlen(options);
         }
