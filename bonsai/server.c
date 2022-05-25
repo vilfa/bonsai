@@ -12,7 +12,6 @@
 #include <wlr/util/log.h>
 
 #include "bonsai/config/signal.h"
-#include "bonsai/desktop/workspace.h"
 #include "bonsai/events.h"
 #include "bonsai/server.h"
 
@@ -100,7 +99,7 @@ bsi_server_init(struct bsi_server* bsi_server)
         WLR_DEBUG, "Loaded wlr_xcursor_manager with scale %1.f", cursor_scale);
 
     struct bsi_outputs bsi_outputs;
-    bsi_outputs_init(&bsi_outputs);
+    bsi_outputs_init(&bsi_outputs, bsi_server);
     bsi_server->bsi_outputs = bsi_outputs;
 
     struct bsi_inputs bsi_inputs;
@@ -118,10 +117,6 @@ bsi_server_init(struct bsi_server* bsi_server)
     struct bsi_listeners bsi_listeners;
     bsi_listeners_init(&bsi_listeners);
     bsi_server->bsi_listeners = bsi_listeners;
-
-    struct bsi_workspaces bsi_workspaces;
-    bsi_workspaces_init(&bsi_workspaces);
-    bsi_server->bsi_workspaces = bsi_workspaces;
 
     bsi_listeners_add(&bsi_server->bsi_listeners,
                       BSI_LISTENERS_BACKEND_NEW_OUTPUT,

@@ -7,8 +7,10 @@ bonsai_src = files(
     'config/output.c',
     'config/global.c',
 
+    'input/cursor.c',
+    'input/keyboard.c',
+    
     'desktop/view.c',
-    'desktop/cursor.c',
     'desktop/workspace.c',
     'desktop/layer.c',
 

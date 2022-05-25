@@ -8,8 +8,8 @@
 #include <wlr/util/box.h>
 #include <wlr/util/edges.h>
 
-#include "bonsai/desktop/cursor.h"
 #include "bonsai/desktop/view.h"
+#include "bonsai/input/cursor.h"
 #include "bonsai/server.h"
 
 struct bsi_cursor*
@@ -129,13 +129,24 @@ bsi_cursor_process_view_move(struct bsi_cursor* bsi_cursor,
     struct bsi_view* bsi_view = bsi_cursor->grabbed_view;
     struct wlr_event_pointer_motion* event = bsi_cursor_event.motion;
 
+    /* A view in these states cannot be moved. Although, a minimized view
+     * getting here is altogether impossible. */
+    if (bsi_view->fullscreen || bsi_view->minimized)
+        return;
+
     bsi_cursor_image_set(bsi_cursor, BSI_CURSOR_IMAGE_MOVE);
 
+    struct wlr_box box;
     bsi_view->x = bsi_server->wlr_cursor->x - bsi_cursor->grab_x;
     bsi_view->y = bsi_server->wlr_cursor->y - bsi_cursor->grab_y;
+    wlr_xdg_surface_get_geometry(bsi_view->wlr_xdg_surface, &box);
+    bsi_view->width = box.width;
+    bsi_view->height = box.height;
 
-    if (bsi_view->maximized)
+    if (bsi_view->maximized) {
         bsi_view_set_maximized(bsi_view, false);
+        wlr_xdg_toplevel_set_maximized(bsi_view->wlr_xdg_surface, false);
+    }
 
     wlr_scene_node_set_position(
         bsi_view->wlr_scene_node, bsi_view->x, bsi_view->y);
@@ -158,6 +169,13 @@ bsi_cursor_process_view_resize(struct bsi_cursor* bsi_cursor,
     struct bsi_server* bsi_server = bsi_cursor->bsi_server;
     struct bsi_view* bsi_view = bsi_server->bsi_cursor.grabbed_view;
     struct wlr_event_pointer_motion* event = bsi_cursor_event.motion;
+
+    /* The view cannot be resized when in these states. Although, a minimized
+     * view getting here is altogether impossible. */
+    if (bsi_view->maximized || bsi_view->minimized || bsi_view->fullscreen)
+        return;
+
+    wlr_xdg_toplevel_set_resizing(bsi_view->wlr_xdg_surface, true);
 
     // TODO: Not sure what is happening here.
     double border_x = bsi_server->wlr_cursor->x - bsi_cursor->grab_x;
@@ -213,10 +231,14 @@ bsi_cursor_process_view_resize(struct bsi_cursor* bsi_cursor,
     wlr_xdg_surface_get_geometry(bsi_view->wlr_xdg_surface, &box);
     bsi_view->x = new_left - box.x;
     bsi_view->y = new_top - box.y;
+    bsi_view->width = box.width;
+    bsi_view->height = box.height;
     wlr_scene_node_set_position(
         bsi_view->wlr_scene_node, bsi_view->x, bsi_view->y);
 
     int32_t new_width = new_right - new_left;
     int32_t new_height = new_bottom - new_top;
     wlr_xdg_toplevel_set_size(bsi_view->wlr_xdg_surface, new_width, new_height);
+
+    wlr_xdg_toplevel_set_resizing(bsi_view->wlr_xdg_surface, false);
 }

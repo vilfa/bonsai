@@ -12,8 +12,8 @@
 #include <wlr/util/edges.h>
 
 #include "bonsai/config/output.h"
-#include "bonsai/desktop/cursor.h"
 #include "bonsai/desktop/view.h"
+#include "bonsai/input/cursor.h"
 #include "bonsai/server.h"
 
 struct bsi_views*
@@ -37,6 +37,14 @@ bsi_views_add(struct bsi_views* bsi_views, struct bsi_view* bsi_view)
     wl_list_insert(&bsi_views->views, &bsi_view->link);
 
     wlr_scene_node_set_enabled(bsi_view->wlr_scene_node, true);
+
+    /* Initialize geometry state. */
+    struct wlr_box box;
+    wlr_xdg_surface_get_geometry(bsi_view->wlr_xdg_surface, &box);
+    bsi_view->x = box.x;
+    bsi_view->y = box.y;
+    bsi_view->width = box.width;
+    bsi_view->height = box.height;
 }
 
 void
@@ -207,16 +215,20 @@ bsi_view_set_maximized(struct bsi_view* bsi_view, bool maximized)
 {
     assert(bsi_view);
 
+    bsi_view->maximized = maximized;
+
     if (!maximized) {
         bsi_view_restore_prev(bsi_view);
     } else {
+        /* Save the geometry. */
         struct wlr_box box;
+        int32_t lx, ly;
         wlr_xdg_surface_get_geometry(bsi_view->wlr_xdg_surface, &box);
-        bsi_view->x = box.x;
-        bsi_view->y = box.y;
+        wlr_scene_node_coords(bsi_view->wlr_scene_node, &lx, &ly);
+        bsi_view->x = lx;
+        bsi_view->y = ly;
         bsi_view->width = box.width;
         bsi_view->height = box.height;
-        bsi_view->maximized = maximized;
 
         struct bsi_server* server = bsi_view->bsi_server;
         struct bsi_output* output = bsi_view->bsi_workspace->bsi_output;
@@ -233,16 +245,21 @@ bsi_view_set_minimized(struct bsi_view* bsi_view, bool minimized)
 {
     assert(bsi_view);
 
+    bsi_view->minimized = minimized;
+
     if (!minimized) {
         bsi_view_restore_prev(bsi_view);
+        wlr_scene_node_set_enabled(bsi_view->wlr_scene_node, !minimized);
     } else {
+        /* Save the geometry. */
         struct wlr_box box;
+        int32_t lx, ly;
         wlr_xdg_surface_get_geometry(bsi_view->wlr_xdg_surface, &box);
-        bsi_view->x = box.x;
-        bsi_view->y = box.y;
+        wlr_scene_node_coords(bsi_view->wlr_scene_node, &lx, &ly);
+        bsi_view->x = lx;
+        bsi_view->y = ly;
         bsi_view->width = box.width;
         bsi_view->height = box.height;
-        bsi_view->minimized = minimized;
 
         wlr_scene_node_set_enabled(bsi_view->wlr_scene_node, false);
     }
@@ -253,16 +270,20 @@ bsi_view_set_fullscreen(struct bsi_view* bsi_view, bool fullscreen)
 {
     assert(bsi_view);
 
+    bsi_view->fullscreen = fullscreen;
+
     if (!fullscreen) {
         bsi_view_restore_prev(bsi_view);
     } else {
+        /* Save the geometry. */
         struct wlr_box box;
+        int32_t lx, ly;
         wlr_xdg_surface_get_geometry(bsi_view->wlr_xdg_surface, &box);
-        bsi_view->x = box.x;
-        bsi_view->y = box.y;
+        wlr_scene_node_coords(bsi_view->wlr_scene_node, &lx, &ly);
+        bsi_view->x = lx;
+        bsi_view->y = ly;
         bsi_view->width = box.width;
         bsi_view->height = box.height;
-        bsi_view->fullscreen = fullscreen;
 
         // TODO: This should probably get rid of decorations to put the entire
         // app fullscreen
@@ -279,8 +300,10 @@ bsi_view_set_fullscreen(struct bsi_view* bsi_view, bool fullscreen)
 void
 bsi_view_restore_prev(struct bsi_view* bsi_view)
 {
+    wlr_xdg_toplevel_set_resizing(bsi_view->wlr_xdg_surface, true);
     wlr_xdg_toplevel_set_size(
         bsi_view->wlr_xdg_surface, bsi_view->width, bsi_view->height);
+    wlr_xdg_toplevel_set_resizing(bsi_view->wlr_xdg_surface, false);
     wlr_scene_node_set_position(
         bsi_view->wlr_scene_node, bsi_view->x, bsi_view->y);
 }

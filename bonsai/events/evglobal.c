@@ -5,6 +5,7 @@
  *
  */
 
+#include "bonsai/desktop/layer.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <wayland-server-core.h>
@@ -22,8 +23,11 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 
+struct bsi_view;
+
 #include "bonsai/config/input.h"
 #include "bonsai/config/signal.h"
+#include "bonsai/desktop/layer.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/desktop/workspace.h"
 #include "bonsai/events.h"
@@ -57,8 +61,30 @@ bsi_listeners_backend_new_output_notify(struct wl_listener* listener,
             return;
     }
 
+    struct bsi_workspaces* bsi_workspaces =
+        calloc(1, sizeof(struct bsi_workspaces));
+    bsi_workspaces_init(bsi_workspaces);
+
+    struct bsi_layers* bsi_layers = calloc(1, sizeof(struct bsi_layers));
+    bsi_layers_init(bsi_layers);
+
     struct bsi_output* bsi_output = calloc(1, sizeof(struct bsi_output));
-    bsi_output_init(bsi_output, bsi_server, wlr_output);
+    bsi_output_init(
+        bsi_output, bsi_server, wlr_output, bsi_workspaces, bsi_layers);
+
+    /* Attach a workspace to the output. */
+    char workspace_name[25];
+    struct bsi_workspace* bsi_workspace =
+        calloc(1, sizeof(struct bsi_workspace));
+    sprintf(workspace_name, "Workspace %ld", bsi_workspaces->len + 1);
+    bsi_workspace_init(bsi_workspace, bsi_server, bsi_output, workspace_name);
+    bsi_workspaces_add(bsi_workspaces, bsi_workspace);
+
+    wlr_log(WLR_INFO,
+            "Attached %s to output %s",
+            bsi_workspace->name,
+            bsi_output->wlr_output->name);
+
     bsi_outputs_add(&bsi_server->bsi_outputs, bsi_output);
     bsi_output_listener_add(bsi_output,
                             BSI_OUTPUT_LISTENER_FRAME,
@@ -117,21 +143,6 @@ bsi_listeners_backend_new_output_notify(struct wl_listener* listener,
                             bsi_output_destroy_notify);
 
     wlr_output_layout_add_auto(bsi_server->wlr_output_layout, wlr_output);
-
-    /* Attach a workspace to the output. */
-    struct bsi_workspaces* bsi_workspaces = &bsi_server->bsi_workspaces;
-
-    char workspace_name[25];
-    struct bsi_workspace* bsi_workspace =
-        calloc(1, sizeof(struct bsi_workspace));
-    sprintf(workspace_name, "Workspace %ld", bsi_workspaces->len + 1);
-    bsi_workspace_init(bsi_workspace, bsi_server, bsi_output, workspace_name);
-    bsi_workspaces_add(bsi_workspaces, bsi_workspace);
-
-    wlr_log(WLR_INFO,
-            "Attached %s to output %s",
-            bsi_workspace->name,
-            bsi_output->wlr_output->name);
 }
 
 void
@@ -524,8 +535,10 @@ bsi_listeners_xdg_shell_new_surface_notify(struct wl_listener* listener,
             wlr_scene_xdg_surface_create(parent_node, wlr_xdg_surface);
     } else if (wlr_xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
         struct bsi_view* bsi_view = calloc(1, sizeof(struct bsi_view));
+        struct bsi_output* bsi_output =
+            bsi_outputs_get_active(&bsi_server->bsi_outputs);
         struct bsi_workspace* workspace_active =
-            bsi_workspaces_get_active(&bsi_server->bsi_workspaces);
+            bsi_workspaces_get_active(bsi_output->bsi_workspaces);
         bsi_view_init(bsi_view, bsi_server, wlr_xdg_surface, workspace_active);
         bsi_workspace_view_add(workspace_active, bsi_view);
         wlr_log(

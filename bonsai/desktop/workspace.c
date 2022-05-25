@@ -106,7 +106,7 @@ bsi_workspace_init(struct bsi_workspace* bsi_workspace,
 
     bsi_workspace->bsi_server = bsi_server;
     bsi_workspace->bsi_output = bsi_output;
-    bsi_workspace->id = bsi_server->bsi_workspaces.len + 1;
+    bsi_workspace->id = bsi_output->bsi_workspaces->len + 1;
     bsi_workspace->name = strdup(name);
     bsi_workspace->active = false;
 
@@ -124,6 +124,18 @@ bsi_workspace_destroy(struct bsi_workspace* bsi_workspace)
 
     free(bsi_workspace->name);
     free(bsi_workspace);
+}
+
+size_t
+bsi_workspace_get_global_id(struct bsi_workspace* bsi_workspace)
+{
+    assert(bsi_workspace);
+
+    struct bsi_output* bsi_output = bsi_workspace->bsi_output;
+    if (bsi_output->id > 0)
+        return bsi_output->id * 10 + bsi_workspace->id;
+    else
+        return bsi_workspace->id;
 }
 
 void

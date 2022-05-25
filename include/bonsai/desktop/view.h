@@ -1,9 +1,10 @@
 #pragma once
 
-#include "bonsai/desktop/cursor.h"
-#include "bonsai/desktop/workspace.h"
 #include <wayland-server-core.h>
 #include <wayland-util.h>
+
+#include "bonsai/desktop/workspace.h"
+#include "bonsai/input/cursor.h"
 
 /**
  * @brief Holds all the views the server owns.

@@ -12,10 +12,10 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 
-#include "bonsai/desktop/cursor.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/desktop/workspace.h"
 #include "bonsai/events.h"
+#include "bonsai/input/cursor.h"
 #include "bonsai/server.h"
 
 #define GIMME_ALL_VIEW_EVENTS
@@ -95,10 +95,23 @@ bsi_view_map_notify(struct wl_listener* listener, void* data)
     struct bsi_views* bsi_views = &bsi_view->bsi_server->bsi_views;
     struct wlr_xdg_surface* wlr_xdg_surface = data;
 
-    if (wlr_xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
-        struct wlr_xdg_toplevel_requested* requested =
-            &wlr_xdg_surface->toplevel->requested;
-        // TODO: Implement maximize for surface
+    struct wlr_xdg_toplevel_requested* requested =
+        &wlr_xdg_surface->toplevel->requested;
+
+    /* Only honor one request of this type. A surface can't request to be
+     * maximized and minimized at the same time. */
+    if (requested->fullscreen) {
+        // TODO: Should there be code handling fullscreen_output_destroy, we
+        // already handle moving views in workspace code
+        bsi_view_set_fullscreen(bsi_view, requested->fullscreen);
+        wlr_xdg_toplevel_set_fullscreen(bsi_view->wlr_xdg_surface,
+                                        requested->fullscreen);
+    } else if (requested->maximized) {
+        bsi_view_set_maximized(bsi_view, requested->maximized);
+        wlr_xdg_toplevel_set_maximized(bsi_view->wlr_xdg_surface,
+                                       requested->maximized);
+    } else if (requested->minimized) {
+        bsi_view_set_minimized(bsi_view, requested->minimized);
     }
 
     bsi_view->mapped = true;
@@ -154,11 +167,18 @@ bsi_view_request_maximize_notify(struct wl_listener* listener, void* data)
     struct bsi_view* bsi_view =
         wl_container_of(listener, bsi_view, events.request_maximize);
     struct wlr_xdg_surface* surface = data;
+
+    /* I'm not sure if this is necessary, only a toplevel surface should be
+     * able to request maximize anyway; also, only toplevel surfaces have
+     * views. */
+    if (surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL)
+        return;
+
     struct wlr_xdg_toplevel_requested* requested =
         &surface->toplevel->requested;
 
     bsi_view_set_maximized(bsi_view, requested->maximized);
-    /* This surface should now consider itself maximized */
+    /* This surface should now consider itself (un-)maximized */
     wlr_xdg_toplevel_set_maximized(surface, requested->maximized);
 }
 
@@ -171,6 +191,7 @@ bsi_view_request_fullscreen_notify(struct wl_listener* listener, void* data)
 
     struct bsi_view* bsi_view =
         wl_container_of(listener, bsi_view, events.request_fullscreen);
+    /* Only a toplevel surface can request fullscreen. */
     struct wlr_xdg_toplevel_set_fullscreen_event* event = data;
 
     bsi_view_set_fullscreen(bsi_view, event->fullscreen);
@@ -189,11 +210,16 @@ bsi_view_request_minimize_notify(struct wl_listener* listener, void* data)
         wl_container_of(listener, bsi_view, events.request_minimize);
     struct bsi_views* bsi_views = &bsi_view->bsi_server->bsi_views;
     struct wlr_xdg_surface* surface = data;
+
+    /* Again, not sure if this is necessary, only a toplevel surface should be
+     * able to request minimize anyway. */
+    if (surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL)
+        return;
+
     struct wlr_xdg_toplevel_requested* requested =
         &surface->toplevel->requested;
 
-    // TODO: Is this right? I have no clue.
-
+    /* Remove surface from views. */
     bsi_view_set_minimized(bsi_view, requested->minimized);
     bsi_views_remove(bsi_views, bsi_view);
 }

@@ -6,6 +6,11 @@
 #include <wayland-server-core.h>
 #include <wayland-util.h>
 
+struct bsi_server;
+
+#include "bonsai/desktop/layer.h"
+#include "bonsai/desktop/workspace.h"
+
 /**
  * @brief Holds all outputs the server knows about via signal listeners. The
  * outputs list holds elements of type `struct bsi_output`
@@ -13,6 +18,8 @@
  */
 struct bsi_outputs
 {
+    struct bsi_server* bsi_server;
+
     size_t len;
     struct wl_list outputs;
 };
@@ -47,6 +54,10 @@ struct bsi_output
     struct bsi_server* bsi_server;
     struct wlr_output* wlr_output;
     struct timespec last_frame;
+    size_t id; /* Incremental id. */
+
+    struct bsi_workspaces* bsi_workspaces;
+    struct bsi_layers* bsi_layers; /* wlr_layer_shell_v1 */
 
     uint32_t active_listeners;
     struct wl_list* active_links[bsi_output_listener_len];
@@ -73,10 +84,12 @@ struct bsi_output
  * @brief Initialize the server outputs struct.
  *
  * @param bsi_outputs Pointer to bsi_outputs struct.
+ * @param bsi_server Server owning the outputs.
  * @return struct bsi_outputs* Pointer to initialized struct.
  */
 struct bsi_outputs*
-bsi_outputs_init(struct bsi_outputs* bsi_outputs);
+bsi_outputs_init(struct bsi_outputs* bsi_outputs,
+                 struct bsi_server* bsi_server);
 
 /**
  * @brief Adds an output to the known server outputs.
@@ -98,6 +111,9 @@ void
 bsi_outputs_remove(struct bsi_outputs* bsi_outputs,
                    struct bsi_output* bsi_output);
 
+struct bsi_output*
+bsi_outputs_get_active(struct bsi_outputs* bsi_outputs);
+
 /**
  * @brief Initializes a preallocated bsi_output.
  *
@@ -109,7 +125,9 @@ bsi_outputs_remove(struct bsi_outputs* bsi_outputs,
 struct bsi_output*
 bsi_output_init(struct bsi_output* bsi_output,
                 struct bsi_server* bsi_server,
-                struct wlr_output* wlr_output);
+                struct wlr_output* wlr_output,
+                struct bsi_workspaces* bsi_workspaces,
+                struct bsi_layers* bsi_layers);
 
 /**
  * @brief Destroys (calls `free`) on an output.

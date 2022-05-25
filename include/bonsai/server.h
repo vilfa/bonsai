@@ -3,9 +3,8 @@
 #include "bonsai/config/input.h"
 #include "bonsai/config/output.h"
 #include "bonsai/config/signal.h"
-#include "bonsai/desktop/cursor.h"
 #include "bonsai/desktop/view.h"
-#include "bonsai/desktop/workspace.h"
+#include "bonsai/input/cursor.h"
 
 /**
  * @brief Represents the compositor and its internal state.
@@ -28,24 +27,35 @@ struct bsi_server
     struct wlr_seat* wlr_seat;
     struct wlr_cursor* wlr_cursor;
     struct wlr_xcursor_manager* wlr_xcursor_manager;
+
     /* State */
     struct bsi_outputs bsi_outputs;
     struct bsi_inputs bsi_inputs;
     struct bsi_views bsi_views;
     struct bsi_listeners bsi_listeners;
     struct bsi_cursor bsi_cursor;
-    struct bsi_workspaces bsi_workspaces;
 
     // TODO
-    /* So, the way I imagine it, a server will have a bunch of workspaces, maybe
-     * with another parent to hold the workspaces. The panels or panel,
-     * probably, will then exist outside of the workspaces, and will be
-     * positioned on the top and maybe bottom of the screen. The top panel will
-     * hold a workspace indicator, a datetime indicator, a system tray, a switch
-     * between floating and tiling mode (this is optional, maybe I will just
-     * leave everything floating, as it is the usual desktop experience). Now, I
-     * know that there is a lot of work to be done before any of this, but a
-     * somewhat clear plan probably helps. */
+    // /* So, the way I imagine it, a server will have a bunch of workspaces,
+    // maybe
+    //  * with another parent to hold the workspaces. The panels or panel,
+    //  * probably, will then exist outside of the workspaces, and will be
+    //  * positioned on the top and maybe bottom of the screen. The top panel
+    //  will
+    //  * hold a workspace indicator, a datetime indicator, a system tray, a
+    //  switch
+    //  * between floating and tiling mode (this is optional, maybe I will just
+    //  * leave everything floating, as it is the usual desktop experience).
+    //  Now, I
+    //  * know that there is a lot of work to be done before any of this, but a
+    //  * somewhat clear plan probably helps. */
+    /* Pay no attention to the above bullshit ^. */
+    /* So, the way I imagine it, a workspace can be attached to a single output
+     * at one time, with each output being able to hold multiple workspaces.
+     * ---
+     * Each output will also have the four layers defined by
+     * zwlr_layer_shell_v1, so the layers are not dependent on the workspace,
+     * but on the output. */
 };
 
 /**

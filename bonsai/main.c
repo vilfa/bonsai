@@ -25,9 +25,9 @@
 #include "bonsai/config/input.h"
 #include "bonsai/config/output.h"
 #include "bonsai/config/signal.h"
-#include "bonsai/desktop/cursor.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/events.h"
+#include "bonsai/input/cursor.h"
 #include "bonsai/server.h"
 #include "bonsai/util.h"
 

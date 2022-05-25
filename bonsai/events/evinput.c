@@ -14,9 +14,10 @@
 #include <wlr/util/log.h>
 
 #include "bonsai/config/input.h"
-#include "bonsai/desktop/cursor.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/events.h"
+#include "bonsai/input/cursor.h"
+#include "bonsai/input/keyboard.h"
 #include "bonsai/server.h"
 
 // #define GIMME_ALL_POINTER_EVENTS
@@ -254,14 +255,21 @@ bsi_input_keyboard_key_notify(struct wl_listener* listener, void* data)
     struct wlr_event_keyboard_key* event = data;
 
     // TODO: Server is primary handler. Handle server keybindings first.
-
-    /* Notify client of keys not handled by the server. */
-    wlr_seat_keyboard_notify_key(
-        wlr_seat, event->time_msec, event->keycode, event->state);
+    if (!bsi_keyboard_keybinds_process(bsi_input_keyboard, event)) {
+        /* A seat can only have one keyboard, but multiple keyboards can be
+         * attached. Switch the seat to the correct underlying keyboard. Roots
+         * handles this for us :). */
+        wlr_seat_set_keyboard(wlr_seat, bsi_input_keyboard->wlr_input_device);
+        /* The server knows not thy keybind, the client shall handle it. Notify
+         * client of keys not handled by the server. */
+        wlr_seat_keyboard_notify_key(
+            wlr_seat, event->time_msec, event->keycode, event->state);
+    }
 }
 
 void
-bsi_input_keyboard_modifiers_notify(struct wl_listener* listener, void* data)
+bsi_input_keyboard_modifiers_notify(struct wl_listener* listener,
+                                    __attribute__((unused)) void* data)
 {
 #ifdef GIMME_ALL_KEYBOARD_EVENTS
     wlr_log(WLR_DEBUG, "Got event modifiers from wlr_input_device");
@@ -270,13 +278,14 @@ bsi_input_keyboard_modifiers_notify(struct wl_listener* listener, void* data)
     struct bsi_input_keyboard* bsi_input_keyboard =
         wl_container_of(listener, bsi_input_keyboard, events.modifiers);
     struct wlr_seat* wlr_seat = bsi_input_keyboard->bsi_server->wlr_seat;
-    struct wlr_keyboard* wlr_keyboard =
-        bsi_input_keyboard->wlr_input_device->keyboard;
+    struct wlr_input_device* dev = bsi_input_keyboard->wlr_input_device;
 
-    // TODO: Server is primary handler. Handle server keybindings first.
-
+    /* A seat can only have one keyboard, but multiple keyboards can be
+     * attached. Switch the seat to the correct underlying keyboard. Roots
+     * handles this for us :). */
+    wlr_seat_set_keyboard(wlr_seat, dev);
     /* Notify client of keys not handled by the server. */
-    wlr_seat_keyboard_notify_modifiers(wlr_seat, &wlr_keyboard->modifiers);
+    wlr_seat_keyboard_notify_modifiers(wlr_seat, &dev->keyboard->modifiers);
 }
 
 void
@@ -307,11 +316,17 @@ bsi_input_keyboard_repeat_info_notify(struct wl_listener* listener, void* data)
     // TODO: Wat do?
     // TODO: Server is only handler?
 
-#warning "Not implemented"
+    // struct bsi_input_keyboard* bsi_input_keyboard =
+    // wl_container_of(listener, bsi_input_keyboard, events.repeat_info);
+    struct wlr_keyboard* keyboard = data;
+
+    /* Consent to keyboard repeat settings. */
+    wlr_keyboard_set_repeat_info(
+        keyboard, keyboard->repeat_info.rate, keyboard->repeat_info.delay);
 }
 
 // TODO: A pointer destroy listener? Idk why a keyboard has one, pointer not. Or
-// should just everything be handled when a destroy events comes from
+// should just everything be handled when a destroy event comes from
 // wlr_input_device?
 
 void

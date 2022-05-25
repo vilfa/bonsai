@@ -2,10 +2,10 @@
 
 #include <wayland-util.h>
 
-#include "bonsai/config/output.h"
-#include "bonsai/desktop/view.h"
-
 struct bsi_server;
+struct bsi_output;
+
+#include "bonsai/desktop/view.h"
 
 /**
  * @brief Holds all workspaces that belong to the server.
@@ -26,12 +26,11 @@ struct bsi_workspaces
 struct bsi_workspace
 {
     struct bsi_server* bsi_server;
-    // TODO: Workspace spans outputs.
-    struct bsi_output* bsi_output; /* Workspace spans outputs. */
+    struct bsi_output* bsi_output; /* Workspace belongs to a single output. */
 
     size_t id;   /* Incremental id. */
     char* name;  /* User given name. */
-    bool active; /* A single workspace can be active at one time. */
+    bool active; /* A single workspace can be active at one time per output. */
 
     // TODO: Figure this out.
     size_t len_views;
@@ -109,6 +108,9 @@ bsi_workspace_init(struct bsi_workspace* bsi_workspace,
  */
 void
 bsi_workspace_destroy(struct bsi_workspace* bsi_workspace);
+
+size_t
+bsi_workspace_get_global_id(struct bsi_workspace* bsi_workspace);
 
 /**
  * @brief Sets the workspace active state. Only a single workspace should be
