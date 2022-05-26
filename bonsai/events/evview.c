@@ -12,6 +12,8 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 
+struct bsi_view;
+
 #include "bonsai/desktop/view.h"
 #include "bonsai/desktop/workspace.h"
 #include "bonsai/events.h"
@@ -29,11 +31,11 @@ bsi_view_destroy_xdg_surface_notify(struct wl_listener* listener,
 #endif
 
     struct bsi_view* bsi_view =
-        wl_container_of(listener, bsi_view, events.destroy_xdg_surface);
+        wl_container_of(listener, bsi_view, listen.destroy_xdg_surface);
     struct bsi_views* bsi_views = &bsi_view->bsi_server->bsi_views;
     struct bsi_workspace* bsi_workspace = bsi_view->bsi_workspace;
 
-    bsi_view_listener_unlink_all(bsi_view);
+    bsi_view_finish(bsi_view);
     bsi_views_remove(bsi_views, bsi_view);
     bsi_workspace_view_remove(bsi_workspace, bsi_view);
 
@@ -56,9 +58,9 @@ bsi_view_destroy_scene_node_notify(struct wl_listener* listener,
 #endif
 
     struct bsi_view* bsi_view =
-        wl_container_of(listener, bsi_view, events.destroy_scene_node);
+        wl_container_of(listener, bsi_view, listen.destroy_scene_node);
 
-    bsi_view_listener_unlink_all(bsi_view);
+    bsi_view_finish(bsi_view);
     /* Should also work if e.g. you close a window on another workspace with
      * kill. */
     bsi_workspace_view_remove(bsi_view->bsi_workspace, bsi_view);
@@ -91,7 +93,7 @@ bsi_view_map_notify(struct wl_listener* listener, void* data)
     wlr_log(WLR_DEBUG, "Got event map from wlr_xdg_surface");
 #endif
 
-    struct bsi_view* bsi_view = wl_container_of(listener, bsi_view, events.map);
+    struct bsi_view* bsi_view = wl_container_of(listener, bsi_view, listen.map);
     struct bsi_views* bsi_views = &bsi_view->bsi_server->bsi_views;
     struct wlr_xdg_surface* wlr_xdg_surface = data;
 
@@ -128,7 +130,7 @@ bsi_view_unmap_notify(struct wl_listener* listener,
 #endif
 
     struct bsi_view* bsi_view =
-        wl_container_of(listener, bsi_view, events.unmap);
+        wl_container_of(listener, bsi_view, listen.unmap);
     struct bsi_views* bsi_views = &bsi_view->bsi_server->bsi_views;
 
     bsi_view->mapped = false;
@@ -165,7 +167,7 @@ bsi_view_request_maximize_notify(struct wl_listener* listener, void* data)
     // https://gitlab.freedesktop.org/wlroots/wlr-protocols/-/blob/master/unstable/wlr-layer-shell-unstable-v1.xml
 
     struct bsi_view* bsi_view =
-        wl_container_of(listener, bsi_view, events.request_maximize);
+        wl_container_of(listener, bsi_view, listen.request_maximize);
     struct wlr_xdg_surface* surface = data;
 
     /* I'm not sure if this is necessary, only a toplevel surface should be
@@ -190,7 +192,7 @@ bsi_view_request_fullscreen_notify(struct wl_listener* listener, void* data)
 #endif
 
     struct bsi_view* bsi_view =
-        wl_container_of(listener, bsi_view, events.request_fullscreen);
+        wl_container_of(listener, bsi_view, listen.request_fullscreen);
     /* Only a toplevel surface can request fullscreen. */
     struct wlr_xdg_toplevel_set_fullscreen_event* event = data;
 
@@ -207,7 +209,7 @@ bsi_view_request_minimize_notify(struct wl_listener* listener, void* data)
 #endif
 
     struct bsi_view* bsi_view =
-        wl_container_of(listener, bsi_view, events.request_minimize);
+        wl_container_of(listener, bsi_view, listen.request_minimize);
     struct bsi_views* bsi_views = &bsi_view->bsi_server->bsi_views;
     struct wlr_xdg_surface* surface = data;
 
@@ -234,7 +236,7 @@ bsi_view_request_move_notify(struct wl_listener* listener, void* data)
     /* The user would like to begin an interactive move operation. This is
      * raised when a user clicks on the client side decorations. */
     struct bsi_view* bsi_view =
-        wl_container_of(listener, bsi_view, events.request_move);
+        wl_container_of(listener, bsi_view, listen.request_move);
     struct wlr_xdg_toplevel_move_event* event = data;
 
     if (wlr_seat_client_validate_event_serial(event->seat, event->serial)) {
@@ -256,7 +258,7 @@ bsi_view_request_resize_notify(struct wl_listener* listener, void* data)
     /* The user would like to begin an interactive resize operation. This is
      * raised when a use clicks on the client side decorations. */
     struct bsi_view* bsi_view =
-        wl_container_of(listener, bsi_view, events.request_resize);
+        wl_container_of(listener, bsi_view, listen.request_resize);
     struct wlr_xdg_toplevel_resize_event* event = data;
 
     if (wlr_seat_client_validate_event_serial(event->seat, event->serial)) {
@@ -278,7 +280,7 @@ bsi_view_request_show_window_menu_notify(struct wl_listener* listener,
 #endif
 
     struct bsi_view* bsi_view =
-        wl_container_of(listener, bsi_view, events.request_show_window_menu);
+        wl_container_of(listener, bsi_view, listen.request_show_window_menu);
     struct wlr_xdg_toplevel_show_window_menu_event* event = data;
 
     if (wlr_seat_client_validate_event_serial(event->seat, event->serial)) {
@@ -304,7 +306,7 @@ bsi_view_set_parent_notify(struct wl_listener* listener, void* data)
 #endif
 
     struct bsi_view* bsi_view =
-        wl_container_of(listener, bsi_view, events.set_parent);
+        wl_container_of(listener, bsi_view, listen.set_parent);
     struct wlr_xdg_surface* wlr_xdg_surface = data;
 
     // TODO: This causes a crash :(.
@@ -321,7 +323,7 @@ bsi_view_set_title_notify(struct wl_listener* listener, void* data)
 #endif
 
     struct bsi_view* bsi_view =
-        wl_container_of(listener, bsi_view, events.set_parent);
+        wl_container_of(listener, bsi_view, listen.set_parent);
     struct wlr_xdg_surface* wlr_xdg_surface = data;
 
     if (wlr_xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL)
@@ -338,7 +340,7 @@ bsi_view_set_app_id_notify(struct wl_listener* listener, void* data)
 #endif
 
     struct bsi_view* bsi_view =
-        wl_container_of(listener, bsi_view, events.set_app_id);
+        wl_container_of(listener, bsi_view, listen.set_app_id);
     struct wlr_xdg_surface* wlr_xdg_surface = data;
 
     if (wlr_xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL)

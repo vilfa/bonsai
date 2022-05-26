@@ -12,41 +12,11 @@
  */
 struct bsi_views
 {
+    struct bsi_server* bsi_server;
+
     size_t len;
     struct wl_list views;
 };
-
-/**
- * @brief Holds all possible active listener types for `bsi_view`.
- *
- */
-enum bsi_view_listener_mask
-{
-    /* wlr_xdg_surface */
-    BSI_VIEW_LISTENER_DESTROY_XDG_SURFACE = 1 << 0,
-    BSI_VIEW_LISTENER_PING_TIMEOUT = 1 << 1,
-    BSI_VIEW_LISTENER_NEW_POPUP = 1 << 2,
-    BSI_VIEW_LISTENER_MAP = 1 << 3,
-    BSI_VIEW_LISTENER_UNMAP = 1 << 4,
-    BSI_VIEW_LISTENER_CONFIGURE = 1 << 5,
-    BSI_VIEW_LISTENER_ACK_CONFIGURE = 1 << 6,
-    /* wlr_xdg_toplevel */
-    BSI_VIEW_LISTENER_REQUEST_MAXIMIZE = 1 << 7,
-    BSI_VIEW_LISTENER_REQUEST_FULLSCREEN = 1 << 8,
-    BSI_VIEW_LISTENER_REQUEST_MINIMIZE = 1 << 9,
-    BSI_VIEW_LISTENER_REQUEST_MOVE = 1 << 10,
-    BSI_VIEW_LISTENER_REQUEST_RESIZE = 1 << 11,
-    BSI_VIEW_LISTENER_REQUEST_SHOW_WINDOW_MENU = 1 << 12,
-    BSI_VIEW_LISTENER_SET_PARENT = 1 << 13,
-    BSI_VIEW_LISTENER_SET_TITLE = 1 << 14,
-    BSI_VIEW_LISTENER_SET_APP_ID = 1 << 15,
-    /* wlr_scene_node */
-    BSI_VIEW_LISTENER_DESTROY_SCENE_NODE = 1 << 16,
-    /* bsi_workspaces */
-    BSI_VIEW_LISTENER_ACTIVE_WORKSPACE = 1 << 17,
-};
-
-#define bsi_view_listener_len 18
 
 /**
  * @brief Represents all surfaces of a single application.
@@ -72,9 +42,7 @@ struct bsi_view
     double x, y;
     uint32_t width, height;
 
-    uint32_t active_listeners;
-    struct wl_list* active_links[bsi_view_listener_len];
-    size_t len_active_links;
+    size_t len_active_listen;
     struct
     {
         /* wlr_xdg_surface */
@@ -99,7 +67,7 @@ struct bsi_view
         struct wl_listener destroy_scene_node;
         /* bsi_workspaces */
         struct wl_listener active_workspace;
-    } events;
+    } listen;
 
     struct wl_list link;
     struct wl_list link_workspace;
@@ -112,7 +80,7 @@ struct bsi_view
  * @return struct bsi_views* The initialized views.
  */
 struct bsi_views*
-bsi_views_init(struct bsi_views* bsi_views);
+bsi_views_init(struct bsi_views* bsi_views, struct bsi_server* bsi_server);
 
 /**
  * @brief Adds a view to the server views.
@@ -145,6 +113,14 @@ bsi_view_init(struct bsi_view* bsi_view,
               struct bsi_server* bsi_server,
               struct wlr_xdg_surface* wlr_xdg_surface,
               struct bsi_workspace* bsi_workspace);
+
+/**
+ * @brief Unlinks all active listeners from a `bsi_view`.
+ *
+ * @param bsi_view The view.
+ */
+void
+bsi_view_finish(struct bsi_view* bsi_view);
 
 /**
  * @brief Destroys (calls `free`) on the passed view.
@@ -217,15 +193,6 @@ bsi_view_restore_prev(struct bsi_view* bsi_view);
  */
 void
 bsi_view_listener_add(struct bsi_view* bsi_view,
-                      enum bsi_view_listener_mask bsi_listener_type,
                       struct wl_listener* bsi_listener_memb,
                       struct wl_signal* bsi_signal_memb,
                       wl_notify_func_t func);
-
-/**
- * @brief Unlinks all active listeners from a `bsi_view`.
- *
- * @param bsi_view The view.
- */
-void
-bsi_view_listener_unlink_all(struct bsi_view* bsi_view);

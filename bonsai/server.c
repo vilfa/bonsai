@@ -11,7 +11,7 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 
-#include "bonsai/config/signal.h"
+#include "bonsai/config/global.h"
 #include "bonsai/events.h"
 #include "bonsai/server.h"
 
@@ -103,117 +103,117 @@ bsi_server_init(struct bsi_server* bsi_server)
     bsi_server->bsi_outputs = bsi_outputs;
 
     struct bsi_inputs bsi_inputs;
-    bsi_inputs_init(&bsi_inputs, bsi_server->wlr_seat);
+    bsi_inputs_init(&bsi_inputs, bsi_server);
     bsi_server->bsi_inputs = bsi_inputs;
 
     struct bsi_views bsi_views;
-    bsi_views_init(&bsi_views);
+    bsi_views_init(&bsi_views, bsi_server);
     bsi_server->bsi_views = bsi_views;
 
     struct bsi_cursor bsi_cursor;
     bsi_cursor_init(&bsi_cursor, bsi_server);
     bsi_server->bsi_cursor = bsi_cursor;
 
-    struct bsi_listeners bsi_listeners;
-    bsi_listeners_init(&bsi_listeners);
-    bsi_server->bsi_listeners = bsi_listeners;
+    struct bsi_listeners_global bsi_listeners;
+    bsi_listeners_global_init(&bsi_listeners);
+    bsi_server->bsi_listeners_global = bsi_listeners;
 
-    bsi_listeners_add(&bsi_server->bsi_listeners,
-                      BSI_LISTENERS_BACKEND_NEW_OUTPUT,
-                      &bsi_server->bsi_listeners.wlr_backend.new_output,
-                      &bsi_server->wlr_backend->events.new_output,
-                      bsi_listeners_backend_new_output_notify);
-    bsi_listeners_add(&bsi_server->bsi_listeners,
-                      BSI_LISTENERS_BACKEND_NEW_INPUT,
-                      &bsi_server->bsi_listeners.wlr_backend.new_input,
-                      &bsi_server->wlr_backend->events.new_input,
-                      bsi_listeners_backend_new_input_notify);
-    bsi_listeners_add(&bsi_server->bsi_listeners,
-                      BSI_LISTENERS_BACKEND_DESTROY,
-                      &bsi_server->bsi_listeners.wlr_backend.destroy,
-                      &bsi_server->wlr_backend->events.destroy,
-                      bsi_listeners_backend_destroy_notify);
-    bsi_listeners_add(&bsi_server->bsi_listeners,
-                      BSI_LISTENERS_SEAT_POINTER_GRAB_BEGIN,
-                      &bsi_server->bsi_listeners.wlr_seat.pointer_grab_begin,
-                      &bsi_server->wlr_seat->events.pointer_grab_begin,
-                      bsi_listeners_seat_pointer_grab_begin_notify);
-    bsi_listeners_add(&bsi_server->bsi_listeners,
-                      BSI_LISTENERS_SEAT_POINTER_GRAB_END,
-                      &bsi_server->bsi_listeners.wlr_seat.pointer_grab_end,
-                      &bsi_server->wlr_seat->events.pointer_grab_end,
-                      bsi_listeners_seat_pointer_grab_end_notify);
-    bsi_listeners_add(&bsi_server->bsi_listeners,
-                      BSI_LISTENERS_SEAT_KEYBOARD_GRAB_BEGIN,
-                      &bsi_server->bsi_listeners.wlr_seat.keyboard_grab_begin,
-                      &bsi_server->wlr_seat->events.keyboard_grab_begin,
-                      bsi_listeners_seat_keyboard_grab_begin_notify);
-    bsi_listeners_add(&bsi_server->bsi_listeners,
-                      BSI_LISTENERS_SEAT_KEYBOARD_GRAB_END,
-                      &bsi_server->bsi_listeners.wlr_seat.keyboard_grab_end,
-                      &bsi_server->wlr_seat->events.keyboard_grab_end,
-                      bsi_listeners_seat_keyboard_grab_end_notify);
-    bsi_listeners_add(&bsi_server->bsi_listeners,
-                      BSI_LISTENERS_SEAT_TOUCH_GRAB_BEGIN,
-                      &bsi_server->bsi_listeners.wlr_seat.touch_grab_begin,
-                      &bsi_server->wlr_seat->events.touch_grab_begin,
-                      bsi_listeners_seat_touch_grab_begin_notify);
-    bsi_listeners_add(&bsi_server->bsi_listeners,
-                      BSI_LISTENERS_SEAT_TOUCH_GRAB_END,
-                      &bsi_server->bsi_listeners.wlr_seat.touch_grab_end,
-                      &bsi_server->wlr_seat->events.touch_grab_end,
-                      bsi_listeners_seat_touch_grab_end_notify);
-    bsi_listeners_add(&bsi_server->bsi_listeners,
-                      BSI_LISTENERS_SEAT_REQUEST_SET_CURSOR,
-                      &bsi_server->bsi_listeners.wlr_seat.request_set_cursor,
-                      &bsi_server->wlr_seat->events.request_set_cursor,
-                      bsi_listeners_seat_request_set_cursor_notify);
-    bsi_listeners_add(&bsi_server->bsi_listeners,
-                      BSI_LISTENERS_SEAT_REQUEST_SET_SELECTION,
-                      &bsi_server->bsi_listeners.wlr_seat.request_set_selection,
-                      &bsi_server->wlr_seat->events.request_set_selection,
-                      bsi_listeners_seat_request_set_selection_notify);
-    bsi_listeners_add(&bsi_server->bsi_listeners,
-                      BSI_LISTENERS_SEAT_SET_SELECTION,
-                      &bsi_server->bsi_listeners.wlr_seat.set_selection,
-                      &bsi_server->wlr_seat->events.set_selection,
-                      bsi_listeners_seat_set_selection_notify);
-    bsi_listeners_add(
-        &bsi_server->bsi_listeners,
-        BSI_LISTENERS_SEAT_REQUEST_SET_PRIMARY_SELECTION,
-        &bsi_server->bsi_listeners.wlr_seat.request_set_primary_selection,
+    bsi_listeners_global_add(
+        &bsi_server->bsi_listeners_global,
+        &bsi_server->bsi_listeners_global.listen.wlr_backend_new_output,
+        &bsi_server->wlr_backend->events.new_output,
+        bsi_global_backend_new_output_notify);
+    bsi_listeners_global_add(
+        &bsi_server->bsi_listeners_global,
+        &bsi_server->bsi_listeners_global.listen.wlr_backend_new_input,
+        &bsi_server->wlr_backend->events.new_input,
+        bsi_global_backend_new_input_notify);
+    bsi_listeners_global_add(
+        &bsi_server->bsi_listeners_global,
+        &bsi_server->bsi_listeners_global.listen.wlr_backend_destroy,
+        &bsi_server->wlr_backend->events.destroy,
+        bsi_global_backend_destroy_notify);
+    bsi_listeners_global_add(
+        &bsi_server->bsi_listeners_global,
+        &bsi_server->bsi_listeners_global.listen.wlr_seat_pointer_grab_begin,
+        &bsi_server->wlr_seat->events.pointer_grab_begin,
+        bsi_global_seat_pointer_grab_begin_notify);
+    bsi_listeners_global_add(
+        &bsi_server->bsi_listeners_global,
+        &bsi_server->bsi_listeners_global.listen.wlr_seat_pointer_grab_end,
+        &bsi_server->wlr_seat->events.pointer_grab_end,
+        bsi_global_seat_pointer_grab_end_notify);
+    bsi_listeners_global_add(
+        &bsi_server->bsi_listeners_global,
+        &bsi_server->bsi_listeners_global.listen.wlr_seat_keyboard_grab_begin,
+        &bsi_server->wlr_seat->events.keyboard_grab_begin,
+        bsi_global_seat_keyboard_grab_begin_notify);
+    bsi_listeners_global_add(
+        &bsi_server->bsi_listeners_global,
+        &bsi_server->bsi_listeners_global.listen.wlr_seat_keyboard_grab_end,
+        &bsi_server->wlr_seat->events.keyboard_grab_end,
+        bsi_global_seat_keyboard_grab_end_notify);
+    bsi_listeners_global_add(
+        &bsi_server->bsi_listeners_global,
+        &bsi_server->bsi_listeners_global.listen.wlr_seat_touch_grab_begin,
+        &bsi_server->wlr_seat->events.touch_grab_begin,
+        bsi_global_seat_touch_grab_begin_notify);
+    bsi_listeners_global_add(
+        &bsi_server->bsi_listeners_global,
+        &bsi_server->bsi_listeners_global.listen.wlr_seat_touch_grab_end,
+        &bsi_server->wlr_seat->events.touch_grab_end,
+        bsi_global_seat_touch_grab_end_notify);
+    bsi_listeners_global_add(
+        &bsi_server->bsi_listeners_global,
+        &bsi_server->bsi_listeners_global.listen.wlr_seat_request_set_cursor,
+        &bsi_server->wlr_seat->events.request_set_cursor,
+        bsi_global_seat_request_set_cursor_notify);
+    bsi_listeners_global_add(
+        &bsi_server->bsi_listeners_global,
+        &bsi_server->bsi_listeners_global.listen.wlr_seat_request_set_selection,
+        &bsi_server->wlr_seat->events.request_set_selection,
+        bsi_global_seat_request_set_selection_notify);
+    bsi_listeners_global_add(
+        &bsi_server->bsi_listeners_global,
+        &bsi_server->bsi_listeners_global.listen.wlr_seat_set_selection,
+        &bsi_server->wlr_seat->events.set_selection,
+        bsi_global_seat_set_selection_notify);
+    bsi_listeners_global_add(
+        &bsi_server->bsi_listeners_global,
+        &bsi_server->bsi_listeners_global.listen
+             .wlr_seat_request_set_primary_selection,
         &bsi_server->wlr_seat->events.request_set_primary_selection,
-        bsi_listeners_seat_request_set_primary_selection_notify);
-    bsi_listeners_add(&bsi_server->bsi_listeners,
-                      BSI_LISTENERS_SEAT_SET_PRIMARY_SELECTION,
-                      &bsi_server->bsi_listeners.wlr_seat.set_primary_selection,
-                      &bsi_server->wlr_seat->events.set_primary_selection,
-                      bsi_listeners_seat_set_primary_selection_notify);
-    bsi_listeners_add(&bsi_server->bsi_listeners,
-                      BSI_LISTENERS_SEAT_REQUEST_START_DRAG,
-                      &bsi_server->bsi_listeners.wlr_seat.request_start_drag,
-                      &bsi_server->wlr_seat->events.request_start_drag,
-                      bsi_listeners_seat_request_start_drag_notify);
-    bsi_listeners_add(&bsi_server->bsi_listeners,
-                      BSI_LISTENERS_SEAT_START_DRAG,
-                      &bsi_server->bsi_listeners.wlr_seat.start_drag,
-                      &bsi_server->wlr_seat->events.start_drag,
-                      bsi_listeners_seat_start_drag_notify);
-    bsi_listeners_add(&bsi_server->bsi_listeners,
-                      BSI_LISTENERS_SEAT_DESTROY,
-                      &bsi_server->bsi_listeners.wlr_seat.destroy,
-                      &bsi_server->wlr_seat->events.destroy,
-                      bsi_listeners_seat_destroy_notify);
-    bsi_listeners_add(&bsi_server->bsi_listeners,
-                      BSI_LISTENERS_XDG_SHELL_NEW_SURFACE,
-                      &bsi_server->bsi_listeners.wlr_xdg_shell.new_surface,
-                      &bsi_server->wlr_xdg_shell->events.new_surface,
-                      bsi_listeners_xdg_shell_new_surface_notify);
-    bsi_listeners_add(&bsi_server->bsi_listeners,
-                      BSI_LISTENERS_XDG_SHELL_DESTROY,
-                      &bsi_server->bsi_listeners.wlr_xdg_shell.destroy,
-                      &bsi_server->wlr_xdg_shell->events.destroy,
-                      bsi_listeners_xdg_shell_destroy_notify);
+        bsi_global_seat_request_set_primary_selection_notify);
+    bsi_listeners_global_add(
+        &bsi_server->bsi_listeners_global,
+        &bsi_server->bsi_listeners_global.listen.wlr_seat_set_primary_selection,
+        &bsi_server->wlr_seat->events.set_primary_selection,
+        bsi_global_seat_set_primary_selection_notify);
+    bsi_listeners_global_add(
+        &bsi_server->bsi_listeners_global,
+        &bsi_server->bsi_listeners_global.listen.wlr_seat_request_start_drag,
+        &bsi_server->wlr_seat->events.request_start_drag,
+        bsi_global_seat_request_start_drag_notify);
+    bsi_listeners_global_add(
+        &bsi_server->bsi_listeners_global,
+        &bsi_server->bsi_listeners_global.listen.wlr_seat_start_drag,
+        &bsi_server->wlr_seat->events.start_drag,
+        bsi_global_seat_start_drag_notify);
+    bsi_listeners_global_add(
+        &bsi_server->bsi_listeners_global,
+        &bsi_server->bsi_listeners_global.listen.wlr_seat_destroy,
+        &bsi_server->wlr_seat->events.destroy,
+        bsi_global_seat_destroy_notify);
+    bsi_listeners_global_add(
+        &bsi_server->bsi_listeners_global,
+        &bsi_server->bsi_listeners_global.listen.wlr_xdg_shell_new_surface,
+        &bsi_server->wlr_xdg_shell->events.new_surface,
+        bsi_global_xdg_shell_new_surface_notify);
+    bsi_listeners_global_add(
+        &bsi_server->bsi_listeners_global,
+        &bsi_server->bsi_listeners_global.listen.wlr_xdg_shell_destroy,
+        &bsi_server->wlr_xdg_shell->events.destroy,
+        bsi_global_xdg_shell_destroy_notify);
 
     return bsi_server;
 }

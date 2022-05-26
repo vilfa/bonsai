@@ -22,9 +22,9 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 
+#include "bonsai/config/global.h"
 #include "bonsai/config/input.h"
 #include "bonsai/config/output.h"
-#include "bonsai/config/signal.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/events.h"
 #include "bonsai/input/cursor.h"

@@ -15,6 +15,7 @@
  */
 struct bsi_inputs
 {
+    struct bsi_server* bsi_server;
     struct wlr_seat* wlr_seat;
 
     size_t len_pointers;
@@ -23,29 +24,6 @@ struct bsi_inputs
     size_t len_keyboards;
     struct wl_list keyboards;
 };
-
-/**
- * @brief Holds all possible listener types for `bsi_input_pointer`.
- *
- */
-enum bsi_input_pointer_listener_mask
-{
-    BSI_INPUT_POINTER_LISTENER_MOTION = 1 << 0,
-    BSI_INPUT_POINTER_LISTENER_MOTION_ABSOLUTE = 1 << 1,
-    BSI_INPUT_POINTER_LISTENER_BUTTON = 1 << 2,
-    BSI_INPUT_POINTER_LISTENER_AXIS = 1 << 3,
-    BSI_INPUT_POINTER_LISTENER_FRAME = 1 << 4,
-    BSI_INPUT_POINTER_LISTENER_SWIPE_BEGIN = 1 << 5,
-    BSI_INPUT_POINTER_LISTENER_SWIPE_UPDATE = 1 << 6,
-    BSI_INPUT_POINTER_LISTENER_SWIPE_END = 1 << 7,
-    BSI_INPUT_POINTER_LISTENER_PINCH_BEGIN = 1 << 8,
-    BSI_INPUT_POINTER_LISTENER_PINCH_UPDATE = 1 << 9,
-    BSI_INPUT_POINTER_LISTENER_PINCH_END = 1 << 10,
-    BSI_INPUT_POINTER_LISTENER_HOLD_BEGIN = 1 << 11,
-    BSI_INPUT_POINTER_LISTENER_HOLD_END = 1 << 12,
-};
-
-#define bsi_input_pointer_listener_len 13
 
 /**
  * @brief Holds a single input pointer and its event listeners.
@@ -57,9 +35,8 @@ struct bsi_input_pointer
     struct wlr_cursor* wlr_cursor;
     struct wlr_input_device* wlr_input_device;
 
-    uint32_t active_listeners;
-    struct wl_list* active_links[bsi_input_pointer_listener_len];
-    size_t len_active_links;
+    // TODO: What is actually necessary here?
+    size_t len_active_listen;
     struct
     {
         struct wl_listener motion;
@@ -75,25 +52,10 @@ struct bsi_input_pointer
         struct wl_listener pinch_end;
         struct wl_listener hold_begin;
         struct wl_listener hold_end;
-    } events;
+    } listen;
 
     struct wl_list link;
 };
-
-/**
- * @brief Holds all possible listener types for `bsi_input_keyboard`.
- *
- */
-enum bsi_input_keyboard_listener_mask
-{
-    BSI_INPUT_KEYBOARD_LISTENER_KEY = 1 << 0,
-    BSI_INPUT_KEYBOARD_LISTENER_MODIFIERS = 1 << 1,
-    BSI_INPUT_KEYBOARD_LISTENER_KEYMAP = 1 << 2,
-    BSI_INPUT_KEYBOARD_LISTENER_REPEAT_INFO = 1 << 3,
-    BSI_INPUT_KEYBOARD_LISTENER_DESTROY = 1 << 4,
-};
-
-#define bsi_input_keyboard_listener_len 5
 
 /**
  * @brief Holds a single input keyboard and its event listeners.
@@ -104,8 +66,7 @@ struct bsi_input_keyboard
     struct bsi_server* bsi_server;
     struct wlr_input_device* wlr_input_device;
 
-    uint32_t active_listeners;
-    struct wl_list* active_links[bsi_input_keyboard_listener_len];
+    struct wl_list active_links;
     size_t len_active_links;
     struct
     {
@@ -114,7 +75,7 @@ struct bsi_input_keyboard
         struct wl_listener keymap;
         struct wl_listener repeat_info;
         struct wl_listener destroy;
-    } events;
+    } listen;
 
     struct wl_list link;
 };
@@ -166,11 +127,11 @@ static const struct xkb_rule_names bsi_input_keyboard_rules[] = {
  * @brief Initializes inputs for the given server seat.
  *
  * @param bsi_inputs Pointer to bsi_inputs server struct.
- * @param wlr_seat Pointer to the server seat.
+ * @param bsi_server Pointer to the server.
  * @return struct bsi_inputs* Pointer to initialized server seat.
  */
 struct bsi_inputs*
-bsi_inputs_init(struct bsi_inputs* bsi_inputs, struct wlr_seat* wlr_seat);
+bsi_inputs_init(struct bsi_inputs* bsi_inputs, struct bsi_server* bsi_server);
 
 /**
  * @brief Adds a pointer to the server inputs.
@@ -228,6 +189,14 @@ bsi_input_pointer_init(struct bsi_input_pointer* bsi_input_pointer,
                        struct wlr_input_device* wlr_input_device);
 
 /**
+ * @brief Unlinks all active listeners for the specified `bsi_input_pointer`.
+ *
+ * @param bsi_input_pointer The input pointer.
+ */
+void
+bsi_input_pointer_finish(struct bsi_input_pointer* bsi_input_pointer);
+
+/**
  * @brief Destroys (calls `free`) on the input pointer.
  *
  * @param bsi_input_pointer The input pointer to destroy.
@@ -248,21 +217,10 @@ bsi_input_pointer_destroy(struct bsi_input_pointer* bsi_input_pointer);
  * @param func The listener function.
  */
 void
-bsi_input_pointer_listener_add(
-    struct bsi_input_pointer* bsi_input_pointer,
-    enum bsi_input_pointer_listener_mask bsi_listener_type,
-    struct wl_listener* bsi_listener_memb,
-    struct wl_signal* bsi_signal_memb,
-    wl_notify_func_t func);
-
-/**
- * @brief Unlinks all active listeners for the specified `bsi_input_pointer`.
- *
- * @param bsi_input_pointer The input pointer.
- */
-void
-bsi_input_pointer_listeners_unlink_all(
-    struct bsi_input_pointer* bsi_input_pointer);
+bsi_input_pointer_listener_add(struct bsi_input_pointer* bsi_input_pointer,
+                               struct wl_listener* bsi_listener_memb,
+                               struct wl_signal* bsi_signal_memb,
+                               wl_notify_func_t func);
 
 /**
  * @brief Initializes a preallocated `bsi_input_keyboard`.
@@ -278,6 +236,22 @@ bsi_input_keyboard_init(struct bsi_input_keyboard* bsi_input_keyboard,
                         struct wlr_input_device* wlr_input_device);
 
 /**
+ * @brief Unlinks all active listeners for the specified `bsi_input_keyboard`.
+ *
+ * @param bsi_input_keyboard The input keyboard.
+ */
+void
+bsi_input_keyboard_finish(struct bsi_input_keyboard* bsi_input_keyboard);
+
+/**
+ * @brief Destroys (calls `free`) on the keyboard.
+ *
+ * @param bsi_input_keyboard The keyboard to destroy.
+ */
+void
+bsi_input_keyboard_destroy(struct bsi_input_keyboard* bsi_input_keyboard);
+
+/**
  * @brief Gets a keymap from the xkb context and sets it for the specified
  * keyboard.
  *
@@ -288,14 +262,6 @@ void
 bsi_input_keyboard_keymap_set(struct bsi_input_keyboard* bsi_input_keyboard,
                               const struct xkb_rule_names* xkb_rule_names,
                               const size_t xkb_rule_names_len);
-
-/**
- * @brief Destroys (calls `free`) on the keyboard.
- *
- * @param bsi_input_keyboard The keyboard to destroy.
- */
-void
-bsi_input_keyboard_destroy(struct bsi_input_keyboard* bsi_input_keyboard);
 
 /**
  * @brief Adds a listener `func` for the specified member of the
@@ -310,18 +276,7 @@ bsi_input_keyboard_destroy(struct bsi_input_keyboard* bsi_input_keyboard);
  * @param func The listener function.
  */
 void
-bsi_input_keyboard_listener_add(
-    struct bsi_input_keyboard* bsi_input_keyboard,
-    enum bsi_input_keyboard_listener_mask bsi_listener_type,
-    struct wl_listener* bsi_listener_memb,
-    struct wl_signal* bsi_signal_memb,
-    wl_notify_func_t func);
-
-/**
- * @brief Unlinks all active listeners for the specified `bsi_input_keyboard`.
- *
- * @param bsi_input_keyboard The input keyboard.
- */
-void
-bsi_input_keyboard_listeners_unlink_all(
-    struct bsi_input_keyboard* bsi_input_keyboard);
+bsi_input_keyboard_listener_add(struct bsi_input_keyboard* bsi_input_keyboard,
+                                struct wl_listener* bsi_listener_memb,
+                                struct wl_signal* bsi_signal_memb,
+                                wl_notify_func_t func);

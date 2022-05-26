@@ -11,11 +11,14 @@
 #include "bonsai/util.h"
 
 struct bsi_workspaces*
-bsi_workspaces_init(struct bsi_workspaces* bsi_workspaces)
+bsi_workspaces_init(struct bsi_workspaces* bsi_workspaces,
+                    struct bsi_server* bsi_server)
 {
     assert(bsi_workspaces);
+    assert(bsi_server);
 
     bsi_workspaces->len = 0;
+    bsi_workspaces->bsi_server = bsi_server;
     wl_list_init(&bsi_workspaces->workspaces);
 
     return bsi_workspaces;
@@ -112,7 +115,7 @@ bsi_workspace_init(struct bsi_workspace* bsi_workspace,
 
     bsi_workspace->len_views = 0;
     wl_list_init(&bsi_workspace->views);
-    wl_signal_init(&bsi_workspace->events.active);
+    wl_signal_init(&bsi_workspace->signal.active);
 
     return bsi_workspace;
 }
@@ -144,7 +147,7 @@ bsi_workspace_set_active(struct bsi_workspace* bsi_workspace, bool active)
     assert(bsi_workspace);
 
     bsi_workspace->active = active;
-    wl_signal_emit(&bsi_workspace->events.active, bsi_workspace);
+    wl_signal_emit(&bsi_workspace->signal.active, bsi_workspace);
 }
 
 void

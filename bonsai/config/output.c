@@ -8,7 +8,8 @@
 #include <wlr/types/wlr_output.h>
 
 #include "bonsai/config/output.h"
-#include "bonsai/desktop/layer.h"
+#include "bonsai/desktop/layer-shell.h"
+#include "bonsai/desktop/view.h"
 #include "bonsai/desktop/workspace.h"
 #include "bonsai/server.h"
 #include "bonsai/util.h"
@@ -45,7 +46,7 @@ bsi_outputs_remove(struct bsi_outputs* bsi_outputs,
 
     --bsi_outputs->len;
     wl_list_remove(&bsi_output->link);
-    bsi_output_listeners_unlink_all(bsi_output);
+    bsi_output_finish(bsi_output);
 }
 
 struct bsi_output*
@@ -86,8 +87,7 @@ bsi_output_init(struct bsi_output* bsi_output,
     assert(bsi_layers);
 
     bsi_output->id = bsi_server->bsi_outputs.len;
-    bsi_output->active_listeners = 0;
-    bsi_output->len_active_links = 0;
+    bsi_output->len_active_listen = 0;
     bsi_output->bsi_server = bsi_server;
     bsi_output->wlr_output = wlr_output;
     bsi_output->bsi_workspaces = bsi_workspaces;
@@ -100,17 +100,76 @@ bsi_output_init(struct bsi_output* bsi_output,
 }
 
 void
+bsi_output_finish(struct bsi_output* bsi_output)
+{
+    assert(bsi_output);
+
+    wl_list_remove(&bsi_output->listen.frame.link);
+    wl_list_remove(&bsi_output->listen.damage.link);
+    wl_list_remove(&bsi_output->listen.needs_frame.link);
+    wl_list_remove(&bsi_output->listen.precommit.link);
+    wl_list_remove(&bsi_output->listen.commit.link);
+    wl_list_remove(&bsi_output->listen.present.link);
+    wl_list_remove(&bsi_output->listen.bind.link);
+    wl_list_remove(&bsi_output->listen.enable.link);
+    wl_list_remove(&bsi_output->listen.mode.link);
+    wl_list_remove(&bsi_output->listen.description.link);
+    wl_list_remove(&bsi_output->listen.destroy.link);
+    bsi_output->len_active_listen = 0;
+}
+
+void
 bsi_output_destroy(struct bsi_output* bsi_output)
 {
     assert(bsi_output);
 
-    // TODO: Take care of workspaces and layers.
+    struct bsi_server* server = bsi_output->bsi_server;
+
+    if (server->bsi_outputs.len > 0) {
+        /* Move the views on all workspaces that belong to the destroyed output
+         * to the active workspace of the active output, or the first workspace
+         * of the first output.  */
+        struct bsi_output* next_output =
+            bsi_outputs_get_active(&server->bsi_outputs);
+        struct bsi_workspace* next_workspace =
+            bsi_workspaces_get_active(next_output->bsi_workspaces);
+
+        struct bsi_workspaces* output_workspaces = bsi_output->bsi_workspaces;
+        struct bsi_workspace *wspace, *wspace_tmp;
+        wl_list_for_each_safe(
+            wspace, wspace_tmp, &output_workspaces->workspaces, link)
+        {
+            struct bsi_view* view;
+            wl_list_for_each(view, &wspace->views, link)
+            {
+                bsi_workspace_view_move(wspace, next_workspace, view);
+            }
+            bsi_workspace_destroy(wspace);
+        }
+    } else {
+        /* Destroy everything, there are no more outputs. */
+        struct bsi_workspaces* output_workspaces = bsi_output->bsi_workspaces;
+
+        struct bsi_workspace *wspace, *wspace_tmp;
+        wl_list_for_each_safe(
+            wspace, wspace_tmp, &output_workspaces->workspaces, link)
+        {
+            struct bsi_view *view, *view_tmp;
+            wl_list_for_each_safe(view, view_tmp, &wspace->views, link)
+            {
+                bsi_view_destroy(view);
+            }
+            bsi_workspace_destroy(wspace);
+        }
+    }
+
+    // TODO: Take care of layers too.
+
     free(bsi_output);
 }
 
 void
 bsi_output_listener_add(struct bsi_output* bsi_output,
-                        enum bsi_output_listener_mask bsi_listener_type,
                         struct wl_listener* bsi_listener_memb,
                         struct wl_signal* bsi_signal_memb,
                         wl_notify_func_t func)
@@ -119,20 +178,6 @@ bsi_output_listener_add(struct bsi_output* bsi_output,
     assert(func);
 
     bsi_listener_memb->notify = func;
-    bsi_output->active_listeners |= bsi_listener_type;
-    bsi_output->active_links[bsi_output->len_active_links++] =
-        &bsi_listener_memb->link;
-
+    ++bsi_output->len_active_listen;
     wl_signal_add(bsi_signal_memb, bsi_listener_memb);
-}
-
-void
-bsi_output_listeners_unlink_all(struct bsi_output* bsi_output)
-{
-    assert(bsi_output);
-
-    for (size_t i = 0; i < bsi_output->len_active_links; ++i) {
-        if (bsi_output->active_links[i] != NULL)
-            wl_list_remove(bsi_output->active_links[i]);
-    }
 }

@@ -4,6 +4,7 @@
 
 struct bsi_server;
 struct bsi_output;
+struct bsi_view;
 
 #include "bonsai/desktop/view.h"
 
@@ -13,6 +14,7 @@ struct bsi_output;
  */
 struct bsi_workspaces
 {
+    struct bsi_server* bsi_server;
     // TODO: Maybe limiting the amount of workspaces isn't a bad idea?
     size_t len;
     struct wl_list workspaces;
@@ -39,7 +41,7 @@ struct bsi_workspace
     struct
     {
         struct wl_signal active;
-    } events;
+    } signal;
 
     struct wl_list link;
 };
@@ -51,7 +53,8 @@ struct bsi_workspace
  * @return struct bsi_workspaces* The initialized workspaces.
  */
 struct bsi_workspaces*
-bsi_workspaces_init(struct bsi_workspaces* bsi_workspaces);
+bsi_workspaces_init(struct bsi_workspaces* bsi_workspaces,
+                    struct bsi_server* bsi_server);
 
 /**
  * @brief Add a workspace to the workspaces. This will emit `active` events for
@@ -109,6 +112,12 @@ bsi_workspace_init(struct bsi_workspace* bsi_workspace,
 void
 bsi_workspace_destroy(struct bsi_workspace* bsi_workspace);
 
+/**
+ * @brief Computes a unique id for the workspace.
+ *
+ * @param bsi_workspace The workspace.
+ * @return size_t The unique global id.
+ */
 size_t
 bsi_workspace_get_global_id(struct bsi_workspace* bsi_workspace);
 

@@ -21,7 +21,7 @@ bsi_workspace_active_notify(struct wl_listener* listener, void* data)
 #endif
 
     struct bsi_view* bsi_view =
-        wl_container_of(listener, bsi_view, events.active_workspace);
+        wl_container_of(listener, bsi_view, listen.active_workspace);
     struct bsi_views* bsi_views = &bsi_view->bsi_server->bsi_views;
     struct bsi_workspace* bsi_workspace = data;
 

@@ -12,7 +12,7 @@ bonsai_src = files(
     
     'desktop/view.c',
     'desktop/workspace.c',
-    'desktop/layer.c',
+    'desktop/layer-shell.c',
 
     'events/evglobal.c',
     'events/evoutput.c',

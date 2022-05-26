@@ -8,7 +8,7 @@
 
 struct bsi_server;
 
-#include "bonsai/desktop/layer.h"
+#include "bonsai/desktop/layer-shell.h"
 #include "bonsai/desktop/workspace.h"
 
 /**
@@ -25,27 +25,6 @@ struct bsi_outputs
 };
 
 /**
- * @brief Holds all possible active listener types for `bsi_output`.
- *
- */
-enum bsi_output_listener_mask
-{
-    BSI_OUTPUT_LISTENER_FRAME = 1 << 0,
-    BSI_OUTPUT_LISTENER_DAMAGE = 1 << 1,
-    BSI_OUTPUT_LISTENER_NEEDS_FRAME = 1 << 2,
-    BSI_OUTPUT_LISTENER_PRECOMMIT = 1 << 3,
-    BSI_OUTPUT_LISTENER_COMMIT = 1 << 4,
-    BSI_OUTPUT_LISTENER_PRESENT = 1 << 5,
-    BSI_OUTPUT_LISTENER_BIND = 1 << 6,
-    BSI_OUTPUT_LISTENER_ENABLE = 1 << 7,
-    BSI_OUTPUT_LISTENER_MODE = 1 << 8,
-    BSI_OUTPUT_LISTENER_DESCRIPTION = 1 << 9,
-    BSI_OUTPUT_LISTENER_DESTROY = 1 << 10,
-};
-
-#define bsi_output_listener_len 11
-
-/**
  * @brief Represents a single output and its event listeners.
  *
  */
@@ -59,9 +38,7 @@ struct bsi_output
     struct bsi_workspaces* bsi_workspaces;
     struct bsi_layers* bsi_layers; /* wlr_layer_shell_v1 */
 
-    uint32_t active_listeners;
-    struct wl_list* active_links[bsi_output_listener_len];
-    size_t len_active_links;
+    size_t len_active_listen;
     struct
     {
         struct wl_listener frame;
@@ -75,7 +52,7 @@ struct bsi_output
         struct wl_listener mode;
         struct wl_listener description;
         struct wl_listener destroy;
-    } events;
+    } listen;
 
     struct wl_list link;
 };
@@ -130,6 +107,14 @@ bsi_output_init(struct bsi_output* bsi_output,
                 struct bsi_layers* bsi_layers);
 
 /**
+ * @brief Remove all active listeners from the specified `bsi_output`.
+ *
+ * @param bsi_output The output.
+ */
+void
+bsi_output_finish(struct bsi_output* bsi_output);
+
+/**
  * @brief Destroys (calls `free`) on an output.
  *
  * @param bsi_output The output.
@@ -151,15 +136,6 @@ bsi_output_destroy(struct bsi_output* bsi_output);
  */
 void
 bsi_output_listener_add(struct bsi_output* bsi_output,
-                        enum bsi_output_listener_mask bsi_listener_type,
                         struct wl_listener* bsi_listener_memb,
                         struct wl_signal* bsi_signal_memb,
                         wl_notify_func_t func);
-
-/**
- * @brief Remove all active listeners from the specified `bsi_output`.
- *
- * @param bsi_output The output.
- */
-void
-bsi_output_listeners_unlink_all(struct bsi_output* bsi_output);

@@ -1,8 +1,8 @@
 #pragma once
 
+#include "bonsai/config/global.h"
 #include "bonsai/config/input.h"
 #include "bonsai/config/output.h"
-#include "bonsai/config/signal.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/input/cursor.h"
 
@@ -29,10 +29,10 @@ struct bsi_server
     struct wlr_xcursor_manager* wlr_xcursor_manager;
 
     /* State */
+    struct bsi_listeners_global bsi_listeners_global;
     struct bsi_outputs bsi_outputs;
     struct bsi_inputs bsi_inputs;
     struct bsi_views bsi_views;
-    struct bsi_listeners bsi_listeners;
     struct bsi_cursor bsi_cursor;
 
     // TODO

@@ -31,7 +31,7 @@ bsi_input_pointer_motion_notify(struct wl_listener* listener, void* data)
 #endif
 
     struct bsi_input_pointer* bsi_input_pointer =
-        wl_container_of(listener, bsi_input_pointer, events.motion);
+        wl_container_of(listener, bsi_input_pointer, listen.motion);
     struct bsi_server* bsi_server = bsi_input_pointer->bsi_server;
     struct wlr_event_pointer_motion* event = data;
     union bsi_cursor_event bsi_cursor_event = { .motion = event };
@@ -55,7 +55,7 @@ bsi_input_pointer_motion_absolute_notify(struct wl_listener* listener,
 #endif
 
     struct bsi_input_pointer* bsi_input_pointer =
-        wl_container_of(listener, bsi_input_pointer, events.motion_absolute);
+        wl_container_of(listener, bsi_input_pointer, listen.motion_absolute);
     struct bsi_server* bsi_server = bsi_input_pointer->bsi_server;
     struct wlr_event_pointer_motion_absolute* event = data;
     union bsi_cursor_event bsi_cursor_event = { .motion_absolute = event };
@@ -81,7 +81,7 @@ bsi_input_pointer_button_notify(struct wl_listener* listener, void* data)
      * event. */
 
     struct bsi_input_pointer* bsi_input_pointer =
-        wl_container_of(listener, bsi_input_pointer, events.button);
+        wl_container_of(listener, bsi_input_pointer, listen.button);
     struct bsi_cursor* bsi_cursor = &bsi_input_pointer->bsi_server->bsi_cursor;
     struct wlr_seat* wlr_seat = bsi_input_pointer->bsi_server->wlr_seat;
     struct wlr_event_pointer_button* event = data;
@@ -119,7 +119,7 @@ bsi_input_pointer_axis_notify(struct wl_listener* listener, void* data)
 #endif
 
     struct bsi_input_pointer* bsi_input_pointer =
-        wl_container_of(listener, bsi_input_pointer, events.axis);
+        wl_container_of(listener, bsi_input_pointer, listen.axis);
     struct wlr_seat* wlr_seat = bsi_input_pointer->bsi_server->wlr_seat;
     struct wlr_event_pointer_axis* event = data;
 
@@ -141,7 +141,7 @@ bsi_input_pointer_frame_notify(struct wl_listener* listener,
 #endif
 
     struct bsi_input_pointer* bsi_input_pointer =
-        wl_container_of(listener, bsi_input_pointer, events.frame);
+        wl_container_of(listener, bsi_input_pointer, listen.frame);
     struct wlr_seat* wlr_seat = bsi_input_pointer->bsi_server->wlr_seat;
 
     /* Notify client that has pointer focus of the event. */
@@ -156,7 +156,7 @@ bsi_input_pointer_swipe_begin_notify(struct wl_listener* listener, void* data)
 #endif
 
     struct bsi_input_pointer* bsi_input_pointer =
-        wl_container_of(listener, bsi_input_pointer, events.swipe_begin);
+        wl_container_of(listener, bsi_input_pointer, listen.swipe_begin);
     struct wlr_seat* wlr_seat = bsi_input_pointer->bsi_server->wlr_seat;
     struct wlr_event_pointer_swipe_begin* event = data;
 
@@ -172,7 +172,7 @@ bsi_input_pointer_swipe_update_notify(struct wl_listener* listener, void* data)
 #endif
 
     struct bsi_input_pointer* bsi_input_pointer =
-        wl_container_of(listener, bsi_input_pointer, events.swipe_update);
+        wl_container_of(listener, bsi_input_pointer, listen.swipe_update);
     struct wlr_seat* wlr_seat = bsi_input_pointer->bsi_server->wlr_seat;
     struct wlr_event_pointer_swipe_update* event = data;
 
@@ -188,7 +188,7 @@ bsi_input_pointer_swipe_end_notify(struct wl_listener* listener, void* data)
 #endif
 
     struct bsi_input_pointer* bsi_input_pointer =
-        wl_container_of(listener, bsi_input_pointer, events.swipe_end);
+        wl_container_of(listener, bsi_input_pointer, listen.swipe_end);
     struct wlr_seat* wlr_seat = bsi_input_pointer->bsi_server->wlr_seat;
     struct wlr_event_pointer_swipe_end* event = data;
 
@@ -250,7 +250,7 @@ bsi_input_keyboard_key_notify(struct wl_listener* listener, void* data)
 #endif
 
     struct bsi_input_keyboard* bsi_input_keyboard =
-        wl_container_of(listener, bsi_input_keyboard, events.key);
+        wl_container_of(listener, bsi_input_keyboard, listen.key);
     struct wlr_seat* wlr_seat = bsi_input_keyboard->bsi_server->wlr_seat;
     struct wlr_event_keyboard_key* event = data;
 
@@ -276,7 +276,7 @@ bsi_input_keyboard_modifiers_notify(struct wl_listener* listener,
 #endif
 
     struct bsi_input_keyboard* bsi_input_keyboard =
-        wl_container_of(listener, bsi_input_keyboard, events.modifiers);
+        wl_container_of(listener, bsi_input_keyboard, listen.modifiers);
     struct wlr_seat* wlr_seat = bsi_input_keyboard->bsi_server->wlr_seat;
     struct wlr_input_device* dev = bsi_input_keyboard->wlr_input_device;
 
@@ -296,7 +296,7 @@ bsi_input_keyboard_keymap_notify(struct wl_listener* listener, void* data)
 #endif
 
     struct bsi_input_keyboard* bsi_input_keyboard =
-        wl_container_of(listener, bsi_input_keyboard, events.keymap);
+        wl_container_of(listener, bsi_input_keyboard, listen.keymap);
     struct wlr_seat* wlr_seat = bsi_input_keyboard->bsi_server->wlr_seat;
     struct wlr_keyboard* wlr_keyboard =
         bsi_input_keyboard->wlr_input_device->keyboard;
@@ -337,7 +337,7 @@ bsi_input_keyboard_destroy_notify(struct wl_listener* listener, void* data)
 #endif
 
     struct bsi_input_keyboard* bsi_input_keyboard =
-        wl_container_of(listener, bsi_input_keyboard, events.destroy);
+        wl_container_of(listener, bsi_input_keyboard, listen.destroy);
     struct bsi_inputs* bsi_inputs = &bsi_input_keyboard->bsi_server->bsi_inputs;
 
     bsi_inputs_keyboard_remove(bsi_inputs, bsi_input_keyboard);

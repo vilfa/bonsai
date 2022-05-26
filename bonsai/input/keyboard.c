@@ -133,6 +133,7 @@ bsi_keyboard_mod_super_handle(struct bsi_server* bsi_server, xkb_keysym_t sym)
 #endif
     switch (sym) {
         case XKB_KEY_d:
+            // TODO: Make a helper for this stuff.
             switch (fork()) {
                 case 0: {
                     wlr_log(WLR_INFO, "Got Super+d -> open menu");
@@ -147,6 +148,33 @@ bsi_keyboard_mod_super_handle(struct bsi_server* bsi_server, xkb_keysym_t sym)
                     char* const argp[] = {
                         "/usr/bin/bemenu-run", "-c", "-i", NULL
                     };
+                    char* const envp[] = { path, sock, rdir, NULL };
+                    execve(argp[0], argp, envp);
+
+                    wlr_log(WLR_ERROR, "Exec failed: %s", strerror(errno));
+                    _exit(EXIT_FAILURE);
+                    break;
+                }
+                case -1:
+                    wlr_log(WLR_ERROR, "Fork failed: %s", strerror(errno));
+                    return false;
+                default:
+                    return true;
+            }
+            break;
+        case XKB_KEY_Return:
+            switch (fork()) {
+                case 0: {
+                    wlr_log(WLR_INFO, "Got Super+Return -> open terminal");
+
+                    char path[255] = { 0 }, sock[255] = { 0 },
+                         rdir[255] = { 0 };
+                    sprintf(path, "PATH=%s", getenv("PATH"));
+                    sprintf(sock, "WAYLAND_DISPLAY=%s", bsi_server->wl_socket);
+                    sprintf(
+                        rdir, "XDG_RUNTIME_DIR=%s", getenv("XDG_RUNTIME_DIR"));
+
+                    char* const argp[] = { "/usr/bin/foot", NULL };
                     char* const envp[] = { path, sock, rdir, NULL };
                     execve(argp[0], argp, envp);
 

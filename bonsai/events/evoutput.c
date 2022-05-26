@@ -25,7 +25,7 @@ bsi_output_frame_notify(struct wl_listener* listener,
 #endif
 
     struct bsi_output* bsi_output =
-        wl_container_of(listener, bsi_output, events.frame);
+        wl_container_of(listener, bsi_output, listen.frame);
     struct wlr_scene* wlr_scene = bsi_output->bsi_server->wlr_scene;
 
     struct wlr_scene_output* wlr_scene_output =
@@ -127,7 +127,7 @@ bsi_output_destroy_notify(struct wl_listener* listener,
 #endif
 
     struct bsi_output* bsi_output =
-        wl_container_of(listener, bsi_output, events.destroy);
+        wl_container_of(listener, bsi_output, listen.destroy);
     struct bsi_server* bsi_server = bsi_output->bsi_server;
 
     bsi_outputs_remove(&bsi_server->bsi_outputs, bsi_output);

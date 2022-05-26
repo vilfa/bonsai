@@ -17,11 +17,13 @@
 #include "bonsai/server.h"
 
 struct bsi_views*
-bsi_views_init(struct bsi_views* bsi_views)
+bsi_views_init(struct bsi_views* bsi_views, struct bsi_server* bsi_server)
 {
     assert(bsi_views);
+    assert(bsi_server);
 
     bsi_views->len = 0;
+    bsi_views->bsi_server = bsi_server;
     wl_list_init(&bsi_views->views);
 
     return bsi_views;
@@ -83,8 +85,7 @@ bsi_view_init(struct bsi_view* bsi_view,
     bsi_view->y = 0.0;
     bsi_view->width = 0;
     bsi_view->height = 0;
-    bsi_view->active_listeners = 0;
-    bsi_view->len_active_links = 0;
+    bsi_view->len_active_listen = 0;
     bsi_view->mapped = false;
     bsi_view->maximized = false;
     bsi_view->minimized = false;
@@ -97,6 +98,36 @@ bsi_view_init(struct bsi_view* bsi_view,
     wlr_xdg_surface->data = bsi_view->wlr_scene_node;
 
     return bsi_view;
+}
+
+void
+bsi_view_finish(struct bsi_view* bsi_view)
+{
+    assert(bsi_view);
+
+    /* wlr_xdg_surface */
+    wl_list_remove(&bsi_view->listen.destroy_xdg_surface.link);
+    wl_list_remove(&bsi_view->listen.ping_timeout.link);
+    wl_list_remove(&bsi_view->listen.new_popup.link);
+    wl_list_remove(&bsi_view->listen.map.link);
+    wl_list_remove(&bsi_view->listen.unmap.link);
+    wl_list_remove(&bsi_view->listen.configure.link);
+    wl_list_remove(&bsi_view->listen.ack_configure.link);
+    /* wlr_xdg_toplevel */
+    wl_list_remove(&bsi_view->listen.request_maximize.link);
+    wl_list_remove(&bsi_view->listen.request_fullscreen.link);
+    wl_list_remove(&bsi_view->listen.request_minimize.link);
+    wl_list_remove(&bsi_view->listen.request_move.link);
+    wl_list_remove(&bsi_view->listen.request_resize.link);
+    wl_list_remove(&bsi_view->listen.request_show_window_menu.link);
+    wl_list_remove(&bsi_view->listen.set_parent.link);
+    wl_list_remove(&bsi_view->listen.set_title.link);
+    wl_list_remove(&bsi_view->listen.set_app_id.link);
+    /* wlr_scene_node */
+    wl_list_remove(&bsi_view->listen.destroy_scene_node.link);
+    /* bsi_workspaces */
+    wl_list_remove(&bsi_view->listen.active_workspace.link);
+    bsi_view->len_active_listen = 0;
 }
 
 void
@@ -310,7 +341,6 @@ bsi_view_restore_prev(struct bsi_view* bsi_view)
 
 void
 bsi_view_listener_add(struct bsi_view* bsi_view,
-                      enum bsi_view_listener_mask bsi_listener_type,
                       struct wl_listener* bsi_listener_memb,
                       struct wl_signal* bsi_signal_memb,
                       wl_notify_func_t func)
@@ -319,20 +349,7 @@ bsi_view_listener_add(struct bsi_view* bsi_view,
     assert(func);
 
     bsi_listener_memb->notify = func;
-    bsi_view->active_listeners |= bsi_listener_type;
-    bsi_view->active_links[bsi_view->len_active_links++] =
-        &bsi_listener_memb->link;
+    ++bsi_view->len_active_listen;
 
     wl_signal_add(bsi_signal_memb, bsi_listener_memb);
-}
-
-void
-bsi_view_listener_unlink_all(struct bsi_view* bsi_view)
-{
-    assert(bsi_view);
-
-    for (size_t i = 0; i < bsi_view->len_active_links; ++i) {
-        if (bsi_view->active_links[i] != NULL)
-            wl_list_remove(bsi_view->active_links[i]);
-    }
 }
