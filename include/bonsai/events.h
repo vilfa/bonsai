@@ -86,3 +86,29 @@ extern bsi_notify_func_t bsi_input_keyboard_destroy_notify;
 
 /* bsi_workspace */
 extern bsi_notify_func_t bsi_workspace_active_notify;
+
+/* bsi_layer_surface_toplevel */
+/* wlr_layer_surface_v1 */
+extern bsi_notify_func_t bsi_layer_surface_toplevel_map_notify;
+extern bsi_notify_func_t bsi_layer_surface_toplevel_unmap_notify;
+extern bsi_notify_func_t bsi_layer_surface_toplevel_destroy_notify;
+extern bsi_notify_func_t bsi_layer_surface_toplevel_new_popup_notify;
+/* wlr_surface -> wlr_layer_surface::surface */
+extern bsi_notify_func_t bsi_layer_surface_toplevel_wlr_surface_commit_notify;
+extern bsi_notify_func_t
+    bsi_layer_surface_toplevel_wlr_surface_new_subsurface_notify;
+extern bsi_notify_func_t bsi_layer_surface_toplevel_wlr_surface_destroy_notify;
+
+/* bsi_layer_surface_popup */
+/* wlr_xdg_surface -> wlr_xdg_popup::base */
+extern bsi_notify_func_t bsi_layer_surface_popup_destroy_notify;
+extern bsi_notify_func_t bsi_layer_surface_popup_ping_timeout_notify;
+extern bsi_notify_func_t bsi_layer_surface_popup_new_popup_notify;
+extern bsi_notify_func_t bsi_layer_surface_popup_map_notify;
+extern bsi_notify_func_t bsi_layer_surface_popup_unmap_notify;
+
+/* bsi_layer_surface_subsurface */
+/* wlr_subsurface */
+extern bsi_notify_func_t bsi_layer_surface_subsurface_destroy_notify;
+extern bsi_notify_func_t bsi_layer_surface_subsurface_map_notify;
+extern bsi_notify_func_t bsi_layer_surface_subsurface_unmap_notify;
