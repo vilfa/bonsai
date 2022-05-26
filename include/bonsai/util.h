@@ -2,6 +2,7 @@
 
 #include <stdbool.h>
 #include <time.h>
+#include <wayland-server-core.h>
 
 struct bsi_server;
 
@@ -12,6 +13,18 @@ struct bsi_server;
  */
 struct timespec
 bsi_util_timespec_get();
+
+/**
+ * @brief Connects a signal to its listener and adds a handler.
+ *
+ * @param bsi_signal_memb The signal.
+ * @param bsi_listener_memb The listener.
+ * @param func Handler func.
+ */
+void
+bsi_util_slot_connect(struct wl_signal* bsi_signal_memb,
+                      struct wl_listener* bsi_listener_memb,
+                      wl_notify_func_t func);
 
 /**
  * @brief Sets the proper environment and executes an execve call with the

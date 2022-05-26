@@ -6,9 +6,11 @@ typedef void
 bsi_notify_func_t(struct wl_listener*, void*);
 
 /* bsi_listeners_global */
+/* wlr_backend */
 extern bsi_notify_func_t bsi_global_backend_new_output_notify;
 extern bsi_notify_func_t bsi_global_backend_new_input_notify;
 extern bsi_notify_func_t bsi_global_backend_destroy_notify;
+/* wlr_seat */
 extern bsi_notify_func_t bsi_global_seat_pointer_grab_begin_notify;
 extern bsi_notify_func_t bsi_global_seat_pointer_grab_end_notify;
 extern bsi_notify_func_t bsi_global_seat_keyboard_grab_begin_notify;
@@ -23,8 +25,12 @@ extern bsi_notify_func_t bsi_global_seat_set_primary_selection_notify;
 extern bsi_notify_func_t bsi_global_seat_request_start_drag_notify;
 extern bsi_notify_func_t bsi_global_seat_start_drag_notify;
 extern bsi_notify_func_t bsi_global_seat_destroy_notify;
+/* wlr_xdg_shell */
 extern bsi_notify_func_t bsi_global_xdg_shell_new_surface_notify;
 extern bsi_notify_func_t bsi_global_xdg_shell_destroy_notify;
+/* wlr_layer_shell_v1 */
+extern bsi_notify_func_t bsi_layer_shell_new_surface_notify;
+extern bsi_notify_func_t bsi_layer_shell_destroy_notify;
 
 /* bsi_view */
 extern bsi_notify_func_t bsi_view_destroy_xdg_surface_notify;

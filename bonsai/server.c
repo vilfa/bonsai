@@ -98,6 +98,11 @@ bsi_server_init(struct bsi_server* bsi_server)
     wlr_log(
         WLR_DEBUG, "Loaded wlr_xcursor_manager with scale %1.f", cursor_scale);
 
+    bsi_server->wlr_layer_shell =
+        wlr_layer_shell_v1_create(bsi_server->wl_display);
+    assert(bsi_server->wlr_layer_shell);
+    wlr_log(WLR_DEBUG, "Created wlr_layer_shell_v1");
+
     struct bsi_outputs bsi_outputs;
     bsi_outputs_init(&bsi_outputs, bsi_server);
     bsi_server->bsi_outputs = bsi_outputs;
@@ -214,6 +219,16 @@ bsi_server_init(struct bsi_server* bsi_server)
         &bsi_server->bsi_listeners_global.listen.wlr_xdg_shell_destroy,
         &bsi_server->wlr_xdg_shell->events.destroy,
         bsi_global_xdg_shell_destroy_notify);
+    bsi_listeners_global_add(
+        &bsi_server->bsi_listeners_global,
+        &bsi_server->bsi_listeners_global.listen.wlr_layer_surface_new_surface,
+        &bsi_server->wlr_layer_shell->events.new_surface,
+        bsi_layer_shell_new_surface_notify);
+    bsi_listeners_global_add(
+        &bsi_server->bsi_listeners_global,
+        &bsi_server->bsi_listeners_global.listen.wlr_layer_surface_destroy,
+        &bsi_server->wlr_layer_shell->events.destroy,
+        bsi_layer_shell_destroy_notify);
 
     return bsi_server;
 }

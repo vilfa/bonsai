@@ -27,6 +27,7 @@ struct bsi_server
     struct wlr_seat* wlr_seat;
     struct wlr_cursor* wlr_cursor;
     struct wlr_xcursor_manager* wlr_xcursor_manager;
+    struct wlr_layer_shell_v1* wlr_layer_shell;
 
     /* State */
     struct bsi_listeners_global bsi_listeners_global;

@@ -11,7 +11,9 @@
 struct bsi_listeners_global
 {
     struct bsi_server* bsi_server;
-    size_t len_active_listen;
+
+    /* Either we listen for all or none, doesn't make sense to keep track of
+     * number of listeners. */
     // TODO: What is actually necessary here?
     struct
     {
@@ -37,6 +39,9 @@ struct bsi_listeners_global
         /* wlr_xdg_shell */
         struct wl_listener wlr_xdg_shell_new_surface;
         struct wl_listener wlr_xdg_shell_destroy;
+        /* wlr_layer_surface_v1 */
+        struct wl_listener wlr_layer_surface_new_surface;
+        struct wl_listener wlr_layer_surface_destroy;
         /* bsi_workspace */
         struct wl_listener bsi_workspace_active;
     } listen;

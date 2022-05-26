@@ -18,7 +18,6 @@ bsi_listeners_global_init(struct bsi_listeners_global* bsi_listeners_global)
         wl_container_of(bsi_listeners_global, bsi_server, bsi_listeners_global);
 
     bsi_listeners_global->bsi_server = bsi_server;
-    bsi_listeners_global->len_active_listen = 0;
     return bsi_listeners_global;
 }
 
@@ -34,7 +33,6 @@ bsi_listeners_global_add(struct bsi_listeners_global* bsi_listeners_global,
     assert(func);
 
     bsi_listeners_memb->notify = func;
-    ++bsi_listeners_global->len_active_listen;
     wl_signal_add(bsi_signal_memb, bsi_listeners_memb);
 }
 
@@ -78,6 +76,4 @@ bsi_listeners_global_finish(struct bsi_listeners_global* bsi_listeners_global)
     wl_list_remove(&bsi_listeners_global->listen.wlr_xdg_shell_destroy.link);
     /* bsi_workspace */
     wl_list_remove(&bsi_listeners_global->listen.bsi_workspace_active.link);
-
-    bsi_listeners_global->len_active_listen = 0;
 }

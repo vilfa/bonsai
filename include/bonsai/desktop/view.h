@@ -33,7 +33,8 @@ struct bsi_view
 
     char* app_id;
     char* app_title;
-    struct bsi_workspace* bsi_workspace;
+
+    struct bsi_workspace* bsi_workspace; /* Belongs to this workspace. */
 
     /* Note, that when the window goes fullscreen, minimized or maximized,
      * this will hold the last state of the window that should be restored when
@@ -42,7 +43,8 @@ struct bsi_view
     double x, y;
     uint32_t width, height;
 
-    size_t len_active_listen;
+    /* Either we listen for all or none, doesn't make sense to keep track of
+     * number of listeners. */
     struct
     {
         /* wlr_xdg_surface */
@@ -179,20 +181,3 @@ bsi_view_set_fullscreen(struct bsi_view* bsi_view, bool fullscreen);
 
 void
 bsi_view_restore_prev(struct bsi_view* bsi_view);
-
-/**
- * @brief Adds a listener to the scene node represented by `bsi_view`.
- *
- * @param bsi_view The view.
- * @param bsi_listener_type Type of listener to add.
- * @param bsi_listeners_memb Pointer to a listener to initialize with func (a
- * member of one of the `bsi_listeners` anonymus structs).
- * @param bsi_signal_memb Pointer to signal which the listener handles (usually
- * a member of the `events` struct of its parent).
- * @param func The listener func.
- */
-void
-bsi_view_listener_add(struct bsi_view* bsi_view,
-                      struct wl_listener* bsi_listener_memb,
-                      struct wl_signal* bsi_signal_memb,
-                      wl_notify_func_t func);

@@ -85,7 +85,6 @@ bsi_view_init(struct bsi_view* bsi_view,
     bsi_view->y = 0.0;
     bsi_view->width = 0;
     bsi_view->height = 0;
-    bsi_view->len_active_listen = 0;
     bsi_view->mapped = false;
     bsi_view->maximized = false;
     bsi_view->minimized = false;
@@ -127,7 +126,6 @@ bsi_view_finish(struct bsi_view* bsi_view)
     wl_list_remove(&bsi_view->listen.destroy_scene_node.link);
     /* bsi_workspaces */
     wl_list_remove(&bsi_view->listen.active_workspace.link);
-    bsi_view->len_active_listen = 0;
 }
 
 void
@@ -337,19 +335,4 @@ bsi_view_restore_prev(struct bsi_view* bsi_view)
     wlr_xdg_toplevel_set_resizing(bsi_view->wlr_xdg_surface, false);
     wlr_scene_node_set_position(
         bsi_view->wlr_scene_node, bsi_view->x, bsi_view->y);
-}
-
-void
-bsi_view_listener_add(struct bsi_view* bsi_view,
-                      struct wl_listener* bsi_listener_memb,
-                      struct wl_signal* bsi_signal_memb,
-                      wl_notify_func_t func)
-{
-    assert(bsi_view);
-    assert(func);
-
-    bsi_listener_memb->notify = func;
-    ++bsi_view->len_active_listen;
-
-    wl_signal_add(bsi_signal_memb, bsi_listener_memb);
 }

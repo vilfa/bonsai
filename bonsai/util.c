@@ -1,14 +1,15 @@
-#include "bonsai/server.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <wayland-server-core.h>
 #include <wlr/util/log.h>
 
 struct bsi_server;
 
+#include "bonsai/server.h"
 #include "bonsai/util.h"
 
 struct timespec
@@ -17,6 +18,19 @@ bsi_util_timespec_get()
     struct timespec ts;
     timespec_get(&ts, TIME_UTC);
     return ts;
+}
+
+void
+bsi_util_slot_connect(struct wl_signal* bsi_signal_memb,
+                      struct wl_listener* bsi_listener_memb,
+                      wl_notify_func_t func)
+{
+    assert(bsi_listener_memb);
+    assert(bsi_signal_memb);
+    assert(func);
+
+    bsi_listener_memb->notify = func;
+    wl_signal_add(bsi_signal_memb, bsi_listener_memb);
 }
 
 bool

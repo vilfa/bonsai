@@ -8,7 +8,7 @@
 
 struct bsi_server;
 
-#include "bonsai/desktop/layer-shell.h"
+#include "bonsai/desktop/layer.h"
 #include "bonsai/desktop/workspace.h"
 
 /**
@@ -36,9 +36,10 @@ struct bsi_output
     size_t id; /* Incremental id. */
 
     struct bsi_workspaces* bsi_workspaces;
-    struct bsi_layers* bsi_layers; /* wlr_layer_shell_v1 */
+    struct bsi_output_layers* bsi_output_layers; /* wlr_layer_shell_v1 */
 
-    size_t len_active_listen;
+    /* Either we listen for all or none, doesn't make sense to keep track of
+     * number of listeners. */
     struct
     {
         struct wl_listener frame;
@@ -104,7 +105,7 @@ bsi_output_init(struct bsi_output* bsi_output,
                 struct bsi_server* bsi_server,
                 struct wlr_output* wlr_output,
                 struct bsi_workspaces* bsi_workspaces,
-                struct bsi_layers* bsi_layers);
+                struct bsi_output_layers* bsi_output_layers);
 
 /**
  * @brief Remove all active listeners from the specified `bsi_output`.
@@ -121,21 +122,3 @@ bsi_output_finish(struct bsi_output* bsi_output);
  */
 void
 bsi_output_destroy(struct bsi_output* bsi_output);
-
-/**
- * @brief Add a listener `func` for the specified member of the `bsi_output`
- * `events` struct.
- *
- * @param bsi_output The output.
- * @param bsi_listener_type Type of listener to add.
- * @param bsi_listener_memb Pointer to a listener to initialize with func (a
- * member of the `events` anonymus struct).
- * @param bsi_signal_memb Pointer to signal which the listener handles (usually
- * a member of the `events` struct of its parent).
- * @param func The listener function.
- */
-void
-bsi_output_listener_add(struct bsi_output* bsi_output,
-                        struct wl_listener* bsi_listener_memb,
-                        struct wl_signal* bsi_signal_memb,
-                        wl_notify_func_t func);

@@ -35,10 +35,12 @@ struct bsi_input_pointer
     struct wlr_cursor* wlr_cursor;
     struct wlr_input_device* wlr_input_device;
 
+    /* Either we listen for all or none, doesn't make sense to keep track of
+     * number of listeners. */
     // TODO: What is actually necessary here?
-    size_t len_active_listen;
     struct
     {
+        /* wlr_cursor */
         struct wl_listener motion;
         struct wl_listener motion_absolute;
         struct wl_listener button;
@@ -66,10 +68,11 @@ struct bsi_input_keyboard
     struct bsi_server* bsi_server;
     struct wlr_input_device* wlr_input_device;
 
-    struct wl_list active_links;
-    size_t len_active_links;
+    /* Either we listen for all or none, doesn't make sense to keep track of
+     * number of listeners. */
     struct
     {
+        /* wlr_input_device::keyboard */
         struct wl_listener key;
         struct wl_listener modifiers;
         struct wl_listener keymap;
@@ -205,24 +208,6 @@ void
 bsi_input_pointer_destroy(struct bsi_input_pointer* bsi_input_pointer);
 
 /**
- * @brief Adds a listener `func` for the specified member of the
- * `bsi_input_pointer` `events` struct.
- *
- * @param bsi_input_pointer The input pointer.
- * @param bsi_listener_type Type of listener to add.
- * @param bsi_listener_memb Pointer to a listener to initialize with func (a
- * member of the `events` anonymus struct).
- * @param bsi_signal_memb Pointer to signal which the listener handles (usually
- * a member of the `events` struct of its parent).
- * @param func The listener function.
- */
-void
-bsi_input_pointer_listener_add(struct bsi_input_pointer* bsi_input_pointer,
-                               struct wl_listener* bsi_listener_memb,
-                               struct wl_signal* bsi_signal_memb,
-                               wl_notify_func_t func);
-
-/**
  * @brief Initializes a preallocated `bsi_input_keyboard`.
  *
  * @param bsi_input_keyboard The input keyboard.
@@ -262,21 +247,3 @@ void
 bsi_input_keyboard_keymap_set(struct bsi_input_keyboard* bsi_input_keyboard,
                               const struct xkb_rule_names* xkb_rule_names,
                               const size_t xkb_rule_names_len);
-
-/**
- * @brief Adds a listener `func` for the specified member of the
- * `bsi_input_keyboard` `events` struct.
- *
- * @param bsi_input_keyboard The input keyboard.
- * @param bsi_listener_type Type of listener to add.
- * @param bsi_listener_memb Pointer to a listener to initialize with func (a
- * member of the `events` anonymus struct).
- * @param bsi_signal_memb Pointer to signal which the listener handles
- * (usually a member of the `events` struct of its parent).
- * @param func The listener function.
- */
-void
-bsi_input_keyboard_listener_add(struct bsi_input_keyboard* bsi_input_keyboard,
-                                struct wl_listener* bsi_listener_memb,
-                                struct wl_signal* bsi_signal_memb,
-                                wl_notify_func_t func);

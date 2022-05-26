@@ -7,7 +7,7 @@
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_output.h>
 
-#include "bonsai/desktop/layer-shell.h"
+#include "bonsai/desktop/layer.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/desktop/workspace.h"
 #include "bonsai/output.h"
@@ -80,20 +80,19 @@ bsi_output_init(struct bsi_output* bsi_output,
                 struct bsi_server* bsi_server,
                 struct wlr_output* wlr_output,
                 struct bsi_workspaces* bsi_workspaces,
-                struct bsi_layers* bsi_layers)
+                struct bsi_output_layers* bsi_output_layers)
 {
     assert(bsi_output);
     assert(bsi_server);
     assert(wlr_output);
     assert(bsi_workspaces);
-    assert(bsi_layers);
+    assert(bsi_output_layers);
 
     bsi_output->id = bsi_server->bsi_outputs.len;
-    bsi_output->len_active_listen = 0;
     bsi_output->bsi_server = bsi_server;
     bsi_output->wlr_output = wlr_output;
     bsi_output->bsi_workspaces = bsi_workspaces;
-    bsi_output->bsi_layers = bsi_layers;
+    bsi_output->bsi_output_layers = bsi_output_layers;
 
     struct timespec now = bsi_util_timespec_get();
     bsi_output->last_frame = now;
@@ -117,7 +116,6 @@ bsi_output_finish(struct bsi_output* bsi_output)
     wl_list_remove(&bsi_output->listen.mode.link);
     wl_list_remove(&bsi_output->listen.description.link);
     wl_list_remove(&bsi_output->listen.destroy.link);
-    bsi_output->len_active_listen = 0;
 }
 
 void
@@ -165,21 +163,7 @@ bsi_output_destroy(struct bsi_output* bsi_output)
         }
     }
 
-    // TODO: Take care of layers too.
+    bsi_output_layers_destroy(bsi_output->bsi_output_layers);
 
     free(bsi_output);
-}
-
-void
-bsi_output_listener_add(struct bsi_output* bsi_output,
-                        struct wl_listener* bsi_listener_memb,
-                        struct wl_signal* bsi_signal_memb,
-                        wl_notify_func_t func)
-{
-    assert(bsi_output);
-    assert(func);
-
-    bsi_listener_memb->notify = func;
-    ++bsi_output->len_active_listen;
-    wl_signal_add(bsi_signal_memb, bsi_listener_memb);
 }

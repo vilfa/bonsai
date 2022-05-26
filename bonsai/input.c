@@ -102,7 +102,6 @@ bsi_input_pointer_init(struct bsi_input_pointer* bsi_input_pointer,
     bsi_input_pointer->bsi_server = bsi_server;
     bsi_input_pointer->wlr_cursor = bsi_server->wlr_cursor;
     bsi_input_pointer->wlr_input_device = wlr_input_device;
-    bsi_input_pointer->len_active_listen = 0;
 
     return bsi_input_pointer;
 }
@@ -125,7 +124,6 @@ bsi_input_pointer_finish(struct bsi_input_pointer* bsi_input_pointer)
     wl_list_remove(&bsi_input_pointer->listen.pinch_end.link);
     wl_list_remove(&bsi_input_pointer->listen.hold_begin.link);
     wl_list_remove(&bsi_input_pointer->listen.hold_end.link);
-    bsi_input_pointer->len_active_listen = 0;
 }
 
 void
@@ -134,20 +132,6 @@ bsi_input_pointer_destroy(struct bsi_input_pointer* bsi_input_pointer)
     assert(bsi_input_pointer);
 
     free(bsi_input_pointer);
-}
-
-void
-bsi_input_pointer_listener_add(struct bsi_input_pointer* bsi_input_pointer,
-                               struct wl_listener* bsi_listener_memb,
-                               struct wl_signal* bsi_signal_memb,
-                               wl_notify_func_t func)
-{
-    assert(bsi_input_pointer);
-    assert(func);
-
-    bsi_listener_memb->notify = func;
-    ++bsi_input_pointer->len_active_listen;
-    wl_signal_add(bsi_signal_memb, bsi_listener_memb);
 }
 
 struct bsi_input_keyboard*
@@ -161,7 +145,6 @@ bsi_input_keyboard_init(struct bsi_input_keyboard* bsi_input_keyboard,
 
     bsi_input_keyboard->bsi_server = bsi_server;
     bsi_input_keyboard->wlr_input_device = wlr_input_device;
-    bsi_input_keyboard->len_active_links = 0;
 
     return bsi_input_keyboard;
 }
@@ -176,7 +159,6 @@ bsi_input_keyboard_finish(struct bsi_input_keyboard* bsi_input_keyboard)
     wl_list_remove(&bsi_input_keyboard->listen.keymap.link);
     wl_list_remove(&bsi_input_keyboard->listen.repeat_info.link);
     wl_list_remove(&bsi_input_keyboard->listen.destroy.link);
-    bsi_input_keyboard->len_active_links = 0;
 }
 
 void
@@ -255,18 +237,4 @@ bsi_input_keyboard_keymap_set(struct bsi_input_keyboard* bsi_input_keyboard,
 
     xkb_keymap_unref(xkb_keymap);
     xkb_context_unref(xkb_context);
-}
-
-void
-bsi_input_keyboard_listener_add(struct bsi_input_keyboard* bsi_input_keyboard,
-                                struct wl_listener* bsi_listener_memb,
-                                struct wl_signal* bsi_signal_memb,
-                                wl_notify_func_t func)
-{
-    assert(bsi_input_keyboard);
-    assert(func);
-
-    bsi_listener_memb->notify = func;
-    ++bsi_input_keyboard->len_active_links;
-    wl_signal_add(bsi_signal_memb, bsi_listener_memb);
 }

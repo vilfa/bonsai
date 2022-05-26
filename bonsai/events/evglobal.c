@@ -24,13 +24,14 @@
 
 struct bsi_view;
 
-#include "bonsai/desktop/layer-shell.h"
+#include "bonsai/desktop/layer.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/desktop/workspace.h"
 #include "bonsai/events.h"
 #include "bonsai/global.h"
 #include "bonsai/input.h"
 #include "bonsai/server.h"
+#include "bonsai/util.h"
 
 #define GIMME_ALL_GLOBAL_EVENTS
 
@@ -65,12 +66,13 @@ bsi_global_backend_new_output_notify(struct wl_listener* listener, void* data)
         calloc(1, sizeof(struct bsi_workspaces));
     bsi_workspaces_init(bsi_workspaces, bsi_server);
 
-    struct bsi_layers* bsi_layers = calloc(1, sizeof(struct bsi_layers));
-    bsi_layers_init(bsi_layers);
+    struct bsi_output_layers* bsi_output_layers =
+        calloc(1, sizeof(struct bsi_output_layers));
+    bsi_output_layers_init(bsi_output_layers);
 
     struct bsi_output* bsi_output = calloc(1, sizeof(struct bsi_output));
     bsi_output_init(
-        bsi_output, bsi_server, wlr_output, bsi_workspaces, bsi_layers);
+        bsi_output, bsi_server, wlr_output, bsi_workspaces, bsi_output_layers);
 
     /* Attach a workspace to the output. */
     char workspace_name[25];
@@ -86,50 +88,39 @@ bsi_global_backend_new_output_notify(struct wl_listener* listener, void* data)
             bsi_output->wlr_output->name);
 
     bsi_outputs_add(&bsi_server->bsi_outputs, bsi_output);
-    bsi_output_listener_add(bsi_output,
-                            &bsi_output->listen.frame,
-                            &bsi_output->wlr_output->events.frame,
-                            bsi_output_frame_notify);
-    bsi_output_listener_add(bsi_output,
-                            &bsi_output->listen.damage,
-                            &bsi_output->wlr_output->events.damage,
-                            bsi_output_damage_notify);
-    bsi_output_listener_add(bsi_output,
-                            &bsi_output->listen.needs_frame,
-                            &bsi_output->wlr_output->events.needs_frame,
-                            bsi_output_needs_frame_notify);
-    bsi_output_listener_add(bsi_output,
-                            &bsi_output->listen.precommit,
-                            &bsi_output->wlr_output->events.precommit,
-                            bsi_output_precommit_notify);
-    bsi_output_listener_add(bsi_output,
-                            &bsi_output->listen.commit,
-                            &bsi_output->wlr_output->events.commit,
-                            bsi_output_commit_notify);
-    bsi_output_listener_add(bsi_output,
-                            &bsi_output->listen.present,
-                            &bsi_output->wlr_output->events.present,
-                            bsi_output_present_notify);
-    bsi_output_listener_add(bsi_output,
-                            &bsi_output->listen.bind,
-                            &bsi_output->wlr_output->events.bind,
-                            bsi_output_bind_notify);
-    bsi_output_listener_add(bsi_output,
-                            &bsi_output->listen.enable,
-                            &bsi_output->wlr_output->events.enable,
-                            bsi_output_enable_notify);
-    bsi_output_listener_add(bsi_output,
-                            &bsi_output->listen.mode,
-                            &bsi_output->wlr_output->events.mode,
-                            bsi_output_mode_notify);
-    bsi_output_listener_add(bsi_output,
-                            &bsi_output->listen.description,
-                            &bsi_output->wlr_output->events.description,
-                            bsi_output_description_notify);
-    bsi_output_listener_add(bsi_output,
-                            &bsi_output->listen.destroy,
-                            &bsi_output->wlr_output->events.destroy,
-                            bsi_output_destroy_notify);
+    bsi_util_slot_connect(&bsi_output->wlr_output->events.frame,
+                          &bsi_output->listen.frame,
+                          bsi_output_frame_notify);
+    bsi_util_slot_connect(&bsi_output->wlr_output->events.damage,
+                          &bsi_output->listen.damage,
+                          bsi_output_damage_notify);
+    bsi_util_slot_connect(&bsi_output->wlr_output->events.needs_frame,
+                          &bsi_output->listen.needs_frame,
+                          bsi_output_needs_frame_notify);
+    bsi_util_slot_connect(&bsi_output->wlr_output->events.precommit,
+                          &bsi_output->listen.precommit,
+                          bsi_output_precommit_notify);
+    bsi_util_slot_connect(&bsi_output->wlr_output->events.commit,
+                          &bsi_output->listen.commit,
+                          bsi_output_commit_notify);
+    bsi_util_slot_connect(&bsi_output->wlr_output->events.present,
+                          &bsi_output->listen.present,
+                          bsi_output_present_notify);
+    bsi_util_slot_connect(&bsi_output->wlr_output->events.bind,
+                          &bsi_output->listen.bind,
+                          bsi_output_bind_notify);
+    bsi_util_slot_connect(&bsi_output->wlr_output->events.enable,
+                          &bsi_output->listen.enable,
+                          bsi_output_enable_notify);
+    bsi_util_slot_connect(&bsi_output->wlr_output->events.mode,
+                          &bsi_output->listen.mode,
+                          bsi_output_mode_notify);
+    bsi_util_slot_connect(&bsi_output->wlr_output->events.description,
+                          &bsi_output->listen.description,
+                          bsi_output_description_notify);
+    bsi_util_slot_connect(&bsi_output->wlr_output->events.destroy,
+                          &bsi_output->listen.destroy,
+                          bsi_output_destroy_notify);
 
     wlr_output_layout_add_auto(bsi_server->wlr_output_layout, wlr_output);
 }
@@ -154,70 +145,53 @@ bsi_global_backend_new_input_notify(struct wl_listener* listener, void* data)
             bsi_input_pointer_init(
                 bsi_input_pointer, bsi_server, wlr_input_device);
             bsi_inputs_pointer_add(&bsi_server->bsi_inputs, bsi_input_pointer);
-            bsi_input_pointer_listener_add(
-                bsi_input_pointer,
-                &bsi_input_pointer->listen.motion,
-                &bsi_input_pointer->wlr_cursor->events.motion,
-                bsi_input_pointer_motion_notify);
-            bsi_input_pointer_listener_add(
-                bsi_input_pointer,
-                &bsi_input_pointer->listen.motion_absolute,
+            bsi_util_slot_connect(&bsi_input_pointer->wlr_cursor->events.motion,
+                                  &bsi_input_pointer->listen.motion,
+                                  bsi_input_pointer_motion_notify);
+            bsi_util_slot_connect(
                 &bsi_input_pointer->wlr_cursor->events.motion_absolute,
+                &bsi_input_pointer->listen.motion_absolute,
                 bsi_input_pointer_motion_absolute_notify);
-            bsi_input_pointer_listener_add(
-                bsi_input_pointer,
-                &bsi_input_pointer->listen.button,
-                &bsi_input_pointer->wlr_cursor->events.button,
-                bsi_input_pointer_button_notify);
-            bsi_input_pointer_listener_add(
-                bsi_input_pointer,
-                &bsi_input_pointer->listen.axis,
-                &bsi_input_pointer->wlr_cursor->events.axis,
-                bsi_input_pointer_axis_notify);
-            bsi_input_pointer_listener_add(
-                bsi_input_pointer,
-                &bsi_input_pointer->listen.frame,
-                &bsi_input_pointer->wlr_cursor->events.frame,
-                bsi_input_pointer_frame_notify);
-            bsi_input_pointer_listener_add(
-                bsi_input_pointer,
-                &bsi_input_pointer->listen.swipe_begin,
+            bsi_util_slot_connect(&bsi_input_pointer->wlr_cursor->events.button,
+                                  &bsi_input_pointer->listen.button,
+                                  bsi_input_pointer_button_notify);
+            bsi_util_slot_connect(&bsi_input_pointer->wlr_cursor->events.axis,
+                                  &bsi_input_pointer->listen.axis,
+                                  bsi_input_pointer_axis_notify);
+            bsi_util_slot_connect(&bsi_input_pointer->wlr_cursor->events.frame,
+                                  &bsi_input_pointer->listen.frame,
+                                  bsi_input_pointer_frame_notify);
+            bsi_util_slot_connect(
                 &bsi_input_pointer->wlr_cursor->events.swipe_begin,
+                &bsi_input_pointer->listen.swipe_begin,
                 bsi_input_pointer_swipe_begin_notify);
-            bsi_input_pointer_listener_add(
-                bsi_input_pointer,
-                &bsi_input_pointer->listen.swipe_update,
+            bsi_util_slot_connect(
                 &bsi_input_pointer->wlr_cursor->events.swipe_update,
+                &bsi_input_pointer->listen.swipe_update,
                 bsi_input_pointer_swipe_update_notify);
-            bsi_input_pointer_listener_add(
-                bsi_input_pointer,
-                &bsi_input_pointer->listen.swipe_end,
+            bsi_util_slot_connect(
                 &bsi_input_pointer->wlr_cursor->events.swipe_end,
+                &bsi_input_pointer->listen.swipe_end,
                 bsi_input_pointer_swipe_end_notify);
-            bsi_input_pointer_listener_add(
-                bsi_input_pointer,
-                &bsi_input_pointer->listen.pinch_begin,
+            bsi_util_slot_connect(
                 &bsi_input_pointer->wlr_cursor->events.pinch_begin,
+                &bsi_input_pointer->listen.pinch_begin,
                 bsi_input_pointer_pinch_begin_notify);
-            bsi_input_pointer_listener_add(
-                bsi_input_pointer,
-                &bsi_input_pointer->listen.pinch_update,
+            bsi_util_slot_connect(
                 &bsi_input_pointer->wlr_cursor->events.pinch_update,
+                &bsi_input_pointer->listen.pinch_update,
                 bsi_input_pointer_pinch_update_notify);
-            bsi_input_pointer_listener_add(
-                bsi_input_pointer,
-                &bsi_input_pointer->listen.pinch_end,
+            bsi_util_slot_connect(
                 &bsi_input_pointer->wlr_cursor->events.pinch_end,
+                &bsi_input_pointer->listen.pinch_end,
                 bsi_input_pointer_pinch_end_notify);
-            bsi_input_pointer_listener_add(
-                bsi_input_pointer,
-                &bsi_input_pointer->listen.hold_begin,
+            bsi_util_slot_connect(
                 &bsi_input_pointer->wlr_cursor->events.hold_begin,
+                &bsi_input_pointer->listen.hold_begin,
                 bsi_input_pointer_hold_begin_notify);
-            bsi_input_pointer_listener_add(
-                bsi_input_pointer,
-                &bsi_input_pointer->listen.hold_end,
+            bsi_util_slot_connect(
                 &bsi_input_pointer->wlr_cursor->events.hold_end,
+                &bsi_input_pointer->listen.hold_end,
                 bsi_input_pointer_hold_end_notify);
             wlr_log(WLR_INFO, "Added new pointer input device");
             break;
@@ -229,32 +203,25 @@ bsi_global_backend_new_input_notify(struct wl_listener* listener, void* data)
                 bsi_input_keyboard, bsi_server, wlr_input_device);
             bsi_inputs_keyboard_add(&bsi_server->bsi_inputs,
                                     bsi_input_keyboard);
-            bsi_input_keyboard_listener_add(
-                bsi_input_keyboard,
-                &bsi_input_keyboard->listen.key,
+            bsi_util_slot_connect(
                 &bsi_input_keyboard->wlr_input_device->keyboard->events.key,
+                &bsi_input_keyboard->listen.key,
                 bsi_input_keyboard_key_notify);
-            bsi_input_keyboard_listener_add(
-                bsi_input_keyboard,
-                &bsi_input_keyboard->listen.modifiers,
-                &bsi_input_keyboard->wlr_input_device->keyboard->events
-                     .modifiers,
-                bsi_input_keyboard_modifiers_notify);
-            bsi_input_keyboard_listener_add(
-                bsi_input_keyboard,
-                &bsi_input_keyboard->listen.keymap,
+            bsi_util_slot_connect(&bsi_input_keyboard->wlr_input_device
+                                       ->keyboard->events.modifiers,
+                                  &bsi_input_keyboard->listen.modifiers,
+                                  bsi_input_keyboard_modifiers_notify);
+            bsi_util_slot_connect(
                 &bsi_input_keyboard->wlr_input_device->keyboard->events.keymap,
+                &bsi_input_keyboard->listen.keymap,
                 bsi_input_keyboard_keymap_notify);
-            bsi_input_keyboard_listener_add(
-                bsi_input_keyboard,
-                &bsi_input_keyboard->listen.repeat_info,
-                &bsi_input_keyboard->wlr_input_device->keyboard->events
-                     .repeat_info,
-                bsi_input_keyboard_repeat_info_notify);
-            bsi_input_keyboard_listener_add(
-                bsi_input_keyboard,
-                &bsi_input_keyboard->listen.destroy,
+            bsi_util_slot_connect(&bsi_input_keyboard->wlr_input_device
+                                       ->keyboard->events.repeat_info,
+                                  &bsi_input_keyboard->listen.repeat_info,
+                                  bsi_input_keyboard_repeat_info_notify);
+            bsi_util_slot_connect(
                 &bsi_input_keyboard->wlr_input_device->keyboard->events.destroy,
+                &bsi_input_keyboard->listen.destroy,
                 bsi_input_keyboard_destroy_notify);
             wlr_log(WLR_INFO, "Added new keyboard input device");
             break;
@@ -516,86 +483,68 @@ bsi_global_xdg_shell_new_surface_notify(struct wl_listener* listener,
                 "Workspace %s now has %ld views",
                 workspace_active->name,
                 workspace_active->len_views);
-        bsi_view_listener_add(bsi_view,
+        bsi_util_slot_connect(&bsi_view->wlr_xdg_surface->events.destroy,
                               &bsi_view->listen.destroy_xdg_surface,
-                              &bsi_view->wlr_xdg_surface->events.destroy,
                               bsi_view_destroy_xdg_surface_notify);
-        bsi_view_listener_add(bsi_view,
+        bsi_util_slot_connect(&bsi_view->wlr_xdg_surface->events.ping_timeout,
                               &bsi_view->listen.ping_timeout,
-                              &bsi_view->wlr_xdg_surface->events.ping_timeout,
                               bsi_view_ping_timeout_notify);
-        bsi_view_listener_add(bsi_view,
+        bsi_util_slot_connect(&bsi_view->wlr_xdg_surface->events.new_popup,
                               &bsi_view->listen.new_popup,
-                              &bsi_view->wlr_xdg_surface->events.new_popup,
                               bsi_view_new_popup_notify);
-        bsi_view_listener_add(bsi_view,
+        bsi_util_slot_connect(&bsi_view->wlr_xdg_surface->events.map,
                               &bsi_view->listen.map,
-                              &bsi_view->wlr_xdg_surface->events.map,
                               bsi_view_map_notify);
-        bsi_view_listener_add(bsi_view,
+        bsi_util_slot_connect(&bsi_view->wlr_xdg_surface->events.unmap,
                               &bsi_view->listen.unmap,
-                              &bsi_view->wlr_xdg_surface->events.unmap,
                               bsi_view_unmap_notify);
-        bsi_view_listener_add(bsi_view,
+        bsi_util_slot_connect(&bsi_view->wlr_xdg_surface->events.configure,
                               &bsi_view->listen.configure,
-                              &bsi_view->wlr_xdg_surface->events.configure,
                               bsi_view_configure_notify);
-        bsi_view_listener_add(bsi_view,
+        bsi_util_slot_connect(&bsi_view->wlr_xdg_surface->events.ack_configure,
                               &bsi_view->listen.ack_configure,
-                              &bsi_view->wlr_xdg_surface->events.ack_configure,
                               bsi_view_ack_configure_notify);
-        bsi_view_listener_add(bsi_view,
+        bsi_util_slot_connect(&bsi_view->wlr_scene_node->events.destroy,
                               &bsi_view->listen.destroy_scene_node,
-                              &bsi_view->wlr_scene_node->events.destroy,
                               bsi_view_destroy_scene_node_notify);
-        bsi_view_listener_add(
-            bsi_view,
-            &bsi_view->listen.request_maximize,
+        bsi_util_slot_connect(
             &bsi_view->wlr_xdg_surface->toplevel->events.request_maximize,
+            &bsi_view->listen.request_maximize,
             bsi_view_request_maximize_notify);
-        bsi_view_listener_add(
-            bsi_view,
-            &bsi_view->listen.request_fullscreen,
+        bsi_util_slot_connect(
             &bsi_view->wlr_xdg_surface->toplevel->events.request_fullscreen,
+            &bsi_view->listen.request_fullscreen,
             bsi_view_request_fullscreen_notify);
-        bsi_view_listener_add(
-            bsi_view,
-            &bsi_view->listen.request_minimize,
+        bsi_util_slot_connect(
             &bsi_view->wlr_xdg_surface->toplevel->events.request_minimize,
+            &bsi_view->listen.request_minimize,
             bsi_view_request_minimize_notify);
-        bsi_view_listener_add(
-            bsi_view,
-            &bsi_view->listen.request_move,
+        bsi_util_slot_connect(
             &bsi_view->wlr_xdg_surface->toplevel->events.request_move,
+            &bsi_view->listen.request_move,
             bsi_view_request_move_notify);
-        bsi_view_listener_add(
-            bsi_view,
-            &bsi_view->listen.request_resize,
+        bsi_util_slot_connect(
             &bsi_view->wlr_xdg_surface->toplevel->events.request_resize,
+            &bsi_view->listen.request_resize,
             bsi_view_request_resize_notify);
-        bsi_view_listener_add(bsi_view,
-                              &bsi_view->listen.request_show_window_menu,
-                              &bsi_view->wlr_xdg_surface->toplevel->events
+        bsi_util_slot_connect(&bsi_view->wlr_xdg_surface->toplevel->events
                                    .request_show_window_menu,
+                              &bsi_view->listen.request_show_window_menu,
                               bsi_view_request_show_window_menu_notify);
-        bsi_view_listener_add(
-            bsi_view,
-            &bsi_view->listen.set_parent,
+        bsi_util_slot_connect(
             &bsi_view->wlr_xdg_surface->toplevel->events.set_parent,
+            &bsi_view->listen.set_parent,
             bsi_view_set_parent_notify);
-        bsi_view_listener_add(
-            bsi_view,
-            &bsi_view->listen.set_title,
+        bsi_util_slot_connect(
             &bsi_view->wlr_xdg_surface->toplevel->events.set_title,
+            &bsi_view->listen.set_title,
             bsi_view_set_title_notify);
-        bsi_view_listener_add(
-            bsi_view,
-            &bsi_view->listen.set_app_id,
+        bsi_util_slot_connect(
             &bsi_view->wlr_xdg_surface->toplevel->events.set_app_id,
+            &bsi_view->listen.set_app_id,
             bsi_view_set_app_id_notify);
-        bsi_view_listener_add(bsi_view,
+        bsi_util_slot_connect(&bsi_view->bsi_workspace->signal.active,
                               &bsi_view->listen.active_workspace,
-                              &bsi_view->bsi_workspace->signal.active,
                               bsi_workspace_active_notify);
     } else {
 #ifdef GIMME_ALL_GLOBAL_EVENTS
@@ -614,5 +563,23 @@ bsi_global_xdg_shell_destroy_notify(
 {
 #ifdef GIMME_ALL_GLOBAL_EVENTS
     wlr_log(WLR_DEBUG, "Got event destroy from wlr_xdg_shell");
+#endif
+}
+
+void
+bsi_layer_shell_new_surface_notify(struct wl_listener* listener, void* data)
+{
+#ifdef GIMME_ALL_GLOBAL_EVENTS
+    wlr_log(WLR_DEBUG, "Got event new_surface from wlr_layer_shell_v1");
+#endif
+
+#warning not implemented
+}
+
+void
+bsi_layer_shell_destroy_notify(struct wl_listener* listener, void* data)
+{
+#ifdef GIMME_ALL_GLOBAL_EVENTS
+    wlr_log(WLR_DEBUG, "Got event destroy from wlr_layer_shell_v1");
 #endif
 }
