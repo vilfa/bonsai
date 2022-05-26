@@ -9,8 +9,8 @@
 #include <wlr/types/wlr_scene.h>
 #include <wlr/util/log.h>
 
-#include "bonsai/config/output.h"
 #include "bonsai/events.h"
+#include "bonsai/output.h"
 #include "bonsai/server.h"
 #include "bonsai/util.h"
 
@@ -133,7 +133,6 @@ bsi_output_destroy_notify(struct wl_listener* listener,
     bsi_outputs_remove(&bsi_server->bsi_outputs, bsi_output);
     bsi_output_destroy(bsi_output);
 
-    // TODO: Probably exit if we have no more outputs?
     if (bsi_server->bsi_outputs.len == 0) {
         wlr_log(WLR_INFO, "Out of outputs, exiting");
         bsi_server_exit(bsi_server);

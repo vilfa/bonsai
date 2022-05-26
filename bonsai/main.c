@@ -22,12 +22,12 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 
-#include "bonsai/config/global.h"
-#include "bonsai/config/input.h"
-#include "bonsai/config/output.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/events.h"
+#include "bonsai/global.h"
+#include "bonsai/input.h"
 #include "bonsai/input/cursor.h"
+#include "bonsai/output.h"
 #include "bonsai/server.h"
 #include "bonsai/util.h"
 

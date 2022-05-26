@@ -296,13 +296,8 @@ bsi_global_backend_destroy_notify(struct wl_listener* listener,
                                   __attribute__((unused)) void* data)
 {
 #ifdef GIMME_ALL_GLOBAL_EVENTS
-    wlr_log(WLR_DEBUG, "Got event destroy from wlr_backend, exiting");
+    wlr_log(WLR_DEBUG, "Got event destroy from wlr_backend");
 #endif
-
-    struct bsi_server* bsi_server = wl_container_of(
-        listener, bsi_server, bsi_listeners_global.listen.wlr_backend_destroy);
-
-    bsi_server_exit(bsi_server);
 }
 
 void

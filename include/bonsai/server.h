@@ -1,10 +1,10 @@
 #pragma once
 
-#include "bonsai/config/global.h"
-#include "bonsai/config/input.h"
-#include "bonsai/config/output.h"
 #include "bonsai/desktop/view.h"
+#include "bonsai/global.h"
+#include "bonsai/input.h"
 #include "bonsai/input/cursor.h"
+#include "bonsai/output.h"
 
 /**
  * @brief Represents the compositor and its internal state.

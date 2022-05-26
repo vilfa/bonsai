@@ -8,7 +8,7 @@
 #include <wlr/types/wlr_seat.h>
 #include <xkbcommon/xkbcommon.h>
 
-#include "bonsai/config/input.h"
+#include "bonsai/input.h"
 #include "bonsai/server.h"
 
 // TODO: Something weird with software cursor, when not using the laptop

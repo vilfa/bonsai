@@ -11,8 +11,8 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 
-#include "bonsai/config/global.h"
 #include "bonsai/events.h"
+#include "bonsai/global.h"
 #include "bonsai/server.h"
 
 struct bsi_server*

@@ -13,9 +13,9 @@
 #include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/util/log.h>
 
-#include "bonsai/config/input.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/events.h"
+#include "bonsai/input.h"
 #include "bonsai/input/cursor.h"
 #include "bonsai/input/keyboard.h"
 #include "bonsai/server.h"

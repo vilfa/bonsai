@@ -7,10 +7,10 @@
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_output.h>
 
-#include "bonsai/config/output.h"
 #include "bonsai/desktop/layer-shell.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/desktop/workspace.h"
+#include "bonsai/output.h"
 #include "bonsai/server.h"
 #include "bonsai/util.h"
 

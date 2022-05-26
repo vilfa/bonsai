@@ -14,7 +14,7 @@
 #include <xkbcommon/xkbcommon-keysyms.h>
 #include <xkbcommon/xkbcommon.h>
 
-#include "bonsai/config/input.h"
+#include "bonsai/input.h"
 #include "bonsai/input/keyboard.h"
 #include "bonsai/server.h"
 

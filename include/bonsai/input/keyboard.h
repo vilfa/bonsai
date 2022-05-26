@@ -2,7 +2,7 @@
 
 #include <wlr/types/wlr_keyboard.h>
 
-#include "bonsai/config/input.h"
+#include "bonsai/input.h"
 
 /**
  * @brief Holds all possible modifier combos, that the server might handle.

@@ -11,9 +11,9 @@
 #include <wlr/util/box.h>
 #include <wlr/util/edges.h>
 
-#include "bonsai/config/output.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/input/cursor.h"
+#include "bonsai/output.h"
 #include "bonsai/server.h"
 
 struct bsi_views*

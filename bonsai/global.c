@@ -5,8 +5,8 @@
 #include <wlr/backend.h>
 #include <wlr/types/wlr_xdg_shell.h>
 
-#include "bonsai/config/global.h"
 #include "bonsai/desktop/view.h"
+#include "bonsai/global.h"
 #include "bonsai/server.h"
 
 struct bsi_listeners_global*
