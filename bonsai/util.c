@@ -1,4 +1,13 @@
+#include "bonsai/server.h"
+#include <assert.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
+#include <unistd.h>
+#include <wlr/util/log.h>
+
+struct bsi_server;
 
 #include "bonsai/util.h"
 
@@ -8,4 +17,28 @@ bsi_util_timespec_get()
     struct timespec ts;
     timespec_get(&ts, TIME_UTC);
     return ts;
+}
+
+bool
+bsi_util_forkexec(char* const* argp, const size_t len_argp)
+{
+    if (len_argp < 1)
+        return false;
+
+    switch (fork()) {
+        case 0: {
+            extern char** environ;
+
+            execve(argp[0], argp, environ);
+
+            wlr_log(WLR_ERROR, "Exec failed: %s", strerror(errno));
+            _exit(EXIT_FAILURE);
+            break;
+        }
+        case -1:
+            wlr_log(WLR_ERROR, "Fork failed: %s", strerror(errno));
+            return false;
+        default:
+            return true;
+    }
 }

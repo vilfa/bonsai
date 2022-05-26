@@ -2,10 +2,9 @@ bonsai_src = files(
     'main.c',
     'server.c',
     'util.c',
-
-    'config/input.c',
-    'config/output.c',
-    'config/global.c',
+    'input.c',
+    'output.c',
+    'global.c',
 
     'input/cursor.c',
     'input/keyboard.c',

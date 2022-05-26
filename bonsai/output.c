@@ -70,6 +70,8 @@ bsi_outputs_get_active(struct bsi_outputs* bsi_outputs)
             return output;
     }
 
+    assert(first);
+
     return first;
 }
 

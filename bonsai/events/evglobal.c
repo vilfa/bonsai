@@ -24,12 +24,12 @@
 
 struct bsi_view;
 
-#include "bonsai/config/global.h"
-#include "bonsai/config/input.h"
 #include "bonsai/desktop/layer-shell.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/desktop/workspace.h"
 #include "bonsai/events.h"
+#include "bonsai/global.h"
+#include "bonsai/input.h"
 #include "bonsai/server.h"
 
 #define GIMME_ALL_GLOBAL_EVENTS
