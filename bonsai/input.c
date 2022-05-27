@@ -75,7 +75,7 @@ bsi_inputs_keyboard_add(struct bsi_inputs* bsi_inputs,
                                   bsi_input_keyboard_rules_len);
 
     wlr_seat_set_keyboard(bsi_inputs->wlr_seat,
-                          bsi_input_keyboard->wlr_input_device);
+                          bsi_input_keyboard->wlr_input_device->keyboard);
 }
 
 void
@@ -156,8 +156,6 @@ bsi_input_keyboard_finish(struct bsi_input_keyboard* bsi_input_keyboard)
 
     wl_list_remove(&bsi_input_keyboard->listen.key.link);
     wl_list_remove(&bsi_input_keyboard->listen.modifiers.link);
-    wl_list_remove(&bsi_input_keyboard->listen.keymap.link);
-    wl_list_remove(&bsi_input_keyboard->listen.repeat_info.link);
     wl_list_remove(&bsi_input_keyboard->listen.destroy.link);
 }
 

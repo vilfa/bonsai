@@ -18,6 +18,7 @@ bonsai_src = files(
     'events/evinput.c',
     'events/evview.c',
     'events/evworkspace.c',
+    'events/evlayershell.c',
 )
 
 bonsai_dep = [
@@ -33,6 +34,7 @@ bonsai_dep = [
     dep_wayland_cursor,
     dep_wayland_egl,
     dep_wayland_protocols,
+    dep_pixman,
 ]
 
 bonsai_inc = [

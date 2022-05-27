@@ -73,7 +73,6 @@ struct bsi_layer_surface_toplevel
         /* wlr_surface -> wlr_layer_surface::surface */
         struct wl_listener wlr_surface_commit;
         struct wl_listener wlr_surface_new_subsurface;
-        struct wl_listener wlr_surface_destroy; // TODO: Unnecessary?
     } listen;
 
     struct wl_list link;
@@ -90,7 +89,6 @@ struct bsi_layer_surface_popup
     {
         /* wlr_xdg_surface -> wlr_xdg_popup::base */
         struct wl_listener destroy;
-        struct wl_listener ping_timeout; // TODO: Unnecessary?
         struct wl_listener new_popup;
         struct wl_listener map;
         struct wl_listener unmap;
@@ -122,6 +120,12 @@ bsi_output_layers_init(struct bsi_output_layers* bsi_output_layers);
 void
 bsi_output_layers_destroy(struct bsi_output_layers* bsi_output_layers);
 
+void
+bsi_output_layers_add(
+    struct bsi_output_layers* bsi_output_layers,
+    struct bsi_layer_surface_toplevel* bsi_layer_surface_toplevel,
+    enum zwlr_layer_shell_v1_layer at_layer);
+
 struct bsi_layer_surface_toplevel*
 bsi_layer_surface_toplevel_init(
     struct bsi_layer_surface_toplevel* layer_surface,
@@ -142,3 +146,7 @@ bsi_layer_surface_subsurface_init(
 void
 bsi_layer_surface_finish(union bsi_layer_surface bsi_layer_surface,
                          enum bsi_layer_surface_type layer_surface_type);
+
+void
+bsi_layer_surface_destroy(union bsi_layer_surface bsi_layer_surface,
+                          enum bsi_layer_surface_type layer_surface_type);

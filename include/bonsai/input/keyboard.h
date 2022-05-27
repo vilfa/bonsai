@@ -29,7 +29,7 @@ enum bsi_keyboard_modifier
  */
 bool
 bsi_keyboard_keybinds_process(struct bsi_input_keyboard* bsi_input_keyboard,
-                              struct wlr_event_keyboard_key* event);
+                              struct wlr_keyboard_key_event* event);
 
 /**
  * @brief Appropriately handles the processed keybinds.

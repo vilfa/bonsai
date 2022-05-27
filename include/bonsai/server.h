@@ -15,14 +15,11 @@ struct bsi_server
     /* Globals */
     const char* wl_socket;
     struct wl_display* wl_display;
-    struct wl_event_loop* wl_event_loop;
     struct wlr_backend* wlr_backend;
     struct wlr_renderer* wlr_renderer;
     struct wlr_allocator* wlr_allocator;
     struct wlr_output_layout* wlr_output_layout;
     struct wlr_scene* wlr_scene;
-    struct wlr_compositor* wlr_compositor;
-    struct wlr_data_device_manager* wlr_data_device_manager;
     struct wlr_xdg_shell* wlr_xdg_shell;
     struct wlr_seat* wlr_seat;
     struct wlr_cursor* wlr_cursor;

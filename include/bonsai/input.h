@@ -54,6 +54,8 @@ struct bsi_input_pointer
         struct wl_listener pinch_end;
         struct wl_listener hold_begin;
         struct wl_listener hold_end;
+        /* wlr_input_device::destroy */
+        struct wl_listener destroy;
     } listen;
 
     struct wl_list link;
@@ -75,8 +77,7 @@ struct bsi_input_keyboard
         /* wlr_input_device::keyboard */
         struct wl_listener key;
         struct wl_listener modifiers;
-        struct wl_listener keymap;
-        struct wl_listener repeat_info;
+        /* wlr_input_device::destroy */
         struct wl_listener destroy;
     } listen;
 

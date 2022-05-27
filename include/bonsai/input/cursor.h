@@ -33,6 +33,8 @@ enum bsi_cursor_image
     BSI_CURSOR_IMAGE_RESIZE_RIGHT,
 };
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
 static const char* bsi_cursor_image_map[] = {
     [BSI_CURSOR_IMAGE_NORMAL] = "left_ptr",
     [BSI_CURSOR_IMAGE_MOVE] = "move",
@@ -45,6 +47,7 @@ static const char* bsi_cursor_image_map[] = {
     [BSI_CURSOR_IMAGE_RESIZE_LEFT] = "left_side",
     [BSI_CURSOR_IMAGE_RESIZE_RIGHT] = "right_side",
 };
+#pragma GCC diagnostic pop
 
 /**
  * @brief Holds a single pointer event passed to various functions.
@@ -52,18 +55,18 @@ static const char* bsi_cursor_image_map[] = {
  */
 union bsi_cursor_event
 {
-    struct wlr_event_pointer_motion* motion;
-    struct wlr_event_pointer_motion_absolute* motion_absolute;
-    struct wlr_event_pointer_button* button;
-    struct wlr_event_pointer_axis* axis;
-    struct wlr_event_pointer_swipe_begin* swipe_begin;
-    struct wlr_event_pointer_swipe_update* swipe_update;
-    struct wlr_event_pointer_swipe_end* swipe_end;
-    struct wlr_event_pointer_pinch_begin* pinch_begin;
-    struct wlr_event_pointer_pinch_update* pinch_update;
-    struct wlr_event_pointer_pinch_end* pinch_end;
-    struct wlr_event_pointer_hold_begin* hold_begin;
-    struct wlr_event_pointer_hold_end* hold_end;
+    struct wlr_pointer_motion_event* motion;
+    struct wlr_pointer_motion_absolute_event* motion_absolute;
+    struct wlr_pointer_button_event* button;
+    struct wlr_pointer_axis_event* axis;
+    struct wlr_pointer_swipe_begin_event* swipe_begin;
+    struct wlr_pointer_swipe_update_event* swipe_update;
+    struct wlr_pointer_swipe_end_event* swipe_end;
+    struct wlr_pointer_pinch_begin_event* pinch_begin;
+    struct wlr_pointer_pinch_update_event* pinch_update;
+    struct wlr_pointer_pinch_end_event* pinch_end;
+    struct wlr_pointer_hold_begin_event* hold_begin;
+    struct wlr_pointer_hold_end_event* hold_end;
 };
 
 /**

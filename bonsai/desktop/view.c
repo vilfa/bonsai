@@ -106,12 +106,9 @@ bsi_view_finish(struct bsi_view* bsi_view)
 
     /* wlr_xdg_surface */
     wl_list_remove(&bsi_view->listen.destroy_xdg_surface.link);
-    wl_list_remove(&bsi_view->listen.ping_timeout.link);
     wl_list_remove(&bsi_view->listen.new_popup.link);
     wl_list_remove(&bsi_view->listen.map.link);
     wl_list_remove(&bsi_view->listen.unmap.link);
-    wl_list_remove(&bsi_view->listen.configure.link);
-    wl_list_remove(&bsi_view->listen.ack_configure.link);
     /* wlr_xdg_toplevel */
     wl_list_remove(&bsi_view->listen.request_maximize.link);
     wl_list_remove(&bsi_view->listen.request_fullscreen.link);
@@ -119,7 +116,6 @@ bsi_view_finish(struct bsi_view* bsi_view)
     wl_list_remove(&bsi_view->listen.request_move.link);
     wl_list_remove(&bsi_view->listen.request_resize.link);
     wl_list_remove(&bsi_view->listen.request_show_window_menu.link);
-    wl_list_remove(&bsi_view->listen.set_parent.link);
     wl_list_remove(&bsi_view->listen.set_title.link);
     wl_list_remove(&bsi_view->listen.set_app_id.link);
     /* wlr_scene_node */
@@ -156,7 +152,8 @@ bsi_view_focus(struct bsi_view* bsi_view)
         /* Deactivate the previously focused surface and notify the client. */
         struct wlr_xdg_surface* prev_focused_xdg =
             wlr_xdg_surface_from_wlr_surface(prev_focused);
-        wlr_xdg_toplevel_set_activated(prev_focused_xdg, false);
+        assert(prev_focused_xdg->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL);
+        wlr_xdg_toplevel_set_activated(prev_focused_xdg->toplevel, false);
     }
 
     /* Move view to top. */
@@ -165,7 +162,8 @@ bsi_view_focus(struct bsi_view* bsi_view)
     bsi_views_remove(bsi_views, bsi_view);
     bsi_views_add(bsi_views, bsi_view);
     /* Activate the view surface. */
-    wlr_xdg_toplevel_set_activated(bsi_view->wlr_xdg_surface, true);
+    assert(bsi_view->wlr_xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL);
+    wlr_xdg_toplevel_set_activated(bsi_view->wlr_xdg_surface->toplevel, true);
     /* Tell seat to enter this surface with the keyboard. Don't touch the
      * pointer. */
     struct wlr_keyboard* wlr_keyboard = wlr_seat_get_keyboard(wlr_seat);
@@ -261,11 +259,13 @@ bsi_view_set_maximized(struct bsi_view* bsi_view, bool maximized)
 
         struct bsi_server* server = bsi_view->bsi_server;
         struct bsi_output* output = bsi_view->bsi_workspace->bsi_output;
-        struct wlr_box* output_box = wlr_output_layout_get_box(
-            server->wlr_output_layout, output->wlr_output);
+        struct wlr_box output_box;
+        wlr_output_layout_get_box(
+            server->wlr_output_layout, output->wlr_output, &output_box);
         wlr_scene_node_set_position(bsi_view->wlr_scene_node, 0, 0);
-        wlr_xdg_toplevel_set_size(
-            bsi_view->wlr_xdg_surface, output_box->width, output_box->height);
+        wlr_xdg_toplevel_set_size(bsi_view->wlr_xdg_surface->toplevel,
+                                  output_box.width,
+                                  output_box.height);
     }
 }
 
@@ -318,21 +318,23 @@ bsi_view_set_fullscreen(struct bsi_view* bsi_view, bool fullscreen)
         // app fullscreen
         struct bsi_server* server = bsi_view->bsi_server;
         struct bsi_output* output = bsi_view->bsi_workspace->bsi_output;
-        struct wlr_box* output_box = wlr_output_layout_get_box(
-            server->wlr_output_layout, output->wlr_output);
+        struct wlr_box output_box;
+        wlr_output_layout_get_box(
+            server->wlr_output_layout, output->wlr_output, &output_box);
         wlr_scene_node_set_position(bsi_view->wlr_scene_node, 0, 0);
-        wlr_xdg_toplevel_set_size(
-            bsi_view->wlr_xdg_surface, output_box->width, output_box->height);
+        wlr_xdg_toplevel_set_size(bsi_view->wlr_xdg_surface->toplevel,
+                                  output_box.width,
+                                  output_box.height);
     }
 }
 
 void
 bsi_view_restore_prev(struct bsi_view* bsi_view)
 {
-    wlr_xdg_toplevel_set_resizing(bsi_view->wlr_xdg_surface, true);
+    wlr_xdg_toplevel_set_resizing(bsi_view->wlr_xdg_surface->toplevel, true);
     wlr_xdg_toplevel_set_size(
-        bsi_view->wlr_xdg_surface, bsi_view->width, bsi_view->height);
-    wlr_xdg_toplevel_set_resizing(bsi_view->wlr_xdg_surface, false);
+        bsi_view->wlr_xdg_surface->toplevel, bsi_view->width, bsi_view->height);
+    wlr_xdg_toplevel_set_resizing(bsi_view->wlr_xdg_surface->toplevel, false);
     wlr_scene_node_set_position(
         bsi_view->wlr_scene_node, bsi_view->x, bsi_view->y);
 }

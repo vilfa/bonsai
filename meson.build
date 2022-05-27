@@ -24,6 +24,7 @@ dep_wayland_client = dependency('wayland-client', required : true)
 dep_wayland_cursor = dependency('wayland-cursor', required : true)
 dep_wayland_egl = dependency('wayland-egl', required : true)
 dep_wayland_protocols = dependency('wayland-protocols', required : true)
+dep_pixman = dependency('pixman-1', required : true)
 
 ### Include dirs
 inc_default = include_directories('include')

@@ -49,12 +49,9 @@ struct bsi_view
     {
         /* wlr_xdg_surface */
         struct wl_listener destroy_xdg_surface;
-        struct wl_listener ping_timeout;
         struct wl_listener new_popup;
         struct wl_listener map;
         struct wl_listener unmap;
-        struct wl_listener configure;
-        struct wl_listener ack_configure;
         /* wlr_xdg_toplevel */
         struct wl_listener request_maximize;
         struct wl_listener request_fullscreen;
@@ -62,7 +59,6 @@ struct bsi_view
         struct wl_listener request_move;
         struct wl_listener request_resize;
         struct wl_listener request_show_window_menu;
-        struct wl_listener set_parent;
         struct wl_listener set_title;
         struct wl_listener set_app_id;
         /* wlr_scene_node */

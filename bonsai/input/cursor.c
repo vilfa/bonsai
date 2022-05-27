@@ -59,13 +59,14 @@ bsi_cursor_view_at(struct bsi_cursor* bsi_cursor,
                           sx,
                           sy);
 
-    /* If this node is not a surface node (e.g. is buffer, rect, root, tree),
-     * then return `NULL`. */
-    if (node == NULL || node->type != WLR_SCENE_NODE_SURFACE)
+    /* If this node is not a buffer node (eg. is rect, root, tree), then return
+     * `NULL`. */
+    if (node == NULL || node->type != WLR_SCENE_NODE_BUFFER)
         return NULL;
 
     /* Get the `wlr_surface` of the scene node of the right type. */
-    *surface_at = wlr_scene_surface_from_node(node)->surface;
+    // *surface_at = wlr_scene_surface_from_node(node)->surface;
+    *surface_at = ((struct wlr_scene_surface*)node)->surface;
 
     /* Find the actual topmost node of this node tree. */
     while (node != NULL && node->data == NULL)
@@ -106,7 +107,7 @@ bsi_cursor_process_motion(struct bsi_cursor* bsi_cursor,
              * the surface pointer focus, which is different from keyboard
              * focus (e.g. think of scrolling a view in one window, when another
              * window is focused). */
-            struct wlr_event_pointer_motion* event = bsi_cursor_event.motion;
+            struct wlr_pointer_motion_event* event = bsi_cursor_event.motion;
 
             wlr_seat_pointer_notify_enter(
                 bsi_server->wlr_seat, surface_at, sx, sy);
@@ -127,7 +128,7 @@ bsi_cursor_process_view_move(struct bsi_cursor* bsi_cursor,
 
     struct bsi_server* bsi_server = bsi_cursor->bsi_server;
     struct bsi_view* bsi_view = bsi_cursor->grabbed_view;
-    struct wlr_event_pointer_motion* event = bsi_cursor_event.motion;
+    struct wlr_pointer_motion_event* event = bsi_cursor_event.motion;
 
     /* A view in these states cannot be moved. Although, a minimized view
      * getting here is altogether impossible. */
@@ -145,7 +146,8 @@ bsi_cursor_process_view_move(struct bsi_cursor* bsi_cursor,
 
     if (bsi_view->maximized) {
         bsi_view_set_maximized(bsi_view, false);
-        wlr_xdg_toplevel_set_maximized(bsi_view->wlr_xdg_surface, false);
+        wlr_xdg_toplevel_set_maximized(bsi_view->wlr_xdg_surface->toplevel,
+                                       false);
     }
 
     wlr_scene_node_set_position(
@@ -168,14 +170,15 @@ bsi_cursor_process_view_resize(struct bsi_cursor* bsi_cursor,
 
     struct bsi_server* bsi_server = bsi_cursor->bsi_server;
     struct bsi_view* bsi_view = bsi_server->bsi_cursor.grabbed_view;
-    struct wlr_event_pointer_motion* event = bsi_cursor_event.motion;
+    struct wlr_pointer_motion_event* event = bsi_cursor_event.motion;
 
     /* The view cannot be resized when in these states. Although, a minimized
      * view getting here is altogether impossible. */
     if (bsi_view->maximized || bsi_view->minimized || bsi_view->fullscreen)
         return;
 
-    wlr_xdg_toplevel_set_resizing(bsi_view->wlr_xdg_surface, true);
+    assert(bsi_view->wlr_xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL);
+    wlr_xdg_toplevel_set_resizing(bsi_view->wlr_xdg_surface->toplevel, true);
 
     // TODO: Not sure what is happening here.
     double border_x = bsi_server->wlr_cursor->x - bsi_cursor->grab_x;
@@ -238,7 +241,8 @@ bsi_cursor_process_view_resize(struct bsi_cursor* bsi_cursor,
 
     int32_t new_width = new_right - new_left;
     int32_t new_height = new_bottom - new_top;
-    wlr_xdg_toplevel_set_size(bsi_view->wlr_xdg_surface, new_width, new_height);
+    wlr_xdg_toplevel_set_size(
+        bsi_view->wlr_xdg_surface->toplevel, new_width, new_height);
 
-    wlr_xdg_toplevel_set_resizing(bsi_view->wlr_xdg_surface, false);
+    wlr_xdg_toplevel_set_resizing(bsi_view->wlr_xdg_surface->toplevel, false);
 }

@@ -44,9 +44,7 @@ main(void)
     bsi_server_init(&server);
 
     server.wl_socket = wl_display_add_socket_auto(server.wl_display);
-    assert(server.wl_socket);
-    wlr_log(WLR_DEBUG, "Created server socket");
-    wlr_log(WLR_DEBUG, "Running compositor on socket '%s'", server.wl_socket);
+    wlr_log(WLR_DEBUG, "Created server socket '%s'", server.wl_socket);
 
     if (setenv("WAYLAND_DISPLAY", server.wl_socket, true) != 0) {
         wlr_log(WLR_ERROR,
@@ -57,16 +55,16 @@ main(void)
         exit(EXIT_FAILURE);
     }
 
-    if (setenv("WLR_NO_HARDWARE_CURSORS", "1", true) != 0) {
-        // Workaround for https://github.com/swaywm/wlroots/issues/3189
-        // TODO: Idk man these cursors are weird.
-        wlr_log(WLR_ERROR,
-                "Failed to set WLR_NO_HARDWARE_CURSORS env var: %s",
-                strerror(errno));
-        wlr_backend_destroy(server.wlr_backend);
-        wl_display_destroy(server.wl_display);
-        exit(EXIT_FAILURE);
-    }
+    // if (setenv("WLR_NO_HARDWARE_CURSORS", "1", true) != 0) {
+    //     // Workaround for https://github.com/swaywm/wlroots/issues/3189
+    //     // TODO: Idk man these cursors are weird.
+    //     wlr_log(WLR_ERROR,
+    //             "Failed to set WLR_NO_HARDWARE_CURSORS env var: %s",
+    //             strerror(errno));
+    //     wlr_backend_destroy(server.wlr_backend);
+    //     wl_display_destroy(server.wl_display);
+    //     exit(EXIT_FAILURE);
+    // }
 
     if (!wlr_backend_start(server.wlr_backend)) {
         wlr_log(WLR_ERROR, "Failed to start backend");
@@ -75,6 +73,7 @@ main(void)
         exit(EXIT_FAILURE);
     }
 
+    wlr_log(WLR_INFO, "Running compositor on socket '%s'", server.wl_socket);
     wl_display_run(server.wl_display);
 
     wl_display_destroy_clients(server.wl_display);

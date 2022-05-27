@@ -35,9 +35,10 @@ bsi_view_destroy_xdg_surface_notify(struct wl_listener* listener,
     struct bsi_views* bsi_views = &bsi_view->bsi_server->bsi_views;
     struct bsi_workspace* bsi_workspace = bsi_view->bsi_workspace;
 
-    bsi_view_finish(bsi_view);
     bsi_views_remove(bsi_views, bsi_view);
     bsi_workspace_view_remove(bsi_workspace, bsi_view);
+    bsi_view_finish(bsi_view);
+    bsi_view_destroy(bsi_view);
 
 #ifdef GIMME_ALL_VIEW_EVENTS
     wlr_log(WLR_DEBUG,
@@ -45,8 +46,6 @@ bsi_view_destroy_xdg_surface_notify(struct wl_listener* listener,
             bsi_workspace->name,
             bsi_workspace->len_views);
 #endif
-
-    bsi_view_destroy(bsi_view);
 }
 
 void
@@ -60,21 +59,11 @@ bsi_view_destroy_scene_node_notify(struct wl_listener* listener,
     struct bsi_view* bsi_view =
         wl_container_of(listener, bsi_view, listen.destroy_scene_node);
 
-    bsi_view_finish(bsi_view);
     /* Should also work if e.g. you close a window on another workspace with
      * kill. */
     bsi_workspace_view_remove(bsi_view->bsi_workspace, bsi_view);
+    bsi_view_finish(bsi_view);
     bsi_view_destroy(bsi_view);
-}
-
-void
-bsi_view_ping_timeout_notify(struct wl_listener* listener, void* data)
-{
-#ifdef GIMME_ALL_VIEW_EVENTS
-    wlr_log(WLR_DEBUG, "Got event ping_timeout from wlr_xdg_surface");
-#endif
-
-#warning "Not implemented"
 }
 
 void
@@ -106,11 +95,11 @@ bsi_view_map_notify(struct wl_listener* listener, void* data)
         // TODO: Should there be code handling fullscreen_output_destroy, we
         // already handle moving views in workspace code
         bsi_view_set_fullscreen(bsi_view, requested->fullscreen);
-        wlr_xdg_toplevel_set_fullscreen(bsi_view->wlr_xdg_surface,
+        wlr_xdg_toplevel_set_fullscreen(bsi_view->wlr_xdg_surface->toplevel,
                                         requested->fullscreen);
     } else if (requested->maximized) {
         bsi_view_set_maximized(bsi_view, requested->maximized);
-        wlr_xdg_toplevel_set_maximized(bsi_view->wlr_xdg_surface,
+        wlr_xdg_toplevel_set_maximized(bsi_view->wlr_xdg_surface->toplevel,
                                        requested->maximized);
     } else if (requested->minimized) {
         bsi_view_set_minimized(bsi_view, requested->minimized);
@@ -181,7 +170,7 @@ bsi_view_request_maximize_notify(struct wl_listener* listener, void* data)
 
     bsi_view_set_maximized(bsi_view, requested->maximized);
     /* This surface should now consider itself (un-)maximized */
-    wlr_xdg_toplevel_set_maximized(surface, requested->maximized);
+    wlr_xdg_toplevel_set_maximized(surface->toplevel, requested->maximized);
 }
 
 void
@@ -194,11 +183,12 @@ bsi_view_request_fullscreen_notify(struct wl_listener* listener, void* data)
     struct bsi_view* bsi_view =
         wl_container_of(listener, bsi_view, listen.request_fullscreen);
     /* Only a toplevel surface can request fullscreen. */
-    struct wlr_xdg_toplevel_set_fullscreen_event* event = data;
+    struct wlr_xdg_toplevel* toplevel = bsi_view->wlr_xdg_surface->toplevel;
+    struct wlr_xdg_toplevel_requested* requested = &toplevel->requested;
 
-    bsi_view_set_fullscreen(bsi_view, event->fullscreen);
+    bsi_view_set_fullscreen(bsi_view, requested->fullscreen);
     /* This surface should now consider itself (un-)fullscreen. */
-    wlr_xdg_toplevel_set_fullscreen(event->surface, event->fullscreen);
+    wlr_xdg_toplevel_set_fullscreen(toplevel, requested->fullscreen);
 }
 
 void
@@ -299,23 +289,6 @@ bsi_view_request_show_window_menu_notify(struct wl_listener* listener,
 }
 
 void
-bsi_view_set_parent_notify(struct wl_listener* listener, void* data)
-{
-#ifdef GIMME_ALL_VIEW_EVENTS
-    wlr_log(WLR_DEBUG, "Got event set_parent from wlr_xdg_toplevel");
-#endif
-
-    struct bsi_view* bsi_view =
-        wl_container_of(listener, bsi_view, listen.set_parent);
-    struct wlr_xdg_surface* wlr_xdg_surface = data;
-
-    // TODO: This causes a crash :(.
-    wlr_xdg_toplevel_set_parent(bsi_view->wlr_xdg_surface, wlr_xdg_surface);
-
-#warning "Not implemented"
-}
-
-void
 bsi_view_set_title_notify(struct wl_listener* listener, void* data)
 {
 #ifdef GIMME_ALL_VIEW_EVENTS
@@ -323,7 +296,7 @@ bsi_view_set_title_notify(struct wl_listener* listener, void* data)
 #endif
 
     struct bsi_view* bsi_view =
-        wl_container_of(listener, bsi_view, listen.set_parent);
+        wl_container_of(listener, bsi_view, listen.set_title);
     struct wlr_xdg_surface* wlr_xdg_surface = data;
 
     if (wlr_xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL)

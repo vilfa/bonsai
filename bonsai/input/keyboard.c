@@ -23,7 +23,7 @@
 
 bool
 bsi_keyboard_keybinds_process(struct bsi_input_keyboard* bsi_input_keyboard,
-                              struct wlr_event_keyboard_key* event)
+                              struct wlr_keyboard_key_event* event)
 {
     struct bsi_server* bsi_server = bsi_input_keyboard->bsi_server;
     struct wlr_keyboard* keyboard =

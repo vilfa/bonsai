@@ -5,6 +5,7 @@
  *
  */
 
+#include "bonsai/output.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <wayland-server-core.h>
@@ -73,6 +74,7 @@ bsi_global_backend_new_output_notify(struct wl_listener* listener, void* data)
     struct bsi_output* bsi_output = calloc(1, sizeof(struct bsi_output));
     bsi_output_init(
         bsi_output, bsi_server, wlr_output, bsi_workspaces, bsi_output_layers);
+    bsi_outputs_add(&bsi_server->bsi_outputs, bsi_output);
 
     /* Attach a workspace to the output. */
     char workspace_name[25];
@@ -87,7 +89,6 @@ bsi_global_backend_new_output_notify(struct wl_listener* listener, void* data)
             bsi_workspace->name,
             bsi_output->wlr_output->name);
 
-    bsi_outputs_add(&bsi_server->bsi_outputs, bsi_output);
     bsi_util_slot_connect(&bsi_output->wlr_output->events.frame,
                           &bsi_output->listen.frame,
                           bsi_output_frame_notify);
@@ -193,6 +194,10 @@ bsi_global_backend_new_input_notify(struct wl_listener* listener, void* data)
                 &bsi_input_pointer->wlr_cursor->events.hold_end,
                 &bsi_input_pointer->listen.hold_end,
                 bsi_input_pointer_hold_end_notify);
+            bsi_util_slot_connect(
+                &bsi_input_pointer->wlr_input_device->events.destroy,
+                &bsi_input_pointer->listen.destroy,
+                bsi_input_device_destroy_notify);
             wlr_log(WLR_INFO, "Added new pointer input device");
             break;
         }
@@ -212,17 +217,9 @@ bsi_global_backend_new_input_notify(struct wl_listener* listener, void* data)
                                   &bsi_input_keyboard->listen.modifiers,
                                   bsi_input_keyboard_modifiers_notify);
             bsi_util_slot_connect(
-                &bsi_input_keyboard->wlr_input_device->keyboard->events.keymap,
-                &bsi_input_keyboard->listen.keymap,
-                bsi_input_keyboard_keymap_notify);
-            bsi_util_slot_connect(&bsi_input_keyboard->wlr_input_device
-                                       ->keyboard->events.repeat_info,
-                                  &bsi_input_keyboard->listen.repeat_info,
-                                  bsi_input_keyboard_repeat_info_notify);
-            bsi_util_slot_connect(
-                &bsi_input_keyboard->wlr_input_device->keyboard->events.destroy,
+                &bsi_input_keyboard->wlr_input_device->events.destroy,
                 &bsi_input_keyboard->listen.destroy,
-                bsi_input_keyboard_destroy_notify);
+                bsi_input_device_destroy_notify);
             wlr_log(WLR_INFO, "Added new keyboard input device");
             break;
         }
@@ -256,15 +253,6 @@ bsi_global_backend_new_input_notify(struct wl_listener* listener, void* data)
 #endif
 
     wlr_seat_set_capabilities(bsi_server->wlr_seat, capabilities);
-}
-
-void
-bsi_global_backend_destroy_notify(struct wl_listener* listener,
-                                  __attribute__((unused)) void* data)
-{
-#ifdef GIMME_ALL_GLOBAL_EVENTS
-    wlr_log(WLR_DEBUG, "Got event destroy from wlr_backend");
-#endif
 }
 
 void
@@ -374,17 +362,6 @@ bsi_global_seat_request_set_selection_notify(struct wl_listener* listener,
 }
 
 void
-bsi_global_seat_set_selection_notify(
-    __attribute__((unused)) struct wl_listener* listener,
-    __attribute__((unused)) void* data)
-{
-#ifdef GIMME_ALL_GLOBAL_EVENTS
-    wlr_log(WLR_DEBUG, "Got event set_selection from wlr_seat");
-    wlr_log(WLR_DEBUG, "Set selection for seat");
-#endif
-}
-
-void
 bsi_global_seat_request_set_primary_selection_notify(
     struct wl_listener* listener,
     void* data)
@@ -400,17 +377,6 @@ bsi_global_seat_request_set_primary_selection_notify(
 
     /* This function also validates the event serial. */
     wlr_seat_set_primary_selection(wlr_seat, event->source, event->serial);
-}
-
-void
-bsi_global_seat_set_primary_selection_notify(
-    __attribute__((unused)) struct wl_listener* listener,
-    __attribute__((unused)) void* data)
-{
-#ifdef GIMME_ALL_GLOBAL_EVENTS
-    wlr_log(WLR_DEBUG, "Got event set_primary_selection from wlr_seat");
-    wlr_log(WLR_DEBUG, "Set primary selection for seat");
-#endif
 }
 
 void
@@ -435,16 +401,6 @@ bsi_global_seat_start_drag_notify(
 }
 
 void
-bsi_global_seat_destroy_notify(
-    __attribute__((unused)) struct wl_listener* listener,
-    __attribute__((unused)) void* data)
-{
-#ifdef GIMME_ALL_GLOBAL_EVENTS
-    wlr_log(WLR_DEBUG, "Got event destroy from wlr_seat");
-#endif
-}
-
-void
 bsi_global_xdg_shell_new_surface_notify(struct wl_listener* listener,
                                         void* data)
 {
@@ -460,7 +416,6 @@ bsi_global_xdg_shell_new_surface_notify(struct wl_listener* listener,
 
     /* Firstly check if wlr_xdg_surface is a popup surface. If it is not a popup
      * surface, then it is a toplevel surface */
-    // TODO: Rework this.
     if (wlr_xdg_surface->role == WLR_XDG_SURFACE_ROLE_POPUP) {
         struct wlr_xdg_surface* parent =
             wlr_xdg_surface_from_wlr_surface(wlr_xdg_surface->popup->parent);
@@ -486,9 +441,6 @@ bsi_global_xdg_shell_new_surface_notify(struct wl_listener* listener,
         bsi_util_slot_connect(&bsi_view->wlr_xdg_surface->events.destroy,
                               &bsi_view->listen.destroy_xdg_surface,
                               bsi_view_destroy_xdg_surface_notify);
-        bsi_util_slot_connect(&bsi_view->wlr_xdg_surface->events.ping_timeout,
-                              &bsi_view->listen.ping_timeout,
-                              bsi_view_ping_timeout_notify);
         bsi_util_slot_connect(&bsi_view->wlr_xdg_surface->events.new_popup,
                               &bsi_view->listen.new_popup,
                               bsi_view_new_popup_notify);
@@ -498,12 +450,6 @@ bsi_global_xdg_shell_new_surface_notify(struct wl_listener* listener,
         bsi_util_slot_connect(&bsi_view->wlr_xdg_surface->events.unmap,
                               &bsi_view->listen.unmap,
                               bsi_view_unmap_notify);
-        bsi_util_slot_connect(&bsi_view->wlr_xdg_surface->events.configure,
-                              &bsi_view->listen.configure,
-                              bsi_view_configure_notify);
-        bsi_util_slot_connect(&bsi_view->wlr_xdg_surface->events.ack_configure,
-                              &bsi_view->listen.ack_configure,
-                              bsi_view_ack_configure_notify);
         bsi_util_slot_connect(&bsi_view->wlr_scene_node->events.destroy,
                               &bsi_view->listen.destroy_scene_node,
                               bsi_view_destroy_scene_node_notify);
@@ -532,10 +478,6 @@ bsi_global_xdg_shell_new_surface_notify(struct wl_listener* listener,
                               &bsi_view->listen.request_show_window_menu,
                               bsi_view_request_show_window_menu_notify);
         bsi_util_slot_connect(
-            &bsi_view->wlr_xdg_surface->toplevel->events.set_parent,
-            &bsi_view->listen.set_parent,
-            bsi_view_set_parent_notify);
-        bsi_util_slot_connect(
             &bsi_view->wlr_xdg_surface->toplevel->events.set_title,
             &bsi_view->listen.set_title,
             bsi_view_set_title_notify);
@@ -557,29 +499,52 @@ bsi_global_xdg_shell_new_surface_notify(struct wl_listener* listener,
 }
 
 void
-bsi_global_xdg_shell_destroy_notify(
-    __attribute__((unused)) struct wl_listener* listener,
-    __attribute__((unused)) void* data)
-{
-#ifdef GIMME_ALL_GLOBAL_EVENTS
-    wlr_log(WLR_DEBUG, "Got event destroy from wlr_xdg_shell");
-#endif
-}
-
-void
 bsi_layer_shell_new_surface_notify(struct wl_listener* listener, void* data)
 {
 #ifdef GIMME_ALL_GLOBAL_EVENTS
     wlr_log(WLR_DEBUG, "Got event new_surface from wlr_layer_shell_v1");
 #endif
 
-#warning not implemented
-}
+    struct bsi_server* server = wl_container_of(
+        listener,
+        server,
+        bsi_listeners_global.listen.wlr_layer_shell_new_surface);
+    struct wlr_layer_surface_v1* layer_surface = data;
 
-void
-bsi_layer_shell_destroy_notify(struct wl_listener* listener, void* data)
-{
-#ifdef GIMME_ALL_GLOBAL_EVENTS
-    wlr_log(WLR_DEBUG, "Got event destroy from wlr_layer_shell_v1");
-#endif
+    struct bsi_output* active_output;
+    if (!layer_surface->output) {
+        active_output = bsi_outputs_get_active(&server->bsi_outputs);
+        struct bsi_workspace* active_wspace =
+            bsi_workspaces_get_active(active_output->bsi_workspaces);
+        layer_surface->output = active_wspace->bsi_output->wlr_output;
+    } else {
+        active_output =
+            wl_container_of(layer_surface->output, active_output, wlr_output);
+    }
+
+    struct bsi_layer_surface_toplevel* bsi_layer =
+        calloc(1, sizeof(struct bsi_layer_surface_toplevel));
+    bsi_layer_surface_toplevel_init(bsi_layer, layer_surface);
+    bsi_util_slot_connect(&layer_surface->events.map,
+                          &bsi_layer->listen.map,
+                          bsi_layer_surface_toplevel_map_notify);
+    bsi_util_slot_connect(&layer_surface->events.unmap,
+                          &bsi_layer->listen.unmap,
+                          bsi_layer_surface_toplevel_unmap_notify);
+    bsi_util_slot_connect(&layer_surface->events.destroy,
+                          &bsi_layer->listen.destroy,
+                          bsi_layer_surface_toplevel_destroy_notify);
+    bsi_util_slot_connect(&layer_surface->events.new_popup,
+                          &bsi_layer->listen.new_popup,
+                          bsi_layer_surface_toplevel_new_popup_notify);
+    bsi_util_slot_connect(
+        &layer_surface->surface->events.new_subsurface,
+        &bsi_layer->listen.wlr_surface_new_subsurface,
+        bsi_layer_surface_toplevel_wlr_surface_new_subsurface_notify);
+    bsi_util_slot_connect(&layer_surface->surface->events.commit,
+                          &bsi_layer->listen.wlr_surface_commit,
+                          bsi_layer_surface_toplevel_wlr_surface_commit_notify);
+    bsi_output_layers_add(active_output->bsi_output_layers,
+                          bsi_layer,
+                          layer_surface->pending.layer);
 }

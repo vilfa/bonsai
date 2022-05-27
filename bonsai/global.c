@@ -10,30 +10,12 @@
 #include "bonsai/server.h"
 
 struct bsi_listeners_global*
-bsi_listeners_global_init(struct bsi_listeners_global* bsi_listeners_global)
+bsi_listeners_global_init(struct bsi_listeners_global* bsi_listeners_global,
+                          struct bsi_server* bsi_server)
 {
     assert(bsi_listeners_global);
-
-    struct bsi_server* bsi_server =
-        wl_container_of(bsi_listeners_global, bsi_server, bsi_listeners_global);
-
     bsi_listeners_global->bsi_server = bsi_server;
     return bsi_listeners_global;
-}
-
-void
-bsi_listeners_global_add(struct bsi_listeners_global* bsi_listeners_global,
-                         struct wl_listener* bsi_listeners_memb,
-                         struct wl_signal* bsi_signal_memb,
-                         wl_notify_func_t func)
-{
-    assert(bsi_listeners_global);
-    assert(bsi_listeners_memb);
-    assert(bsi_signal_memb);
-    assert(func);
-
-    bsi_listeners_memb->notify = func;
-    wl_signal_add(bsi_signal_memb, bsi_listeners_memb);
 }
 
 void
@@ -44,7 +26,6 @@ bsi_listeners_global_finish(struct bsi_listeners_global* bsi_listeners_global)
     /* wlr_backend */
     wl_list_remove(&bsi_listeners_global->listen.wlr_backend_new_output.link);
     wl_list_remove(&bsi_listeners_global->listen.wlr_backend_new_input.link);
-    wl_list_remove(&bsi_listeners_global->listen.wlr_backend_destroy.link);
     /* wlr_seat */
     wl_list_remove(
         &bsi_listeners_global->listen.wlr_seat_pointer_grab_begin.link);
@@ -61,19 +42,14 @@ bsi_listeners_global_finish(struct bsi_listeners_global* bsi_listeners_global)
         &bsi_listeners_global->listen.wlr_seat_request_set_cursor.link);
     wl_list_remove(
         &bsi_listeners_global->listen.wlr_seat_request_set_selection.link);
-    wl_list_remove(&bsi_listeners_global->listen.wlr_seat_set_selection.link);
     wl_list_remove(&bsi_listeners_global->listen
                         .wlr_seat_request_set_primary_selection.link);
     wl_list_remove(
-        &bsi_listeners_global->listen.wlr_seat_set_primary_selection.link);
-    wl_list_remove(
         &bsi_listeners_global->listen.wlr_seat_request_start_drag.link);
     wl_list_remove(&bsi_listeners_global->listen.wlr_seat_start_drag.link);
-    wl_list_remove(&bsi_listeners_global->listen.wlr_seat_destroy.link);
     /* wlr_xdg_shell */
     wl_list_remove(
         &bsi_listeners_global->listen.wlr_xdg_shell_new_surface.link);
-    wl_list_remove(&bsi_listeners_global->listen.wlr_xdg_shell_destroy.link);
     /* bsi_workspace */
     wl_list_remove(&bsi_listeners_global->listen.bsi_workspace_active.link);
 }

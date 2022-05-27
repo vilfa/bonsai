@@ -46,7 +46,6 @@ bsi_outputs_remove(struct bsi_outputs* bsi_outputs,
 
     --bsi_outputs->len;
     wl_list_remove(&bsi_output->link);
-    bsi_output_finish(bsi_output);
 }
 
 struct bsi_output*
@@ -157,6 +156,7 @@ bsi_output_destroy(struct bsi_output* bsi_output)
             struct bsi_view *view, *view_tmp;
             wl_list_for_each_safe(view, view_tmp, &wspace->views, link)
             {
+                bsi_view_finish(view);
                 bsi_view_destroy(view);
             }
             bsi_workspace_destroy(wspace);

@@ -14,7 +14,7 @@
 #include "bonsai/server.h"
 #include "bonsai/util.h"
 
-// #define GIMME_ALL_OUTPUT_EVENTS
+#define GIMME_ALL_OUTPUT_EVENTS
 
 void
 bsi_output_frame_notify(struct wl_listener* listener,
@@ -119,22 +119,23 @@ bsi_output_description_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_output_destroy_notify(struct wl_listener* listener,
-                          __attribute__((unused)) void* data)
+bsi_output_destroy_notify(struct wl_listener* listener, void* data)
 {
 #ifdef GIMME_ALL_OUTPUT_EVENTS
     wlr_log(WLR_DEBUG, "Got event destroy from wlr_output");
 #endif
 
+    struct wlr_output* output = data;
     struct bsi_output* bsi_output =
         wl_container_of(listener, bsi_output, listen.destroy);
     struct bsi_server* bsi_server = bsi_output->bsi_server;
 
     bsi_outputs_remove(&bsi_server->bsi_outputs, bsi_output);
+    bsi_output_finish(bsi_output);
     bsi_output_destroy(bsi_output);
 
     if (bsi_server->bsi_outputs.len == 0) {
         wlr_log(WLR_INFO, "Out of outputs, exiting");
-        bsi_server_exit(bsi_server);
+        // bsi_server_exit(bsi_server);
     }
 }
