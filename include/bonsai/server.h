@@ -47,7 +47,7 @@ struct bsi_server
         /* wlr_layer_shell_v1 */
         struct wl_listener wlr_layer_shell_new_surface;
         /* bsi_workspace */
-        struct wl_listener bsi_workspace_active;
+        // struct wl_listener bsi_workspace_active;
     } listen;
 
     /* Keeps track of all server outputs. */
@@ -120,9 +120,6 @@ bsi_server_cursor_init(struct bsi_server* bsi_server);
 
 void
 bsi_server_finish(struct bsi_server* bsi_server);
-
-void
-bsi_server_destroy(struct bsi_server* bsi_server);
 
 /**
  * @brief Cleans everything up and exists with 0.

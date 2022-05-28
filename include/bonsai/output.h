@@ -44,15 +44,6 @@ struct bsi_output
     struct
     {
         struct wl_listener frame;
-        struct wl_listener damage;
-        struct wl_listener needs_frame;
-        struct wl_listener precommit;
-        struct wl_listener commit;
-        struct wl_listener present;
-        struct wl_listener bind;
-        struct wl_listener enable;
-        struct wl_listener mode;
-        struct wl_listener description;
         struct wl_listener destroy;
     } listen;
 

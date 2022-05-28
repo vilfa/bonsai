@@ -20,8 +20,8 @@ bsi_workspace_active_notify(struct wl_listener* listener, void* data)
     wlr_log(WLR_DEBUG, "Got event active from bsi_workspace");
 #endif
 
-    struct bsi_view* view =
-        wl_container_of(listener, view, listen.active_workspace);
+    // struct bsi_view* view =
+    // wl_container_of(listener, view, listen.active_workspace);
 
     // TODO: Figure this out.
 

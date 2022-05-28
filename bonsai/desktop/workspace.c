@@ -101,7 +101,7 @@ bsi_workspace_init(struct bsi_workspace* bsi_workspace,
 
     bsi_workspace->len_views = 0;
     wl_list_init(&bsi_workspace->views);
-    wl_signal_init(&bsi_workspace->signal.active);
+    // wl_signal_init(&bsi_workspace->signal.active);
 
     return bsi_workspace;
 }
@@ -133,7 +133,7 @@ bsi_workspace_set_active(struct bsi_workspace* bsi_workspace, bool active)
     assert(bsi_workspace);
 
     bsi_workspace->active = active;
-    wl_signal_emit(&bsi_workspace->signal.active, bsi_workspace);
+    // wl_signal_emit(&bsi_workspace->signal.active, bsi_workspace);
 }
 
 void

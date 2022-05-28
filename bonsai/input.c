@@ -11,9 +11,6 @@
 #include "bonsai/input.h"
 #include "bonsai/server.h"
 
-// TODO: Something weird with software cursor, when not using the laptop
-// touchpad, but using the connected mouse.
-
 void
 bsi_inputs_pointer_add(struct bsi_server* bsi_server,
                        struct bsi_input_pointer* bsi_input_pointer)

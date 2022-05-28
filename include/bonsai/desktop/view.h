@@ -13,16 +13,12 @@
 struct bsi_view
 {
     struct bsi_server* bsi_server;
-    struct wlr_xdg_surface* wlr_xdg_surface;
+    struct wlr_xdg_toplevel* wlr_xdg_toplevel;
     struct wlr_scene_node* wlr_scene_node;
+    struct bsi_workspace* bsi_workspace; /* Belongs to this workspace. */
 
     bool mapped;
     bool maximized, minimized, fullscreen;
-
-    char* app_id;
-    char* app_title;
-
-    struct bsi_workspace* bsi_workspace; /* Belongs to this workspace. */
 
     /* Note, that when the window goes fullscreen, minimized or maximized,
      * this will hold the last state of the window that should be restored when
@@ -37,7 +33,6 @@ struct bsi_view
     {
         /* wlr_xdg_surface */
         struct wl_listener destroy_xdg_surface;
-        struct wl_listener new_popup;
         struct wl_listener map;
         struct wl_listener unmap;
         /* wlr_xdg_toplevel */
@@ -47,12 +42,8 @@ struct bsi_view
         struct wl_listener request_move;
         struct wl_listener request_resize;
         struct wl_listener request_show_window_menu;
-        struct wl_listener set_title;
-        struct wl_listener set_app_id;
-        /* wlr_scene_node */
-        struct wl_listener destroy_scene_node;
         /* bsi_workspaces */
-        struct wl_listener active_workspace;
+        // struct wl_listener active_workspace;
     } listen;
 
     struct wl_list link;
@@ -82,13 +73,13 @@ bsi_scene_remove(struct bsi_server* bsi_server, struct bsi_view* bsi_view);
  *
  * @param bsi_view The view.
  * @param bsi_server The server.
- * @param wlr_xdg_surface The xdg surface data.
+ * @param wlr_xdg_toplevel The xdg toplevel wrapper.
  * @return struct bsi_view* Inititalized `bsi_view`.
  */
 struct bsi_view*
 bsi_view_init(struct bsi_view* bsi_view,
               struct bsi_server* bsi_server,
-              struct wlr_xdg_surface* wlr_xdg_surface,
+              struct wlr_xdg_toplevel* wlr_xdg_toplevel,
               struct bsi_workspace* bsi_workspace);
 
 /**
@@ -114,24 +105,6 @@ bsi_view_destroy(struct bsi_view* bsi_view);
  */
 void
 bsi_view_focus(struct bsi_view* bsi_view);
-
-/**
- * @brief Sets the app id for this view.
- *
- * @param bsi_view The view.
- * @param app_id The app id.
- */
-void
-bsi_view_set_app_id(struct bsi_view* bsi_view, const char* app_id);
-
-/**
- * @brief Sets the app title for this view.
- *
- * @param bsi_view The view.
- * @param app_title The title.
- */
-void
-bsi_view_set_app_title(struct bsi_view* bsi_view, const char* app_title);
 
 /**
  * @brief Begins interaction with a surface in the view.

@@ -84,7 +84,7 @@ bsi_server_init(struct bsi_server* bsi_server)
     wlr_log(WLR_DEBUG, "Created wlr_cursor & attached it to wlr_output_layout");
 
     const float cursor_scale = 1.0f;
-    bsi_server->wlr_xcursor_manager = wlr_xcursor_manager_create(NULL, 24);
+    bsi_server->wlr_xcursor_manager = wlr_xcursor_manager_create("default", 24);
     wlr_xcursor_manager_load(bsi_server->wlr_xcursor_manager, cursor_scale);
     wlr_log(
         WLR_DEBUG,
@@ -170,6 +170,12 @@ bsi_server_cursor_init(struct bsi_server* bsi_server)
     bsi_server->cursor.cursor_image = BSI_CURSOR_IMAGE_NORMAL;
     bsi_server->cursor.grab_x = 0.0;
     bsi_server->cursor.grab_y = 0.0;
+    bsi_server->cursor.resize_edges = 0;
+    bsi_server->cursor.grab_box.width = 0;
+    bsi_server->cursor.grab_box.height = 0;
+    bsi_server->cursor.grab_box.x = 0;
+    bsi_server->cursor.grab_box.y = 0;
+    bsi_server->cursor.grabbed_view = NULL;
 }
 
 void
@@ -193,12 +199,8 @@ bsi_server_finish(struct bsi_server* bsi_server)
     /* wlr_xdg_shell */
     wl_list_remove(&bsi_server->listen.wlr_xdg_shell_new_surface.link);
     /* bsi_workspace */
-    wl_list_remove(&bsi_server->listen.bsi_workspace_active.link);
+    // wl_list_remove(&bsi_server->listen.bsi_workspace_active.link);
 }
-
-void
-bsi_server_destroy(struct bsi_server* bsi_server)
-{}
 
 void
 bsi_server_exit(struct bsi_server* bsi_server)

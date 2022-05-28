@@ -26,10 +26,10 @@ struct bsi_workspace
     size_t len_views;
     struct wl_list views;
 
-    struct
-    {
-        struct wl_signal active;
-    } signal;
+    // struct
+    // {
+    //     struct wl_signal active;
+    // } signal;
 
     struct wl_list link;
 };

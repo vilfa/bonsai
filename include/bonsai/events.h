@@ -29,8 +29,6 @@ extern bsi_notify_func_t bsi_layer_shell_new_surface_notify;
 
 /* bsi_view */
 extern bsi_notify_func_t bsi_view_destroy_xdg_surface_notify;
-extern bsi_notify_func_t bsi_view_destroy_scene_node_notify;
-extern bsi_notify_func_t bsi_view_new_popup_notify;
 extern bsi_notify_func_t bsi_view_map_notify;
 extern bsi_notify_func_t bsi_view_unmap_notify;
 extern bsi_notify_func_t bsi_view_request_maximize_notify;
@@ -39,20 +37,9 @@ extern bsi_notify_func_t bsi_view_request_minimize_notify;
 extern bsi_notify_func_t bsi_view_request_move_notify;
 extern bsi_notify_func_t bsi_view_request_resize_notify;
 extern bsi_notify_func_t bsi_view_request_show_window_menu_notify;
-extern bsi_notify_func_t bsi_view_set_title_notify;
-extern bsi_notify_func_t bsi_view_set_app_id_notify;
 
 /* bsi_output */
 extern bsi_notify_func_t bsi_output_frame_notify;
-extern bsi_notify_func_t bsi_output_damage_notify;
-extern bsi_notify_func_t bsi_output_needs_frame_notify;
-extern bsi_notify_func_t bsi_output_precommit_notify;
-extern bsi_notify_func_t bsi_output_commit_notify;
-extern bsi_notify_func_t bsi_output_present_notify;
-extern bsi_notify_func_t bsi_output_bind_notify;
-extern bsi_notify_func_t bsi_output_enable_notify;
-extern bsi_notify_func_t bsi_output_mode_notify;
-extern bsi_notify_func_t bsi_output_description_notify;
 extern bsi_notify_func_t bsi_output_destroy_notify;
 
 /* bsi_input_{pointer,keyboard} */

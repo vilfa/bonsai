@@ -79,15 +79,6 @@ bsi_output_finish(struct bsi_output* bsi_output)
     assert(bsi_output);
 
     wl_list_remove(&bsi_output->listen.frame.link);
-    wl_list_remove(&bsi_output->listen.damage.link);
-    wl_list_remove(&bsi_output->listen.needs_frame.link);
-    wl_list_remove(&bsi_output->listen.precommit.link);
-    wl_list_remove(&bsi_output->listen.commit.link);
-    wl_list_remove(&bsi_output->listen.present.link);
-    wl_list_remove(&bsi_output->listen.bind.link);
-    wl_list_remove(&bsi_output->listen.enable.link);
-    wl_list_remove(&bsi_output->listen.mode.link);
-    wl_list_remove(&bsi_output->listen.description.link);
     wl_list_remove(&bsi_output->listen.destroy.link);
 }
 

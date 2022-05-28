@@ -34,14 +34,10 @@ struct bsi_view;
 #include "bonsai/server.h"
 #include "bonsai/util.h"
 
-#define GIMME_ALL_GLOBAL_EVENTS
-
 void
 bsi_global_backend_new_output_notify(struct wl_listener* listener, void* data)
 {
-#ifdef GIMME_ALL_GLOBAL_EVENTS
     wlr_log(WLR_DEBUG, "Got event new_output from wlr_backend");
-#endif
 
     struct bsi_server* server =
         wl_container_of(listener, server, listen.wlr_backend_new_output);
@@ -81,33 +77,6 @@ bsi_global_backend_new_output_notify(struct wl_listener* listener, void* data)
     bsi_util_slot_connect(&output->wlr_output->events.frame,
                           &output->listen.frame,
                           bsi_output_frame_notify);
-    bsi_util_slot_connect(&output->wlr_output->events.damage,
-                          &output->listen.damage,
-                          bsi_output_damage_notify);
-    bsi_util_slot_connect(&output->wlr_output->events.needs_frame,
-                          &output->listen.needs_frame,
-                          bsi_output_needs_frame_notify);
-    bsi_util_slot_connect(&output->wlr_output->events.precommit,
-                          &output->listen.precommit,
-                          bsi_output_precommit_notify);
-    bsi_util_slot_connect(&output->wlr_output->events.commit,
-                          &output->listen.commit,
-                          bsi_output_commit_notify);
-    bsi_util_slot_connect(&output->wlr_output->events.present,
-                          &output->listen.present,
-                          bsi_output_present_notify);
-    bsi_util_slot_connect(&output->wlr_output->events.bind,
-                          &output->listen.bind,
-                          bsi_output_bind_notify);
-    bsi_util_slot_connect(&output->wlr_output->events.enable,
-                          &output->listen.enable,
-                          bsi_output_enable_notify);
-    bsi_util_slot_connect(&output->wlr_output->events.mode,
-                          &output->listen.mode,
-                          bsi_output_mode_notify);
-    bsi_util_slot_connect(&output->wlr_output->events.description,
-                          &output->listen.description,
-                          bsi_output_description_notify);
     bsi_util_slot_connect(&output->wlr_output->events.destroy,
                           &output->listen.destroy,
                           bsi_output_destroy_notify);
@@ -118,9 +87,7 @@ bsi_global_backend_new_output_notify(struct wl_listener* listener, void* data)
 void
 bsi_global_backend_new_input_notify(struct wl_listener* listener, void* data)
 {
-#ifdef GIMME_ALL_GLOBAL_EVENTS
     wlr_log(WLR_DEBUG, "Got event new_input from wlr_backend");
-#endif
 
     struct bsi_server* server =
         wl_container_of(listener, server, listen.wlr_backend_new_input);
@@ -232,23 +199,17 @@ bsi_global_backend_new_input_notify(struct wl_listener* listener, void* data)
     size_t len_keyboards = 0, len_pointers = 0;
     if ((len_pointers = server->input.len_pointers) > 0) {
         capabilities |= WL_SEAT_CAPABILITY_POINTER;
-#ifdef GIMME_ALL_GLOBAL_EVENTS
         wlr_log(WLR_DEBUG, "Seat has capability: WL_SEAT_CAPABILITY_POINTER");
-#endif
     }
     if ((len_keyboards = server->input.len_keyboards) > 0) {
         capabilities |= WL_SEAT_CAPABILITY_KEYBOARD;
-#ifdef GIMME_ALL_GLOBAL_EVENTS
         wlr_log(WLR_DEBUG, "Seat has capability: WL_SEAT_CAPABILITY_KEYBOARD");
-#endif
     }
 
-#ifdef GIMME_ALL_GLOBAL_EVENTS
     wlr_log(
         WLR_DEBUG, "Server now has %ld input pointer devices", len_pointers);
     wlr_log(
         WLR_DEBUG, "Server now has %ld input keyboard devices", len_keyboards);
-#endif
 
     wlr_seat_set_capabilities(server->wlr_seat, capabilities);
 }
@@ -257,53 +218,40 @@ void
 bsi_global_seat_pointer_grab_begin_notify(struct wl_listener* listener,
                                           void* data)
 {
-#ifdef GIMME_ALL_GLOBAL_EVENTS
     wlr_log(WLR_DEBUG, "Got event pointer_grab_begin from wlr_seat");
-#endif
 }
 
 void
 bsi_global_seat_pointer_grab_end_notify(struct wl_listener* listener,
                                         void* data)
 {
-#ifdef GIMME_ALL_GLOBAL_EVENTS
     wlr_log(WLR_DEBUG, "Got event pointer_grab_end from wlr_seat");
-#endif
 }
 
 void
 bsi_global_seat_keyboard_grab_begin_notify(struct wl_listener* listener,
                                            void* data)
 {
-#ifdef GIMME_ALL_GLOBAL_EVENTS
     wlr_log(WLR_DEBUG, "Got event keyboard_grab_begin from wlr_seat");
-#endif
 }
 
 void
 bsi_global_seat_keyboard_grab_end_notify(struct wl_listener* listener,
                                          void* data)
 {
-#ifdef GIMME_ALL_GLOBAL_EVENTS
     wlr_log(WLR_DEBUG, "Got event keyboard_grab_end from wlr_seat");
-#endif
 }
 
 void
-bsi_global_seat_touch_grab_begin_notify(
-    __attribute__((unused)) struct wl_listener* listener,
-    __attribute__((unused)) void* data)
+bsi_global_seat_touch_grab_begin_notify(struct wl_listener* listener,
+                                        void* data)
 {
-#ifdef GIMME_ALL_GLOBAL_EVENTS
     wlr_log(WLR_DEBUG, "Got event touch_grab_begin from wlr_seat");
     wlr_log(WLR_DEBUG, "A touch device has grabbed focus, what the hell!?");
-#endif
 }
 
 void
-bsi_global_seat_touch_grab_end_notify(
-    __attribute__((unused)) struct wl_listener* listener,
-    __attribute__((unused)) void* data)
+bsi_global_seat_touch_grab_end_notify(struct wl_listener* listener, void* data)
 {
 #ifdef GIMME_ALL_GLOBAL_EVENTS
     wlr_log(WLR_DEBUG, "Got event touch_grab_end from wlr_seat");
@@ -315,25 +263,18 @@ void
 bsi_global_seat_request_set_cursor_notify(struct wl_listener* listener,
                                           void* data)
 {
-#ifdef GIMME_ALL_GLOBAL_EVENTS
     wlr_log(WLR_DEBUG, "Got event request_set_cursor from wlr_seat");
-#endif
 
+    struct bsi_server* server =
+        wl_container_of(listener, server, listen.wlr_seat_request_set_cursor);
     struct wlr_seat_pointer_request_set_cursor_event* event = data;
 
     if (wlr_seat_client_validate_event_serial(event->seat_client,
-                                              event->serial)) {
-#ifdef GIMME_ALL_GLOBAL_EVENTS
-        wlr_log(WLR_DEBUG, "Should set cursor");
-#endif
-        // TODO: Figure this out.
-        // wlr_cursor_set_surface(
-        // wlr_cursor, event->surface, event->hotspot_x, event->hotspot_y);
-    } else {
-#ifdef GIMME_ALL_GLOBAL_EVENTS
-        wlr_log(WLR_DEBUG, "Invalid request_set_cursor event serial, dropping");
-#endif
-    }
+                                              event->serial))
+        wlr_cursor_set_surface(server->wlr_cursor,
+                               event->surface,
+                               event->hotspot_x,
+                               event->hotspot_y);
 }
 
 void
@@ -389,88 +330,68 @@ bsi_global_xdg_shell_new_surface_notify(struct wl_listener* listener,
 
     struct bsi_server* server =
         wl_container_of(listener, server, listen.wlr_xdg_shell_new_surface);
-    struct wlr_xdg_surface* wlr_xdg_surface = data;
+    struct wlr_xdg_surface* xdg_surface = data;
 
-    /* Firstly check if wlr_xdg_surface is a popup surface. If it is not a popup
-     * surface, then it is a toplevel surface */
-    if (wlr_xdg_surface->role == WLR_XDG_SURFACE_ROLE_POPUP) {
-        struct wlr_xdg_surface* parent =
-            wlr_xdg_surface_from_wlr_surface(wlr_xdg_surface->popup->parent);
-        struct wlr_scene_node* parent_node = parent->data;
-        /* Create a scene node for the newly created wlr_xdg_surface, and attach
-         * it to its parent, so it renders. */
-        wlr_xdg_surface->data =
-            wlr_scene_xdg_surface_create(parent_node, wlr_xdg_surface);
-    } else if (wlr_xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
-        struct bsi_view* bsi_view = calloc(1, sizeof(struct bsi_view));
-        struct bsi_output* bsi_output = bsi_outputs_get_active(server);
-        struct bsi_workspace* workspace_active =
-            bsi_workspaces_get_active(bsi_output);
-        bsi_view_init(bsi_view, server, wlr_xdg_surface, workspace_active);
-        bsi_workspace_view_add(workspace_active, bsi_view);
-        wlr_log(
-            WLR_INFO, "Attached view to workspace %s", workspace_active->name);
+    assert(xdg_surface->role != WLR_XDG_SURFACE_ROLE_NONE);
+
+    /* We must add xdg popups to the scene graph so they get rendered. The
+     * wlroots scene graph provides a helper for this, but to use it we must
+     * provide the proper parent scene node of the xdg popup. To enable this, we
+     * always set the user data field of xdg_surfaces to the corresponding scene
+     * node. */
+    if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_POPUP) {
+        struct wlr_xdg_surface* parent_surface =
+            wlr_xdg_surface_from_wlr_surface(xdg_surface->popup->parent);
+        struct wlr_scene_node* parent_node = parent_surface->data;
+        xdg_surface->data =
+            wlr_scene_xdg_surface_create(parent_node, xdg_surface);
+    } else {
+        struct bsi_view* view = calloc(1, sizeof(struct bsi_view));
+        struct bsi_output* output = bsi_outputs_get_active(server);
+        struct bsi_workspace* active_wspace = bsi_workspaces_get_active(output);
+        bsi_view_init(view, server, xdg_surface->toplevel, active_wspace);
+
+        bsi_util_slot_connect(&view->wlr_xdg_toplevel->base->events.destroy,
+                              &view->listen.destroy_xdg_surface,
+                              bsi_view_destroy_xdg_surface_notify);
+        bsi_util_slot_connect(&view->wlr_xdg_toplevel->base->events.map,
+                              &view->listen.map,
+                              bsi_view_map_notify);
+        bsi_util_slot_connect(&view->wlr_xdg_toplevel->base->events.unmap,
+                              &view->listen.unmap,
+                              bsi_view_unmap_notify);
+
+        bsi_util_slot_connect(&view->wlr_xdg_toplevel->events.request_maximize,
+                              &view->listen.request_maximize,
+                              bsi_view_request_maximize_notify);
+        bsi_util_slot_connect(
+            &view->wlr_xdg_toplevel->events.request_fullscreen,
+            &view->listen.request_fullscreen,
+            bsi_view_request_fullscreen_notify);
+        bsi_util_slot_connect(&view->wlr_xdg_toplevel->events.request_minimize,
+                              &view->listen.request_minimize,
+                              bsi_view_request_minimize_notify);
+        bsi_util_slot_connect(&view->wlr_xdg_toplevel->events.request_move,
+                              &view->listen.request_move,
+                              bsi_view_request_move_notify);
+        bsi_util_slot_connect(&view->wlr_xdg_toplevel->events.request_resize,
+                              &view->listen.request_resize,
+                              bsi_view_request_resize_notify);
+        bsi_util_slot_connect(
+            &view->wlr_xdg_toplevel->events.request_show_window_menu,
+            &view->listen.request_show_window_menu,
+            bsi_view_request_show_window_menu_notify);
+        // bsi_util_slot_connect(&bsi_view->bsi_workspace->signal.active,
+        //                       &bsi_view->listen.active_workspace,
+        //                       bsi_workspace_active_notify);
+
+        /* Add wired up view to workspace on the active output. */
+        bsi_workspace_view_add(active_wspace, view);
+        wlr_log(WLR_INFO, "Attached view to workspace %s", active_wspace->name);
         wlr_log(WLR_INFO,
                 "Workspace %s now has %ld views",
-                workspace_active->name,
-                workspace_active->len_views);
-        bsi_util_slot_connect(&bsi_view->wlr_xdg_surface->events.destroy,
-                              &bsi_view->listen.destroy_xdg_surface,
-                              bsi_view_destroy_xdg_surface_notify);
-        bsi_util_slot_connect(&bsi_view->wlr_xdg_surface->events.new_popup,
-                              &bsi_view->listen.new_popup,
-                              bsi_view_new_popup_notify);
-        bsi_util_slot_connect(&bsi_view->wlr_xdg_surface->events.map,
-                              &bsi_view->listen.map,
-                              bsi_view_map_notify);
-        bsi_util_slot_connect(&bsi_view->wlr_xdg_surface->events.unmap,
-                              &bsi_view->listen.unmap,
-                              bsi_view_unmap_notify);
-        bsi_util_slot_connect(&bsi_view->wlr_scene_node->events.destroy,
-                              &bsi_view->listen.destroy_scene_node,
-                              bsi_view_destroy_scene_node_notify);
-        bsi_util_slot_connect(
-            &bsi_view->wlr_xdg_surface->toplevel->events.request_maximize,
-            &bsi_view->listen.request_maximize,
-            bsi_view_request_maximize_notify);
-        bsi_util_slot_connect(
-            &bsi_view->wlr_xdg_surface->toplevel->events.request_fullscreen,
-            &bsi_view->listen.request_fullscreen,
-            bsi_view_request_fullscreen_notify);
-        bsi_util_slot_connect(
-            &bsi_view->wlr_xdg_surface->toplevel->events.request_minimize,
-            &bsi_view->listen.request_minimize,
-            bsi_view_request_minimize_notify);
-        bsi_util_slot_connect(
-            &bsi_view->wlr_xdg_surface->toplevel->events.request_move,
-            &bsi_view->listen.request_move,
-            bsi_view_request_move_notify);
-        bsi_util_slot_connect(
-            &bsi_view->wlr_xdg_surface->toplevel->events.request_resize,
-            &bsi_view->listen.request_resize,
-            bsi_view_request_resize_notify);
-        bsi_util_slot_connect(&bsi_view->wlr_xdg_surface->toplevel->events
-                                   .request_show_window_menu,
-                              &bsi_view->listen.request_show_window_menu,
-                              bsi_view_request_show_window_menu_notify);
-        bsi_util_slot_connect(
-            &bsi_view->wlr_xdg_surface->toplevel->events.set_title,
-            &bsi_view->listen.set_title,
-            bsi_view_set_title_notify);
-        bsi_util_slot_connect(
-            &bsi_view->wlr_xdg_surface->toplevel->events.set_app_id,
-            &bsi_view->listen.set_app_id,
-            bsi_view_set_app_id_notify);
-        bsi_util_slot_connect(&bsi_view->bsi_workspace->signal.active,
-                              &bsi_view->listen.active_workspace,
-                              bsi_workspace_active_notify);
-    } else {
-#ifdef GIMME_ALL_GLOBAL_EVENTS
-        wlr_log(WLR_DEBUG,
-                "Got unsupported wlr_xdg_surface from client: type %d, "
-                "discarding event",
-                wlr_xdg_surface->role);
-#endif
+                active_wspace->name,
+                active_wspace->len_views);
     }
 }
 
