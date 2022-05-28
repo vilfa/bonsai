@@ -16,27 +16,14 @@
 #include "bonsai/output.h"
 #include "bonsai/server.h"
 
-struct bsi_views*
-bsi_views_init(struct bsi_views* bsi_views, struct bsi_server* bsi_server)
-{
-    assert(bsi_views);
-    assert(bsi_server);
-
-    bsi_views->len = 0;
-    bsi_views->bsi_server = bsi_server;
-    wl_list_init(&bsi_views->views);
-
-    return bsi_views;
-}
-
 void
-bsi_views_add(struct bsi_views* bsi_views, struct bsi_view* bsi_view)
+bsi_scene_add(struct bsi_server* bsi_server, struct bsi_view* bsi_view)
 {
-    assert(bsi_views);
+    assert(bsi_server);
     assert(bsi_view);
 
-    ++bsi_views->len;
-    wl_list_insert(&bsi_views->views, &bsi_view->link);
+    ++bsi_server->scene.len;
+    wl_list_insert(&bsi_server->scene.views, &bsi_view->link);
 
     wlr_scene_node_set_enabled(bsi_view->wlr_scene_node, true);
 
@@ -50,9 +37,9 @@ bsi_views_add(struct bsi_views* bsi_views, struct bsi_view* bsi_view)
 }
 
 void
-bsi_views_remove(struct bsi_views* bsi_views, struct bsi_view* bsi_view)
+bsi_scene_remove(struct bsi_server* bsi_server, struct bsi_view* bsi_view)
 {
-    assert(bsi_views);
+    assert(bsi_server);
     assert(bsi_view);
 
     // TODO: Add minimized, maximized, etc states to view. Also check
@@ -61,7 +48,7 @@ bsi_views_remove(struct bsi_views* bsi_views, struct bsi_view* bsi_view)
     if (bsi_view->link.prev == NULL || bsi_view->link.next == NULL)
         return;
 
-    --bsi_views->len;
+    --bsi_server->scene.len;
     wl_list_remove(&bsi_view->link);
 
     wlr_scene_node_set_enabled(bsi_view->wlr_scene_node, false);
@@ -140,7 +127,6 @@ bsi_view_focus(struct bsi_view* bsi_view)
     assert(bsi_view);
 
     struct bsi_server* bsi_server = bsi_view->bsi_server;
-    struct bsi_views* bsi_views = &bsi_server->bsi_views;
     struct wlr_seat* wlr_seat = bsi_server->wlr_seat;
     struct wlr_surface* prev_focused = wlr_seat->keyboard_state.focused_surface;
 
@@ -159,8 +145,8 @@ bsi_view_focus(struct bsi_view* bsi_view)
     /* Move view to top. */
     wlr_scene_node_raise_to_top(bsi_view->wlr_scene_node);
     /* Add the view to the front of the list. */
-    bsi_views_remove(bsi_views, bsi_view);
-    bsi_views_add(bsi_views, bsi_view);
+    bsi_scene_remove(bsi_server, bsi_view);
+    bsi_scene_add(bsi_server, bsi_view);
     /* Activate the view surface. */
     assert(bsi_view->wlr_xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL);
     wlr_xdg_toplevel_set_activated(bsi_view->wlr_xdg_surface->toplevel, true);
@@ -210,13 +196,13 @@ bsi_view_interactive_begin(struct bsi_view* bsi_view,
         wlr_surface_get_root_surface(focused_surface))
         return;
 
-    bsi_server->bsi_cursor.grabbed_view = bsi_view;
-    bsi_server->bsi_cursor.cursor_mode = bsi_cursor_mode;
+    bsi_server->cursor.grabbed_view = bsi_view;
+    bsi_server->cursor.cursor_mode = bsi_cursor_mode;
 
     if (bsi_cursor_mode == BSI_CURSOR_MOVE) {
         // TODO: Not sure what is happening here
-        bsi_server->bsi_cursor.grab_x = bsi_server->wlr_cursor->x - bsi_view->x;
-        bsi_server->bsi_cursor.grab_y = bsi_server->wlr_cursor->y - bsi_view->y;
+        bsi_server->cursor.grab_x = bsi_server->wlr_cursor->x - bsi_view->x;
+        bsi_server->cursor.grab_y = bsi_server->wlr_cursor->y - bsi_view->y;
     } else {
         struct wlr_box box;
         wlr_xdg_surface_get_geometry(bsi_view->wlr_xdg_surface, &box);
@@ -226,14 +212,14 @@ bsi_view_interactive_begin(struct bsi_view* bsi_view,
             (bsi_view->x + box.x) + ((edges & WLR_EDGE_RIGHT) ? box.width : 0);
         double border_y = (bsi_view->y + box.y) +
                           ((edges & WLR_EDGE_BOTTOM) ? box.height : 0);
-        bsi_server->bsi_cursor.grab_x = bsi_server->wlr_cursor->x - border_x;
-        bsi_server->bsi_cursor.grab_y = bsi_server->wlr_cursor->y - border_y;
+        bsi_server->cursor.grab_x = bsi_server->wlr_cursor->x - border_x;
+        bsi_server->cursor.grab_y = bsi_server->wlr_cursor->y - border_y;
 
-        bsi_server->bsi_cursor.grab_geobox = box;
-        bsi_server->bsi_cursor.grab_geobox.x += bsi_view->x;
-        bsi_server->bsi_cursor.grab_geobox.y += bsi_view->y;
+        bsi_server->cursor.grab_box = box;
+        bsi_server->cursor.grab_box.x += bsi_view->x;
+        bsi_server->cursor.grab_box.y += bsi_view->y;
 
-        bsi_server->bsi_cursor.resize_edges = edges;
+        bsi_server->cursor.resize_edges = edges;
     }
 }
 

@@ -7,18 +7,6 @@
 #include "bonsai/input/cursor.h"
 
 /**
- * @brief Holds all the views the server owns.
- *
- */
-struct bsi_views
-{
-    struct bsi_server* bsi_server;
-
-    size_t len;
-    struct wl_list views;
-};
-
-/**
  * @brief Represents all surfaces of a single application.
  *
  */
@@ -72,31 +60,22 @@ struct bsi_view
 };
 
 /**
- * @brief Initializes a preallocated `bsi_views`.
- *
- * @param bsi_views The views.
- * @return struct bsi_views* The initialized views.
- */
-struct bsi_views*
-bsi_views_init(struct bsi_views* bsi_views, struct bsi_server* bsi_server);
-
-/**
  * @brief Adds a view to the server views.
  *
- * @param bsi_views The views.
+ * @param bsi_server The server.
  * @param bsi_view The view to add.
  */
 void
-bsi_views_add(struct bsi_views* bsi_views, struct bsi_view* bsi_view);
+bsi_scene_add(struct bsi_server* bsi_server, struct bsi_view* bsi_view);
 
 /**
  * @brief Removes a view from the server views.
  *
- * @param bsi_views The views.
+ * @param bsi_server The server.
  * @param bsi_view The view to remove.
  */
 void
-bsi_views_remove(struct bsi_views* bsi_views, struct bsi_view* bsi_view);
+bsi_scene_remove(struct bsi_server* bsi_server, struct bsi_view* bsi_view);
 
 /**
  * @brief Initializes a preallocated `bsi_view` representing a scene node.

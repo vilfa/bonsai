@@ -7,7 +7,7 @@ project(
         'c_std=c17',
         'warning_level=2',
         'werror=false',
-        'buildtype=debugoptimized',
+        'buildtype=debug',
     ]
 )
 

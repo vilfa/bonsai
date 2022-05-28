@@ -6,29 +6,8 @@
 #include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 
+#include "bonsai/output.h"
 #include "wlr-layer-shell-unstable-v1-protocol.h"
-
-/**
- * So if I get this correctly, a layer is basically just another type of
- * surface, meaning that it should be structured in much the same way as a view,
- * with some common types of listeners.
- *
- */
-
-/**
- * @brief Is just a wrapper that the output owns.
- *
- */
-struct bsi_output_layers
-{
-    /* Basically an ad-hoc map indexable by `enum zwlr_layer_shell_v1_layer`
-     * ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND = 0,
-     * ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM = 1,
-     * ZWLR_LAYER_SHELL_V1_LAYER_TOP = 2,
-     * ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY = 3, */
-
-    struct wl_list layers[4];
-};
 
 enum bsi_layer_surface_type
 {
@@ -113,18 +92,10 @@ struct bsi_layer_surface_subsurface
     struct wl_list link;
 };
 
-/* This does nothing currently, but it might do something later on. */
-struct bsi_output_layers*
-bsi_output_layers_init(struct bsi_output_layers* bsi_output_layers);
-
 void
-bsi_output_layers_destroy(struct bsi_output_layers* bsi_output_layers);
-
-void
-bsi_output_layers_add(
-    struct bsi_output_layers* bsi_output_layers,
-    struct bsi_layer_surface_toplevel* bsi_layer_surface_toplevel,
-    enum zwlr_layer_shell_v1_layer at_layer);
+bsi_layers_add(struct bsi_output* bsi_output,
+               struct bsi_layer_surface_toplevel* bsi_layer_surface_toplevel,
+               enum zwlr_layer_shell_v1_layer at_layer);
 
 struct bsi_layer_surface_toplevel*
 bsi_layer_surface_toplevel_init(

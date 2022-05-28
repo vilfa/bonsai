@@ -10,55 +10,41 @@
 #include "bonsai/server.h"
 #include "bonsai/util.h"
 
-struct bsi_workspaces*
-bsi_workspaces_init(struct bsi_workspaces* bsi_workspaces,
-                    struct bsi_server* bsi_server)
-{
-    assert(bsi_workspaces);
-    assert(bsi_server);
-
-    bsi_workspaces->len = 0;
-    bsi_workspaces->bsi_server = bsi_server;
-    wl_list_init(&bsi_workspaces->workspaces);
-
-    return bsi_workspaces;
-}
-
 void
-bsi_workspaces_add(struct bsi_workspaces* bsi_workspaces,
+bsi_workspaces_add(struct bsi_output* bsi_output,
                    struct bsi_workspace* bsi_workspace)
 {
-    assert(bsi_workspaces);
+    assert(bsi_output);
     assert(bsi_workspace);
 
-    if (bsi_workspaces->len > 0) {
+    if (bsi_output->workspace.len > 0) {
         struct bsi_workspace* workspace_active =
-            bsi_workspaces_get_active(bsi_workspaces);
+            bsi_workspaces_get_active(bsi_output);
         assert(workspace_active);
         bsi_workspace_set_active(workspace_active, false);
         bsi_workspace_set_active(bsi_workspace, true);
     }
 
-    ++bsi_workspaces->len;
-    wl_list_insert(&bsi_workspaces->workspaces, &bsi_workspace->link);
+    ++bsi_output->workspace.len;
+    wl_list_insert(&bsi_output->workspace.workspaces, &bsi_workspace->link);
     bsi_workspace_set_active(bsi_workspace, true);
 }
 
 void
-bsi_workspaces_remove(struct bsi_workspaces* bsi_workspaces,
+bsi_workspaces_remove(struct bsi_output* bsi_output,
                       struct bsi_workspace* bsi_workspace)
 {
-    assert(bsi_workspaces);
+    assert(bsi_output);
     assert(bsi_workspace);
 
     /* Cannot remove the last workspace */
-    if (bsi_workspaces->len == 1)
+    if (bsi_output->workspace.len == 1)
         return;
 
     /* Get the workspace adjacent to this one. */
     struct wl_list* workspace_adj_link;
-    for (size_t i = 0; i < bsi_workspaces->len - 1; ++i) {
-        workspace_adj_link = bsi_workspaces->workspaces.next;
+    for (size_t i = 0; i < bsi_output->workspace.len - 1; ++i) {
+        workspace_adj_link = bsi_output->workspace.workspaces.next;
     }
 
     struct bsi_workspace* workspace_adj =
@@ -74,22 +60,22 @@ bsi_workspaces_remove(struct bsi_workspaces* bsi_workspaces,
     }
 
     /* Take care of the workspaces state. */
-    --bsi_workspaces->len;
+    --bsi_output->workspace.len;
     wl_list_remove(&bsi_workspace->link);
     bsi_workspace_set_active(bsi_workspace, false);
     bsi_workspace_set_active(workspace_adj, true);
 }
 
 struct bsi_workspace*
-bsi_workspaces_get_active(struct bsi_workspaces* bsi_workspaces)
+bsi_workspaces_get_active(struct bsi_output* bsi_output)
 {
-    assert(bsi_workspaces);
+    assert(bsi_output);
 
-    struct bsi_workspace* workspace;
-    wl_list_for_each(workspace, &bsi_workspaces->workspaces, link)
+    struct bsi_workspace* wspace;
+    wl_list_for_each(wspace, &bsi_output->workspace.workspaces, link)
     {
-        if (workspace->active)
-            return workspace;
+        if (wspace->active)
+            return wspace;
     }
 
     /* Should not happen. */
@@ -109,7 +95,7 @@ bsi_workspace_init(struct bsi_workspace* bsi_workspace,
 
     bsi_workspace->bsi_server = bsi_server;
     bsi_workspace->bsi_output = bsi_output;
-    bsi_workspace->id = bsi_output->bsi_workspaces->len + 1;
+    bsi_workspace->id = bsi_output->workspace.len + 1;
     bsi_workspace->name = strdup(name);
     bsi_workspace->active = false;
 

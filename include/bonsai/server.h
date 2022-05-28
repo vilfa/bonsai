@@ -1,7 +1,6 @@
 #pragma once
 
 #include "bonsai/desktop/view.h"
-#include "bonsai/global.h"
 #include "bonsai/input.h"
 #include "bonsai/input/cursor.h"
 #include "bonsai/output.h"
@@ -26,28 +25,67 @@ struct bsi_server
     struct wlr_xcursor_manager* wlr_xcursor_manager;
     struct wlr_layer_shell_v1* wlr_layer_shell;
 
-    /* State */
-    struct bsi_listeners_global bsi_listeners_global;
-    struct bsi_outputs bsi_outputs;
-    struct bsi_inputs bsi_inputs;
-    struct bsi_views bsi_views;
-    struct bsi_cursor bsi_cursor;
+    /* Global server listeners. */
+    struct
+    {
+        /* wlr_backend */
+        struct wl_listener wlr_backend_new_output;
+        struct wl_listener wlr_backend_new_input;
+        /* wlr_seat */
+        struct wl_listener wlr_seat_pointer_grab_begin;
+        struct wl_listener wlr_seat_pointer_grab_end;
+        struct wl_listener wlr_seat_keyboard_grab_begin;
+        struct wl_listener wlr_seat_keyboard_grab_end;
+        struct wl_listener wlr_seat_touch_grab_begin;
+        struct wl_listener wlr_seat_touch_grab_end;
+        struct wl_listener wlr_seat_request_set_cursor;
+        struct wl_listener wlr_seat_request_set_selection;
+        struct wl_listener wlr_seat_request_set_primary_selection;
+        struct wl_listener wlr_seat_request_start_drag;
+        /* wlr_xdg_shell */
+        struct wl_listener wlr_xdg_shell_new_surface;
+        /* wlr_layer_shell_v1 */
+        struct wl_listener wlr_layer_shell_new_surface;
+        /* bsi_workspace */
+        struct wl_listener bsi_workspace_active;
+    } listen;
+
+    /* Keeps track of all server outputs. */
+    struct
+    {
+        size_t len;
+        struct wl_list outputs;
+    } output;
+
+    /* Keeps track of all inputs. */
+    struct
+    {
+        size_t len_pointers;
+        struct wl_list pointers;
+
+        size_t len_keyboards;
+        struct wl_list keyboards;
+    } input;
+
+    /* Keeps track of the scene and all views. */
+    struct
+    {
+        size_t len;
+        struct wl_list views;
+    } scene;
+
+    /* Keeps track of the cursor state. */
+    struct
+    {
+        uint32_t cursor_mode;
+        uint32_t cursor_image;
+        uint32_t resize_edges;
+        struct bsi_view* grabbed_view;
+        struct wlr_box grab_box;
+        double grab_x, grab_y;
+    } cursor;
 
     // TODO
-    // /* So, the way I imagine it, a server will have a bunch of workspaces,
-    // maybe
-    //  * with another parent to hold the workspaces. The panels or panel,
-    //  * probably, will then exist outside of the workspaces, and will be
-    //  * positioned on the top and maybe bottom of the screen. The top panel
-    //  will
-    //  * hold a workspace indicator, a datetime indicator, a system tray, a
-    //  switch
-    //  * between floating and tiling mode (this is optional, maybe I will just
-    //  * leave everything floating, as it is the usual desktop experience).
-    //  Now, I
-    //  * know that there is a lot of work to be done before any of this, but a
-    //  * somewhat clear plan probably helps. */
-    /* Pay no attention to the above bullshit ^. */
     /* So, the way I imagine it, a workspace can be attached to a single output
      * at one time, with each output being able to hold multiple workspaces.
      * ---
@@ -64,6 +102,27 @@ struct bsi_server
  */
 struct bsi_server*
 bsi_server_init(struct bsi_server* bsi_server);
+
+void
+bsi_server_listen_init(struct bsi_server* bsi_server);
+
+void
+bsi_server_output_init(struct bsi_server* bsi_server);
+
+void
+bsi_server_input_init(struct bsi_server* bsi_server);
+
+void
+bsi_server_scene_init(struct bsi_server* bsi_server); // DONE
+
+void
+bsi_server_cursor_init(struct bsi_server* bsi_server);
+
+void
+bsi_server_finish(struct bsi_server* bsi_server);
+
+void
+bsi_server_destroy(struct bsi_server* bsi_server);
 
 /**
  * @brief Cleans everything up and exists with 0.

@@ -12,19 +12,6 @@ struct bsi_server;
 #include "bonsai/desktop/workspace.h"
 
 /**
- * @brief Holds all outputs the server knows about via signal listeners. The
- * outputs list holds elements of type `struct bsi_output`
- *
- */
-struct bsi_outputs
-{
-    struct bsi_server* bsi_server;
-
-    size_t len;
-    struct wl_list outputs;
-};
-
-/**
  * @brief Represents a single output and its event listeners.
  *
  */
@@ -35,8 +22,22 @@ struct bsi_output
     struct timespec last_frame;
     size_t id; /* Incremental id. */
 
-    struct bsi_workspaces* bsi_workspaces;
-    struct bsi_output_layers* bsi_output_layers; /* wlr_layer_shell_v1 */
+    struct
+    {
+        size_t len;
+        struct wl_list workspaces;
+    } workspace;
+
+    struct
+    {
+        /* Basically an ad-hoc map indexable by `enum zwlr_layer_shell_v1_layer`
+         * ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND = 0,
+         * ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM = 1,
+         * ZWLR_LAYER_SHELL_V1_LAYER_TOP = 2,
+         * ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY = 3, */
+        size_t len_layers[4];
+        struct wl_list layers[4];
+    } layer;
 
     /* Either we listen for all or none, doesn't make sense to keep track of
      * number of listeners. */
@@ -59,38 +60,27 @@ struct bsi_output
 };
 
 /**
- * @brief Initialize the server outputs struct.
- *
- * @param bsi_outputs Pointer to bsi_outputs struct.
- * @param bsi_server Server owning the outputs.
- * @return struct bsi_outputs* Pointer to initialized struct.
- */
-struct bsi_outputs*
-bsi_outputs_init(struct bsi_outputs* bsi_outputs,
-                 struct bsi_server* bsi_server);
-
-/**
  * @brief Adds an output to the known server outputs.
  *
- * @param bsi_outputs Pointer to server outputs struct.
+ * @param bsi_server The server.
  * @param bsi_output Pointer to output.
  */
 void
-bsi_outputs_add(struct bsi_outputs* bsi_outputs, struct bsi_output* bsi_output);
+bsi_outputs_add(struct bsi_server* bsi_server, struct bsi_output* bsi_output);
 
 /**
  * @brief Removes an output from the known server outputs. Make sure to destroy
  * the output.
  *
- * @param bsi_outputs Pointer to server outputs struct.
+ * @param bsi_server The server.
  * @param bsi_output Pointer to output.
  */
 void
-bsi_outputs_remove(struct bsi_outputs* bsi_outputs,
+bsi_outputs_remove(struct bsi_server* bsi_server,
                    struct bsi_output* bsi_output);
 
 struct bsi_output*
-bsi_outputs_get_active(struct bsi_outputs* bsi_outputs);
+bsi_outputs_get_active(struct bsi_server* bsi_server);
 
 /**
  * @brief Initializes a preallocated bsi_output.
@@ -103,9 +93,7 @@ bsi_outputs_get_active(struct bsi_outputs* bsi_outputs);
 struct bsi_output*
 bsi_output_init(struct bsi_output* bsi_output,
                 struct bsi_server* bsi_server,
-                struct wlr_output* wlr_output,
-                struct bsi_workspaces* bsi_workspaces,
-                struct bsi_output_layers* bsi_output_layers);
+                struct wlr_output* wlr_output);
 
 /**
  * @brief Remove all active listeners from the specified `bsi_output`.

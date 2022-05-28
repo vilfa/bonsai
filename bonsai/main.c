@@ -24,7 +24,6 @@
 
 #include "bonsai/desktop/view.h"
 #include "bonsai/events.h"
-#include "bonsai/global.h"
 #include "bonsai/input.h"
 #include "bonsai/input/cursor.h"
 #include "bonsai/output.h"
@@ -55,16 +54,16 @@ main(void)
         exit(EXIT_FAILURE);
     }
 
-    // if (setenv("WLR_NO_HARDWARE_CURSORS", "1", true) != 0) {
-    //     // Workaround for https://github.com/swaywm/wlroots/issues/3189
-    //     // TODO: Idk man these cursors are weird.
-    //     wlr_log(WLR_ERROR,
-    //             "Failed to set WLR_NO_HARDWARE_CURSORS env var: %s",
-    //             strerror(errno));
-    //     wlr_backend_destroy(server.wlr_backend);
-    //     wl_display_destroy(server.wl_display);
-    //     exit(EXIT_FAILURE);
-    // }
+    if (setenv("WLR_NO_HARDWARE_CURSORS", "1", true) != 0) {
+        // Workaround for https://github.com/swaywm/wlroots/issues/3189
+        // TODO: Idk man these cursors are weird.
+        wlr_log(WLR_ERROR,
+                "Failed to set WLR_NO_HARDWARE_CURSORS env var: %s",
+                strerror(errno));
+        wlr_backend_destroy(server.wlr_backend);
+        wl_display_destroy(server.wl_display);
+        exit(EXIT_FAILURE);
+    }
 
     if (!wlr_backend_start(server.wlr_backend)) {
         wlr_log(WLR_ERROR, "Failed to start backend");

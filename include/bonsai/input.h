@@ -8,24 +8,6 @@
 #include <xkbcommon/xkbcommon.h>
 
 /**
- * @brief Holds all inputs the server knows about via signal listeners. The
- * inputs_pointers list holds elements of type `struct bsi_input_pointer`. The
- * inputs_keyboards list holds elements of type `struct bsi_input_keyboard`.
- *
- */
-struct bsi_inputs
-{
-    struct bsi_server* bsi_server;
-    struct wlr_seat* wlr_seat;
-
-    size_t len_pointers;
-    struct wl_list pointers;
-
-    size_t len_keyboards;
-    struct wl_list keyboards;
-};
-
-/**
  * @brief Holds a single input pointer and its event listeners.
  *
  */
@@ -128,55 +110,45 @@ static const struct xkb_rule_names bsi_input_keyboard_rules[] = {
 };
 
 /**
- * @brief Initializes inputs for the given server seat.
- *
- * @param bsi_inputs Pointer to bsi_inputs server struct.
- * @param bsi_server Pointer to the server.
- * @return struct bsi_inputs* Pointer to initialized server seat.
- */
-struct bsi_inputs*
-bsi_inputs_init(struct bsi_inputs* bsi_inputs, struct bsi_server* bsi_server);
-
-/**
  * @brief Adds a pointer to the server inputs.
  *
- * @param bsi_inputs Pointer to server inputs struct.
+ * @param bsi_server The server.
  * @param bsi_input_pointer Pointer to pointer to add.
  */
 void
-bsi_inputs_pointer_add(struct bsi_inputs* bsi_inputs,
+bsi_inputs_pointer_add(struct bsi_server* bsi_server,
                        struct bsi_input_pointer* bsi_input_pointer);
 
 /**
  * @brief Remove a pointer from the server inputs. Make sure to destroy the
  * pointer.
  *
- * @param bsi_inputs Pointer to server inputs struct.
+ * @param bsi_server The server.
  * @param bsi_input_pointer Pointer to pointer to remove.
  */
 void
-bsi_inputs_pointer_remove(struct bsi_inputs* bsi_inputs,
+bsi_inputs_pointer_remove(struct bsi_server* bsi_server,
                           struct bsi_input_pointer* bsi_input_pointer);
 
 /**
  * @brief Add a keyboard to the server inputs.
  *
- * @param bsi_inputs Pointer to server inputs struct.
+ * @param bsi_server The server.
  * @param bsi_input_keyboard Pointer to keyboard to add.
  */
 void
-bsi_inputs_keyboard_add(struct bsi_inputs* bsi_inputs,
+bsi_inputs_keyboard_add(struct bsi_server* bsi_server,
                         struct bsi_input_keyboard* bsi_input_keyboard);
 
 /**
  * @brief Remove a keyboard from the server struct. Make sure to destroy the
  * keyboard.
  *
- * @param bsi_inputs Pointer to server inputs struct.
+ * @param bsi_server The server.
  * @param bsi_input_keyboard Pointer to keyboard to remove.
  */
 void
-bsi_inputs_keyboard_remove(struct bsi_inputs* bsi_inputs,
+bsi_inputs_keyboard_remove(struct bsi_server* bsi_server,
                            struct bsi_input_keyboard* bsi_input_keyboard);
 
 /**

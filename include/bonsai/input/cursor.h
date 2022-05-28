@@ -70,40 +70,13 @@ union bsi_cursor_event
 };
 
 /**
- * @brief Holds the global cursor state of the server.
- *
- */
-struct bsi_cursor
-{
-    struct bsi_server* bsi_server;
-    struct wlr_cursor* wlr_cursor;
-
-    uint32_t cursor_mode;
-    uint32_t cursor_image;
-    struct bsi_view* grabbed_view;
-    struct wlr_box grab_geobox;
-    double grab_x, grab_y;
-    uint32_t resize_edges;
-};
-
-/**
- * @brief Initializes the server cursor state with the provided `wlr_cursor`.
- *
- * @param bsi_cursor The preallocated cursor state.
- * @param bsi_server The server.
- * @return struct bsi_cursor* The initialized cursor state.
- */
-struct bsi_cursor*
-bsi_cursor_init(struct bsi_cursor* bsi_cursor, struct bsi_server* bsi_server);
-
-/**
  * @brief Sets the specified cursor image.
  *
- * @param bsi_cursor The cursor.
+ * @param bsi_server The server.
  * @param bsi_cursor_image The image.
  */
 void
-bsi_cursor_image_set(struct bsi_cursor* bsi_cursor,
+bsi_cursor_image_set(struct bsi_server* bsi_server,
                      enum bsi_cursor_image bsi_cursor_image);
 
 /**
@@ -111,7 +84,7 @@ bsi_cursor_image_set(struct bsi_cursor* bsi_cursor,
  * pointer to a preallocated `wlr_surface*` variable to get the specific
  * wlr_surface, that is under the cursor and is a member of the view.
  *
- * @param bsi_cursor The cursor state.
+ * @param bsi_server The server.
  * @param surface_at Pointer to `wlr_surface*` to set to the surface under the
  * cursor.
  * @param sx Pointer to `double` to set to the surface local coordinate x of the
@@ -121,7 +94,7 @@ bsi_cursor_image_set(struct bsi_cursor* bsi_cursor,
  * @return struct bsi_view* The view under the cursor.
  */
 struct bsi_view*
-bsi_cursor_view_at(struct bsi_cursor* bsi_cursor,
+bsi_cursor_view_at(struct bsi_server* bsi_server,
                    struct wlr_surface** surface_at,
                    double* sx,
                    double* sy);
@@ -129,29 +102,29 @@ bsi_cursor_view_at(struct bsi_cursor* bsi_cursor,
 /**
  * @brief Process the cursor motion.
  *
- * @param bsi_cursor The cursor state.
+ * @param bsi_server The server.
  * @param time_msec Cursor event being processed.
  */
 void
-bsi_cursor_process_motion(struct bsi_cursor* bsi_cursor,
+bsi_cursor_process_motion(struct bsi_server* bsi_server,
                           union bsi_cursor_event bsi_cursor_event);
 
 /**
  * @brief Process view movement with cursor.
  *
- * @param bsi_cursor The cursor state.
+ * @param bsi_server The server.
  * @param time_msec Cursor event being processed..
  */
 void
-bsi_cursor_process_view_move(struct bsi_cursor* bsi_cursor,
+bsi_cursor_process_view_move(struct bsi_server* bsi_server,
                              union bsi_cursor_event bsi_cursor_event);
 
 /**
  * @brief
  *
- * @param bsi_cursor The cursor state.
+ * @param bsi_server The server.
  * @param time_msec Cursor event being processed.
  */
 void
-bsi_cursor_process_view_resize(struct bsi_cursor* bsi_cursor,
+bsi_cursor_process_view_resize(struct bsi_server* bsi_server,
                                union bsi_cursor_event bsi_cursor_event);

@@ -9,18 +9,6 @@ struct bsi_view;
 #include "bonsai/desktop/view.h"
 
 /**
- * @brief Holds all workspaces that belong to the server.
- *
- */
-struct bsi_workspaces
-{
-    struct bsi_server* bsi_server;
-    // TODO: Maybe limiting the amount of workspaces isn't a bad idea?
-    size_t len;
-    struct wl_list workspaces;
-};
-
-/**
  * @brief Workspace is the parent of `bsi_view`. Views are grouped by
  * workspaces.
  *
@@ -47,46 +35,36 @@ struct bsi_workspace
 };
 
 /**
- * @brief Initializes a preallocated `bsi_workspaces`.
- *
- * @param bsi_workspaces The workspaces.
- * @return struct bsi_workspaces* The initialized workspaces.
- */
-struct bsi_workspaces*
-bsi_workspaces_init(struct bsi_workspaces* bsi_workspaces,
-                    struct bsi_server* bsi_server);
-
-/**
  * @brief Add a workspace to the workspaces. This will emit `active` events for
  * all workspaces that changed their active state.
  *
- * @param bsi_workspaces The server workspaces.
+ * @param bsi_output The output.
  * @param bsi_workspace The workspace to add.
  */
 void
-bsi_workspaces_add(struct bsi_workspaces* bsi_workspaces,
+bsi_workspaces_add(struct bsi_output* bsi_output,
                    struct bsi_workspace* bsi_workspace);
 
 /**
  * @brief Remove a workspace from the workspaces. This will emit `active` events
  * for all workspaces that changed their active state.
  *
- * @param bsi_workspaces The server workspaces.
+ * @param bsi_output The output.
  * @param bsi_workspace The workspace to remove.
  */
 void
-bsi_workspaces_remove(struct bsi_workspaces* bsi_workspaces,
+bsi_workspaces_remove(struct bsi_output* bsi_output,
                       struct bsi_workspace* bsi_workspace);
 
 /**
  * @brief Get the active workspace.
  *
- * @param bsi_workspaces The server workspaces.
+ * @param bsi_output The output.
  * @return struct bsi_workspace* The active workspace or NULL (shouldn't
  * happen).
  */
 struct bsi_workspace*
-bsi_workspaces_get_active(struct bsi_workspaces* bsi_workspaces);
+bsi_workspaces_get_active(struct bsi_output* bsi_output);
 
 /**
  * @brief Initialize a preallocated workspace.

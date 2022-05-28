@@ -5,48 +5,15 @@
 
 #include "bonsai/desktop/layer.h"
 
-struct bsi_output_layers*
-bsi_output_layers_init(struct bsi_output_layers* bsi_output_layers)
-{
-    assert(bsi_output_layers);
-
-    for (size_t i = 0; i < 4; ++i) {
-        wl_list_init(&bsi_output_layers->layers[i]);
-    }
-
-    return bsi_output_layers;
-}
-
 void
-bsi_output_layers_destroy(struct bsi_output_layers* bsi_output_layers)
+bsi_layers_add(struct bsi_output* bsi_output,
+               struct bsi_layer_surface_toplevel* bsi_layer_surface_toplevel,
+               enum zwlr_layer_shell_v1_layer at_layer)
 {
-    assert(bsi_output_layers);
-
-    for (size_t i = 0; i < 4; ++i) {
-        struct bsi_layer_surface_toplevel *surf, *surf_tmp;
-        wl_list_for_each_safe(
-            surf, surf_tmp, &bsi_output_layers->layers[i], link)
-        {
-            wlr_layer_surface_v1_destroy(surf->wlr_layer_surface);
-            union bsi_layer_surface surface = { .toplevel = surf };
-            bsi_layer_surface_finish(surface, BSI_LAYER_SURFACE_TOPLEVEL);
-            bsi_layer_surface_destroy(surface, BSI_LAYER_SURFACE_TOPLEVEL);
-        }
-    }
-
-    free(bsi_output_layers);
-}
-
-void
-bsi_output_layers_add(
-    struct bsi_output_layers* bsi_output_layers,
-    struct bsi_layer_surface_toplevel* bsi_layer_surface_toplevel,
-    enum zwlr_layer_shell_v1_layer at_layer)
-{
-    assert(bsi_output_layers);
+    assert(bsi_output);
     assert(bsi_layer_surface_toplevel);
 
-    wl_list_insert(&bsi_output_layers->layers[at_layer],
+    wl_list_insert(&bsi_output->layer.layers[at_layer],
                    &bsi_layer_surface_toplevel->link);
 }
 

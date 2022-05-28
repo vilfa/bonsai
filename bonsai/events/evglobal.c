@@ -5,7 +5,7 @@
  *
  */
 
-#include "bonsai/output.h"
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <wayland-server-core.h>
@@ -29,8 +29,8 @@ struct bsi_view;
 #include "bonsai/desktop/view.h"
 #include "bonsai/desktop/workspace.h"
 #include "bonsai/events.h"
-#include "bonsai/global.h"
 #include "bonsai/input.h"
+#include "bonsai/output.h"
 #include "bonsai/server.h"
 #include "bonsai/util.h"
 
@@ -43,14 +43,12 @@ bsi_global_backend_new_output_notify(struct wl_listener* listener, void* data)
     wlr_log(WLR_DEBUG, "Got event new_output from wlr_backend");
 #endif
 
+    struct bsi_server* server =
+        wl_container_of(listener, server, listen.wlr_backend_new_output);
     struct wlr_output* wlr_output = data;
-    struct bsi_server* bsi_server =
-        wl_container_of(listener,
-                        bsi_server,
-                        bsi_listeners_global.listen.wlr_backend_new_output);
 
     wlr_output_init_render(
-        wlr_output, bsi_server->wlr_allocator, bsi_server->wlr_renderer);
+        wlr_output, server->wlr_allocator, server->wlr_renderer);
 
     // TODO: Allow user to pick output mode.
 
@@ -63,67 +61,58 @@ bsi_global_backend_new_output_notify(struct wl_listener* listener, void* data)
             return;
     }
 
-    struct bsi_workspaces* bsi_workspaces =
-        calloc(1, sizeof(struct bsi_workspaces));
-    bsi_workspaces_init(bsi_workspaces, bsi_server);
-
-    struct bsi_output_layers* bsi_output_layers =
-        calloc(1, sizeof(struct bsi_output_layers));
-    bsi_output_layers_init(bsi_output_layers);
-
-    struct bsi_output* bsi_output = calloc(1, sizeof(struct bsi_output));
-    bsi_output_init(
-        bsi_output, bsi_server, wlr_output, bsi_workspaces, bsi_output_layers);
-    bsi_outputs_add(&bsi_server->bsi_outputs, bsi_output);
+    struct bsi_output* output = calloc(1, sizeof(struct bsi_output));
+    bsi_output_init(output, server, wlr_output);
+    bsi_outputs_add(server, output);
+    wlr_output->data = output;
 
     /* Attach a workspace to the output. */
     char workspace_name[25];
-    struct bsi_workspace* bsi_workspace =
-        calloc(1, sizeof(struct bsi_workspace));
-    sprintf(workspace_name, "Workspace %ld", bsi_workspaces->len + 1);
-    bsi_workspace_init(bsi_workspace, bsi_server, bsi_output, workspace_name);
-    bsi_workspaces_add(bsi_workspaces, bsi_workspace);
+    struct bsi_workspace* wspace = calloc(1, sizeof(struct bsi_workspace));
+    sprintf(workspace_name, "Workspace %ld", output->workspace.len + 1);
+    bsi_workspace_init(wspace, server, output, workspace_name);
+    bsi_workspaces_add(output, wspace);
 
     wlr_log(WLR_INFO,
             "Attached %s to output %s",
-            bsi_workspace->name,
-            bsi_output->wlr_output->name);
+            wspace->name,
+            output->wlr_output->name);
 
-    bsi_util_slot_connect(&bsi_output->wlr_output->events.frame,
-                          &bsi_output->listen.frame,
+    bsi_util_slot_connect(&output->wlr_output->events.frame,
+                          &output->listen.frame,
                           bsi_output_frame_notify);
-    bsi_util_slot_connect(&bsi_output->wlr_output->events.damage,
-                          &bsi_output->listen.damage,
+    bsi_util_slot_connect(&output->wlr_output->events.damage,
+                          &output->listen.damage,
                           bsi_output_damage_notify);
-    bsi_util_slot_connect(&bsi_output->wlr_output->events.needs_frame,
-                          &bsi_output->listen.needs_frame,
+    bsi_util_slot_connect(&output->wlr_output->events.needs_frame,
+                          &output->listen.needs_frame,
                           bsi_output_needs_frame_notify);
-    bsi_util_slot_connect(&bsi_output->wlr_output->events.precommit,
-                          &bsi_output->listen.precommit,
+    bsi_util_slot_connect(&output->wlr_output->events.precommit,
+                          &output->listen.precommit,
                           bsi_output_precommit_notify);
-    bsi_util_slot_connect(&bsi_output->wlr_output->events.commit,
-                          &bsi_output->listen.commit,
+    bsi_util_slot_connect(&output->wlr_output->events.commit,
+                          &output->listen.commit,
                           bsi_output_commit_notify);
-    bsi_util_slot_connect(&bsi_output->wlr_output->events.present,
-                          &bsi_output->listen.present,
+    bsi_util_slot_connect(&output->wlr_output->events.present,
+                          &output->listen.present,
                           bsi_output_present_notify);
-    bsi_util_slot_connect(&bsi_output->wlr_output->events.bind,
-                          &bsi_output->listen.bind,
+    bsi_util_slot_connect(&output->wlr_output->events.bind,
+                          &output->listen.bind,
                           bsi_output_bind_notify);
-    bsi_util_slot_connect(&bsi_output->wlr_output->events.enable,
-                          &bsi_output->listen.enable,
+    bsi_util_slot_connect(&output->wlr_output->events.enable,
+                          &output->listen.enable,
                           bsi_output_enable_notify);
-    bsi_util_slot_connect(&bsi_output->wlr_output->events.mode,
-                          &bsi_output->listen.mode,
+    bsi_util_slot_connect(&output->wlr_output->events.mode,
+                          &output->listen.mode,
                           bsi_output_mode_notify);
-    bsi_util_slot_connect(&bsi_output->wlr_output->events.description,
-                          &bsi_output->listen.description,
+    bsi_util_slot_connect(&output->wlr_output->events.description,
+                          &output->listen.description,
                           bsi_output_description_notify);
-    bsi_util_slot_connect(&bsi_output->wlr_output->events.destroy,
-                          &bsi_output->listen.destroy,
+    bsi_util_slot_connect(&output->wlr_output->events.destroy,
+                          &output->listen.destroy,
                           bsi_output_destroy_notify);
 
-    wlr_output_layout_add_auto(bsi_server->wlr_output_layout, wlr_output);
+    wlr_output_layout_add_auto(server->wlr_output_layout, wlr_output);
 }
 
 void
@@ -133,19 +122,16 @@ bsi_global_backend_new_input_notify(struct wl_listener* listener, void* data)
     wlr_log(WLR_DEBUG, "Got event new_input from wlr_backend");
 #endif
 
-    struct wlr_input_device* wlr_input_device = data;
-    struct bsi_server* bsi_server =
-        wl_container_of(listener,
-                        bsi_server,
-                        bsi_listeners_global.listen.wlr_backend_new_input);
+    struct bsi_server* server =
+        wl_container_of(listener, server, listen.wlr_backend_new_input);
+    struct wlr_input_device* device = data;
 
-    switch (wlr_input_device->type) {
+    switch (device->type) {
         case WLR_INPUT_DEVICE_POINTER: {
             struct bsi_input_pointer* bsi_input_pointer =
                 calloc(1, sizeof(struct bsi_input_pointer));
-            bsi_input_pointer_init(
-                bsi_input_pointer, bsi_server, wlr_input_device);
-            bsi_inputs_pointer_add(&bsi_server->bsi_inputs, bsi_input_pointer);
+            bsi_input_pointer_init(bsi_input_pointer, server, device);
+            bsi_inputs_pointer_add(server, bsi_input_pointer);
             bsi_util_slot_connect(&bsi_input_pointer->wlr_cursor->events.motion,
                                   &bsi_input_pointer->listen.motion,
                                   bsi_input_pointer_motion_notify);
@@ -198,16 +184,17 @@ bsi_global_backend_new_input_notify(struct wl_listener* listener, void* data)
                 &bsi_input_pointer->wlr_input_device->events.destroy,
                 &bsi_input_pointer->listen.destroy,
                 bsi_input_device_destroy_notify);
+
+            wlr_cursor_attach_input_device(bsi_input_pointer->wlr_cursor,
+                                           bsi_input_pointer->wlr_input_device);
             wlr_log(WLR_INFO, "Added new pointer input device");
             break;
         }
         case WLR_INPUT_DEVICE_KEYBOARD: {
             struct bsi_input_keyboard* bsi_input_keyboard =
                 calloc(1, sizeof(struct bsi_input_keyboard));
-            bsi_input_keyboard_init(
-                bsi_input_keyboard, bsi_server, wlr_input_device);
-            bsi_inputs_keyboard_add(&bsi_server->bsi_inputs,
-                                    bsi_input_keyboard);
+            bsi_input_keyboard_init(bsi_input_keyboard, server, device);
+            bsi_inputs_keyboard_add(server, bsi_input_keyboard);
             bsi_util_slot_connect(
                 &bsi_input_keyboard->wlr_input_device->keyboard->events.key,
                 &bsi_input_keyboard->listen.key,
@@ -220,25 +207,36 @@ bsi_global_backend_new_input_notify(struct wl_listener* listener, void* data)
                 &bsi_input_keyboard->wlr_input_device->events.destroy,
                 &bsi_input_keyboard->listen.destroy,
                 bsi_input_device_destroy_notify);
+
+            bsi_input_keyboard_keymap_set(bsi_input_keyboard,
+                                          bsi_input_keyboard_rules,
+                                          bsi_input_keyboard_rules_len);
+
+            wlr_keyboard_set_repeat_info(
+                bsi_input_keyboard->wlr_input_device->keyboard, 25, 600);
+
+            wlr_seat_set_keyboard(
+                server->wlr_seat,
+                bsi_input_keyboard->wlr_input_device->keyboard);
             wlr_log(WLR_INFO, "Added new keyboard input device");
             break;
         }
         default:
             wlr_log(WLR_INFO,
                     "Unsupported new input device: type %d",
-                    wlr_input_device->type);
+                    device->type);
             break;
     }
 
     uint32_t capabilities = 0;
     size_t len_keyboards = 0, len_pointers = 0;
-    if ((len_pointers = bsi_server->bsi_inputs.len_pointers) > 0) {
+    if ((len_pointers = server->input.len_pointers) > 0) {
         capabilities |= WL_SEAT_CAPABILITY_POINTER;
 #ifdef GIMME_ALL_GLOBAL_EVENTS
         wlr_log(WLR_DEBUG, "Seat has capability: WL_SEAT_CAPABILITY_POINTER");
 #endif
     }
-    if ((len_keyboards = bsi_server->bsi_inputs.len_keyboards) > 0) {
+    if ((len_keyboards = server->input.len_keyboards) > 0) {
         capabilities |= WL_SEAT_CAPABILITY_KEYBOARD;
 #ifdef GIMME_ALL_GLOBAL_EVENTS
         wlr_log(WLR_DEBUG, "Seat has capability: WL_SEAT_CAPABILITY_KEYBOARD");
@@ -252,7 +250,7 @@ bsi_global_backend_new_input_notify(struct wl_listener* listener, void* data)
         WLR_DEBUG, "Server now has %ld input keyboard devices", len_keyboards);
 #endif
 
-    wlr_seat_set_capabilities(bsi_server->wlr_seat, capabilities);
+    wlr_seat_set_capabilities(server->wlr_seat, capabilities);
 }
 
 void
@@ -262,7 +260,6 @@ bsi_global_seat_pointer_grab_begin_notify(struct wl_listener* listener,
 #ifdef GIMME_ALL_GLOBAL_EVENTS
     wlr_log(WLR_DEBUG, "Got event pointer_grab_begin from wlr_seat");
 #endif
-#warning "Not implemented"
 }
 
 void
@@ -272,7 +269,6 @@ bsi_global_seat_pointer_grab_end_notify(struct wl_listener* listener,
 #ifdef GIMME_ALL_GLOBAL_EVENTS
     wlr_log(WLR_DEBUG, "Got event pointer_grab_end from wlr_seat");
 #endif
-#warning "Not implemented"
 }
 
 void
@@ -282,7 +278,6 @@ bsi_global_seat_keyboard_grab_begin_notify(struct wl_listener* listener,
 #ifdef GIMME_ALL_GLOBAL_EVENTS
     wlr_log(WLR_DEBUG, "Got event keyboard_grab_begin from wlr_seat");
 #endif
-#warning "Not implemented"
 }
 
 void
@@ -292,7 +287,6 @@ bsi_global_seat_keyboard_grab_end_notify(struct wl_listener* listener,
 #ifdef GIMME_ALL_GLOBAL_EVENTS
     wlr_log(WLR_DEBUG, "Got event keyboard_grab_end from wlr_seat");
 #endif
-#warning "Not implemented"
 }
 
 void
@@ -325,8 +319,6 @@ bsi_global_seat_request_set_cursor_notify(struct wl_listener* listener,
     wlr_log(WLR_DEBUG, "Got event request_set_cursor from wlr_seat");
 #endif
 
-    struct bsi_listeners_global* bsi_listeners = wl_container_of(
-        listener, bsi_listeners, listen.wlr_seat_request_set_cursor);
     struct wlr_seat_pointer_request_set_cursor_event* event = data;
 
     if (wlr_seat_client_validate_event_serial(event->seat_client,
@@ -352,13 +344,12 @@ bsi_global_seat_request_set_selection_notify(struct wl_listener* listener,
     wlr_log(WLR_DEBUG, "Got event request_set_selection from wlr_seat");
 #endif
 
-    struct bsi_listeners_global* bsi_listeners = wl_container_of(
-        listener, bsi_listeners, listen.wlr_seat_request_set_selection);
-    struct wlr_seat* wlr_seat = bsi_listeners->bsi_server->wlr_seat;
+    struct bsi_server* server = wl_container_of(
+        listener, server, listen.wlr_seat_request_set_selection);
     struct wlr_seat_request_set_selection_event* event = data;
 
     /* This function also validates the event serial. */
-    wlr_seat_set_selection(wlr_seat, event->source, event->serial);
+    wlr_seat_set_selection(server->wlr_seat, event->source, event->serial);
 }
 
 void
@@ -370,13 +361,13 @@ bsi_global_seat_request_set_primary_selection_notify(
     wlr_log(WLR_DEBUG, "Got event request_set_primary_selection from wlr_seat");
 #endif
 
-    struct bsi_listeners_global* bsi_listeners = wl_container_of(
-        listener, bsi_listeners, listen.wlr_seat_request_set_primary_selection);
-    struct wlr_seat* wlr_seat = bsi_listeners->bsi_server->wlr_seat;
+    struct bsi_server* server = wl_container_of(
+        listener, server, listen.wlr_seat_request_set_primary_selection);
     struct wlr_seat_request_set_primary_selection_event* event = data;
 
     /* This function also validates the event serial. */
-    wlr_seat_set_primary_selection(wlr_seat, event->source, event->serial);
+    wlr_seat_set_primary_selection(
+        server->wlr_seat, event->source, event->serial);
 }
 
 void
@@ -385,18 +376,6 @@ bsi_global_seat_request_start_drag_notify(struct wl_listener* listener,
 {
 #ifdef GIMME_ALL_GLOBAL_EVENTS
     wlr_log(WLR_DEBUG, "Got event request_start_drag from wlr_seat");
-#endif
-#warning "Not implemented"
-}
-
-void
-bsi_global_seat_start_drag_notify(
-    __attribute__((unused)) struct wl_listener* listener,
-    __attribute__((unused)) void* data)
-{
-#ifdef GIMME_ALL_GLOBAL_EVENTS
-    wlr_log(WLR_DEBUG, "Got event start_drag from wlr_seat");
-    wlr_log(WLR_DEBUG, "Started drag for seat");
 #endif
 }
 
@@ -408,11 +387,9 @@ bsi_global_xdg_shell_new_surface_notify(struct wl_listener* listener,
     wlr_log(WLR_DEBUG, "Got event new_surface from wlr_xdg_shell");
 #endif
 
+    struct bsi_server* server =
+        wl_container_of(listener, server, listen.wlr_xdg_shell_new_surface);
     struct wlr_xdg_surface* wlr_xdg_surface = data;
-    struct bsi_server* bsi_server =
-        wl_container_of(listener,
-                        bsi_server,
-                        bsi_listeners_global.listen.wlr_xdg_shell_new_surface);
 
     /* Firstly check if wlr_xdg_surface is a popup surface. If it is not a popup
      * surface, then it is a toplevel surface */
@@ -426,11 +403,10 @@ bsi_global_xdg_shell_new_surface_notify(struct wl_listener* listener,
             wlr_scene_xdg_surface_create(parent_node, wlr_xdg_surface);
     } else if (wlr_xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
         struct bsi_view* bsi_view = calloc(1, sizeof(struct bsi_view));
-        struct bsi_output* bsi_output =
-            bsi_outputs_get_active(&bsi_server->bsi_outputs);
+        struct bsi_output* bsi_output = bsi_outputs_get_active(server);
         struct bsi_workspace* workspace_active =
-            bsi_workspaces_get_active(bsi_output->bsi_workspaces);
-        bsi_view_init(bsi_view, bsi_server, wlr_xdg_surface, workspace_active);
+            bsi_workspaces_get_active(bsi_output);
+        bsi_view_init(bsi_view, server, wlr_xdg_surface, workspace_active);
         bsi_workspace_view_add(workspace_active, bsi_view);
         wlr_log(
             WLR_INFO, "Attached view to workspace %s", workspace_active->name);
@@ -505,17 +481,15 @@ bsi_layer_shell_new_surface_notify(struct wl_listener* listener, void* data)
     wlr_log(WLR_DEBUG, "Got event new_surface from wlr_layer_shell_v1");
 #endif
 
-    struct bsi_server* server = wl_container_of(
-        listener,
-        server,
-        bsi_listeners_global.listen.wlr_layer_shell_new_surface);
+    struct bsi_server* server =
+        wl_container_of(listener, server, listen.wlr_layer_shell_new_surface);
     struct wlr_layer_surface_v1* layer_surface = data;
 
     struct bsi_output* active_output;
     if (!layer_surface->output) {
-        active_output = bsi_outputs_get_active(&server->bsi_outputs);
+        active_output = bsi_outputs_get_active(server);
         struct bsi_workspace* active_wspace =
-            bsi_workspaces_get_active(active_output->bsi_workspaces);
+            bsi_workspaces_get_active(active_output);
         layer_surface->output = active_wspace->bsi_output->wlr_output;
     } else {
         active_output =
@@ -544,7 +518,5 @@ bsi_layer_shell_new_surface_notify(struct wl_listener* listener, void* data)
     bsi_util_slot_connect(&layer_surface->surface->events.commit,
                           &bsi_layer->listen.wlr_surface_commit,
                           bsi_layer_surface_toplevel_wlr_surface_commit_notify);
-    bsi_output_layers_add(active_output->bsi_output_layers,
-                          bsi_layer,
-                          layer_surface->pending.layer);
+    bsi_layers_add(active_output, bsi_layer, layer_surface->pending.layer);
 }

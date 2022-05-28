@@ -4,7 +4,6 @@ bonsai_src = files(
     'util.c',
     'input.c',
     'output.c',
-    'global.c',
 
     'input/cursor.c',
     'input/keyboard.c',
@@ -48,6 +47,7 @@ executable(
     include_directories : bonsai_inc,
     dependencies : bonsai_dep,
     c_args : [
-        '-DWLR_USE_UNSTABLE'
+        '-DWLR_USE_UNSTABLE',
+        '-O0',
         ]
     )

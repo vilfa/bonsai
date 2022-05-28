@@ -20,7 +20,6 @@ extern bsi_notify_func_t bsi_global_seat_request_set_cursor_notify;
 extern bsi_notify_func_t bsi_global_seat_request_set_selection_notify;
 extern bsi_notify_func_t bsi_global_seat_request_set_primary_selection_notify;
 extern bsi_notify_func_t bsi_global_seat_request_start_drag_notify;
-extern bsi_notify_func_t bsi_global_seat_start_drag_notify;
 /* wlr_xdg_shell */
 extern bsi_notify_func_t bsi_global_xdg_shell_new_surface_notify;
 /* wlr_layer_shell_v1 */

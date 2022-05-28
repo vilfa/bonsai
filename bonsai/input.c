@@ -14,80 +14,51 @@
 // TODO: Something weird with software cursor, when not using the laptop
 // touchpad, but using the connected mouse.
 
-struct bsi_inputs*
-bsi_inputs_init(struct bsi_inputs* bsi_inputs, struct bsi_server* bsi_server)
-{
-    assert(bsi_inputs);
-    assert(bsi_server);
-    assert(bsi_server->wlr_seat);
-
-    bsi_inputs->bsi_server = bsi_server;
-    bsi_inputs->wlr_seat = bsi_server->wlr_seat;
-    bsi_inputs->len_pointers = 0;
-    bsi_inputs->len_keyboards = 0;
-    wl_list_init(&bsi_inputs->pointers);
-    wl_list_init(&bsi_inputs->keyboards);
-
-    return bsi_inputs;
-}
-
 void
-bsi_inputs_pointer_add(struct bsi_inputs* bsi_inputs,
+bsi_inputs_pointer_add(struct bsi_server* bsi_server,
                        struct bsi_input_pointer* bsi_input_pointer)
 {
-    assert(bsi_inputs);
+    assert(bsi_server);
     assert(bsi_input_pointer);
     assert(bsi_input_pointer->wlr_cursor);
     assert(bsi_input_pointer->wlr_input_device);
 
-    ++bsi_inputs->len_pointers;
-    wl_list_insert(&bsi_inputs->pointers, &bsi_input_pointer->link);
-
-    wlr_cursor_attach_input_device(bsi_input_pointer->wlr_cursor,
-                                   bsi_input_pointer->wlr_input_device);
+    ++bsi_server->input.len_pointers;
+    wl_list_insert(&bsi_server->input.pointers, &bsi_input_pointer->link);
 }
 
 void
-bsi_inputs_pointer_remove(struct bsi_inputs* bsi_inputs,
+bsi_inputs_pointer_remove(struct bsi_server* bsi_server,
                           struct bsi_input_pointer* bsi_input_pointer)
 {
-    assert(bsi_inputs);
+    assert(bsi_server);
     assert(bsi_input_pointer);
 
-    --bsi_inputs->len_pointers;
+    --bsi_server->input.len_pointers;
     wl_list_remove(&bsi_input_pointer->link);
-    bsi_input_pointer_finish(bsi_input_pointer);
 }
 
 void
-bsi_inputs_keyboard_add(struct bsi_inputs* bsi_inputs,
+bsi_inputs_keyboard_add(struct bsi_server* bsi_server,
                         struct bsi_input_keyboard* bsi_input_keyboard)
 {
-    assert(bsi_inputs);
+    assert(bsi_server);
     assert(bsi_input_keyboard);
     assert(bsi_input_keyboard->wlr_input_device);
 
-    ++bsi_inputs->len_keyboards;
-    wl_list_insert(&bsi_inputs->keyboards, &bsi_input_keyboard->link);
-
-    bsi_input_keyboard_keymap_set(bsi_input_keyboard,
-                                  bsi_input_keyboard_rules,
-                                  bsi_input_keyboard_rules_len);
-
-    wlr_seat_set_keyboard(bsi_inputs->wlr_seat,
-                          bsi_input_keyboard->wlr_input_device->keyboard);
+    ++bsi_server->input.len_keyboards;
+    wl_list_insert(&bsi_server->input.keyboards, &bsi_input_keyboard->link);
 }
 
 void
-bsi_inputs_keyboard_remove(struct bsi_inputs* bsi_inputs,
+bsi_inputs_keyboard_remove(struct bsi_server* bsi_server,
                            struct bsi_input_keyboard* bsi_input_keyboard)
 {
-    assert(bsi_inputs);
+    assert(bsi_server);
     assert(bsi_input_keyboard);
 
-    --bsi_inputs->len_keyboards;
+    --bsi_server->input.len_keyboards;
     wl_list_remove(&bsi_input_keyboard->link);
-    bsi_input_keyboard_finish(bsi_input_keyboard);
 }
 
 struct bsi_input_pointer*
