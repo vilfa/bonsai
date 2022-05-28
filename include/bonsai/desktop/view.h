@@ -43,7 +43,7 @@ struct bsi_view
         struct wl_listener request_resize;
         struct wl_listener request_show_window_menu;
         /* bsi_workspaces */
-        // struct wl_listener active_workspace;
+        struct wl_listener workspace_active;
     } listen;
 
     struct wl_list link;

@@ -5,10 +5,12 @@
 #include <time.h>
 #include <unistd.h>
 #include <wayland-server-core.h>
+#include <wayland-util.h>
 #include <wlr/util/log.h>
 
 struct bsi_server;
 
+#include "bonsai/log.h"
 #include "bonsai/server.h"
 #include "bonsai/util.h"
 
@@ -33,6 +35,13 @@ bsi_util_slot_connect(struct wl_signal* bsi_signal_memb,
     wl_signal_add(bsi_signal_memb, bsi_listener_memb);
 }
 
+void
+bsi_util_slot_disconnect(struct wl_listener* bsi_listener_memb)
+{
+    assert(bsi_listener_memb);
+    wl_list_remove(&bsi_listener_memb->link);
+}
+
 bool
 bsi_util_forkexec(char* const* argp, const size_t len_argp)
 {
@@ -45,12 +54,12 @@ bsi_util_forkexec(char* const* argp, const size_t len_argp)
 
             execve(argp[0], argp, environ);
 
-            wlr_log(WLR_ERROR, "Exec failed: %s", strerror(errno));
+            bsi_log(WLR_ERROR, "Exec failed: %s", strerror(errno));
             _exit(EXIT_FAILURE);
             break;
         }
         case -1:
-            wlr_log(WLR_ERROR, "Fork failed: %s", strerror(errno));
+            bsi_log(WLR_ERROR, "Fork failed: %s", strerror(errno));
             return false;
         default:
             return true;

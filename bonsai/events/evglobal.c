@@ -30,6 +30,7 @@ struct bsi_view;
 #include "bonsai/desktop/workspace.h"
 #include "bonsai/events.h"
 #include "bonsai/input.h"
+#include "bonsai/log.h"
 #include "bonsai/output.h"
 #include "bonsai/server.h"
 #include "bonsai/util.h"
@@ -37,7 +38,7 @@ struct bsi_view;
 void
 bsi_global_backend_new_output_notify(struct wl_listener* listener, void* data)
 {
-    wlr_log(WLR_DEBUG, "Got event new_output from wlr_backend");
+    bsi_log(WLR_DEBUG, "Got event new_output from wlr_backend");
 
     struct bsi_server* server =
         wl_container_of(listener, server, listen.backend_new_output);
@@ -69,7 +70,7 @@ bsi_global_backend_new_output_notify(struct wl_listener* listener, void* data)
     bsi_workspace_init(wspace, server, output, workspace_name);
     bsi_workspaces_add(output, wspace);
 
-    wlr_log(WLR_INFO,
+    bsi_log(WLR_INFO,
             "Attached %s to output %s",
             wspace->name,
             output->wlr_output->name);
@@ -87,7 +88,7 @@ bsi_global_backend_new_output_notify(struct wl_listener* listener, void* data)
 void
 bsi_global_backend_new_input_notify(struct wl_listener* listener, void* data)
 {
-    wlr_log(WLR_DEBUG, "Got event new_input from wlr_backend");
+    bsi_log(WLR_DEBUG, "Got event new_input from wlr_backend");
 
     struct bsi_server* server =
         wl_container_of(listener, server, listen.backend_new_input);
@@ -149,7 +150,7 @@ bsi_global_backend_new_input_notify(struct wl_listener* listener, void* data)
 
             wlr_cursor_attach_input_device(bsi_input_pointer->cursor,
                                            bsi_input_pointer->device);
-            wlr_log(WLR_INFO, "Added new pointer input device");
+            bsi_log(WLR_INFO, "Added new pointer input device");
             break;
         }
         case WLR_INPUT_DEVICE_KEYBOARD: {
@@ -178,11 +179,11 @@ bsi_global_backend_new_input_notify(struct wl_listener* listener, void* data)
 
             wlr_seat_set_keyboard(server->wlr_seat,
                                   bsi_input_keyboard->device->keyboard);
-            wlr_log(WLR_INFO, "Added new keyboard input device");
+            bsi_log(WLR_INFO, "Added new keyboard input device");
             break;
         }
         default:
-            wlr_log(WLR_INFO,
+            bsi_log(WLR_INFO,
                     "Unsupported new input device: type %d",
                     device->type);
             break;
@@ -192,16 +193,16 @@ bsi_global_backend_new_input_notify(struct wl_listener* listener, void* data)
     size_t len_keyboards = 0, len_pointers = 0;
     if ((len_pointers = server->input.len_pointers) > 0) {
         capabilities |= WL_SEAT_CAPABILITY_POINTER;
-        wlr_log(WLR_DEBUG, "Seat has capability: WL_SEAT_CAPABILITY_POINTER");
+        bsi_log(WLR_DEBUG, "Seat has capability: WL_SEAT_CAPABILITY_POINTER");
     }
     if ((len_keyboards = server->input.len_keyboards) > 0) {
         capabilities |= WL_SEAT_CAPABILITY_KEYBOARD;
-        wlr_log(WLR_DEBUG, "Seat has capability: WL_SEAT_CAPABILITY_KEYBOARD");
+        bsi_log(WLR_DEBUG, "Seat has capability: WL_SEAT_CAPABILITY_KEYBOARD");
     }
 
-    wlr_log(
+    bsi_log(
         WLR_DEBUG, "Server now has %ld input pointer devices", len_pointers);
-    wlr_log(
+    bsi_log(
         WLR_DEBUG, "Server now has %ld input keyboard devices", len_keyboards);
 
     wlr_seat_set_capabilities(server->wlr_seat, capabilities);
@@ -211,52 +212,50 @@ void
 bsi_global_seat_pointer_grab_begin_notify(struct wl_listener* listener,
                                           void* data)
 {
-    wlr_log(WLR_DEBUG, "Got event pointer_grab_begin from wlr_seat");
+    bsi_log(WLR_DEBUG, "Got event pointer_grab_begin from wlr_seat");
 }
 
 void
 bsi_global_seat_pointer_grab_end_notify(struct wl_listener* listener,
                                         void* data)
 {
-    wlr_log(WLR_DEBUG, "Got event pointer_grab_end from wlr_seat");
+    bsi_log(WLR_DEBUG, "Got event pointer_grab_end from wlr_seat");
 }
 
 void
 bsi_global_seat_keyboard_grab_begin_notify(struct wl_listener* listener,
                                            void* data)
 {
-    wlr_log(WLR_DEBUG, "Got event keyboard_grab_begin from wlr_seat");
+    bsi_log(WLR_DEBUG, "Got event keyboard_grab_begin from wlr_seat");
 }
 
 void
 bsi_global_seat_keyboard_grab_end_notify(struct wl_listener* listener,
                                          void* data)
 {
-    wlr_log(WLR_DEBUG, "Got event keyboard_grab_end from wlr_seat");
+    bsi_log(WLR_DEBUG, "Got event keyboard_grab_end from wlr_seat");
 }
 
 void
 bsi_global_seat_touch_grab_begin_notify(struct wl_listener* listener,
                                         void* data)
 {
-    wlr_log(WLR_DEBUG, "Got event touch_grab_begin from wlr_seat");
-    wlr_log(WLR_DEBUG, "A touch device has grabbed focus, what the hell!?");
+    bsi_log(WLR_DEBUG, "Got event touch_grab_begin from wlr_seat");
+    bsi_log(WLR_DEBUG, "A touch device has grabbed focus, what the hell!?");
 }
 
 void
 bsi_global_seat_touch_grab_end_notify(struct wl_listener* listener, void* data)
 {
-#ifdef GIMME_ALL_GLOBAL_EVENTS
-    wlr_log(WLR_DEBUG, "Got event touch_grab_end from wlr_seat");
-    wlr_log(WLR_DEBUG, "A touch device has ended focus grab, what the hell!?");
-#endif
+    bsi_log(WLR_DEBUG, "Got event touch_grab_end from wlr_seat");
+    bsi_log(WLR_DEBUG, "A touch device has ended focus grab, what the hell!?");
 }
 
 void
 bsi_global_seat_request_set_cursor_notify(struct wl_listener* listener,
                                           void* data)
 {
-    wlr_log(WLR_DEBUG, "Got event request_set_cursor from wlr_seat");
+    bsi_log(WLR_DEBUG, "Got event request_set_cursor from wlr_seat");
 
     struct bsi_server* server =
         wl_container_of(listener, server, listen.seat_request_set_cursor);
@@ -274,9 +273,7 @@ void
 bsi_global_seat_request_set_selection_notify(struct wl_listener* listener,
                                              void* data)
 {
-#ifdef GIMME_ALL_GLOBAL_EVENTS
-    wlr_log(WLR_DEBUG, "Got event request_set_selection from wlr_seat");
-#endif
+    bsi_log(WLR_DEBUG, "Got event request_set_selection from wlr_seat");
 
     struct bsi_server* server =
         wl_container_of(listener, server, listen.seat_request_set_selection);
@@ -291,9 +288,7 @@ bsi_global_seat_request_set_primary_selection_notify(
     struct wl_listener* listener,
     void* data)
 {
-#ifdef GIMME_ALL_GLOBAL_EVENTS
-    wlr_log(WLR_DEBUG, "Got event request_set_primary_selection from wlr_seat");
-#endif
+    bsi_log(WLR_DEBUG, "Got event request_set_primary_selection from wlr_seat");
 
     struct bsi_server* server = wl_container_of(
         listener, server, listen.wlr_seat_request_set_primary_selection);
@@ -308,18 +303,14 @@ void
 bsi_global_seat_request_start_drag_notify(struct wl_listener* listener,
                                           void* data)
 {
-#ifdef GIMME_ALL_GLOBAL_EVENTS
-    wlr_log(WLR_DEBUG, "Got event request_start_drag from wlr_seat");
-#endif
+    bsi_log(WLR_DEBUG, "Got event request_start_drag from wlr_seat");
 }
 
 void
 bsi_global_xdg_shell_new_surface_notify(struct wl_listener* listener,
                                         void* data)
 {
-#ifdef GIMME_ALL_GLOBAL_EVENTS
-    wlr_log(WLR_DEBUG, "Got event new_surface from wlr_xdg_shell");
-#endif
+    bsi_log(WLR_DEBUG, "Got event new_surface from wlr_xdg_shell");
 
     struct bsi_server* server =
         wl_container_of(listener, server, listen.xdg_shell_new_surface);
@@ -372,14 +363,11 @@ bsi_global_xdg_shell_new_surface_notify(struct wl_listener* listener,
         bsi_util_slot_connect(&view->toplevel->events.request_show_window_menu,
                               &view->listen.request_show_window_menu,
                               bsi_view_request_show_window_menu_notify);
-        // bsi_util_slot_connect(&bsi_view->bsi_workspace->signal.active,
-        //                       &bsi_view->listen.active_workspace,
-        //                       bsi_workspace_active_notify);
 
         /* Add wired up view to workspace on the active output. */
         bsi_workspace_view_add(active_wspace, view);
-        wlr_log(WLR_INFO, "Attached view to workspace %s", active_wspace->name);
-        wlr_log(WLR_INFO,
+        bsi_log(WLR_INFO, "Attached view to workspace %s", active_wspace->name);
+        bsi_log(WLR_INFO,
                 "Workspace %s now has %ld views",
                 active_wspace->name,
                 active_wspace->len_views);
@@ -389,9 +377,7 @@ bsi_global_xdg_shell_new_surface_notify(struct wl_listener* listener,
 void
 bsi_layer_shell_new_surface_notify(struct wl_listener* listener, void* data)
 {
-#ifdef GIMME_ALL_GLOBAL_EVENTS
-    wlr_log(WLR_DEBUG, "Got event new_surface from wlr_layer_shell_v1");
-#endif
+    bsi_log(WLR_DEBUG, "Got event new_surface from wlr_layer_shell_v1");
 
     struct bsi_server* server =
         wl_container_of(listener, server, listen.layer_shell_new_surface);

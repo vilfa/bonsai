@@ -27,6 +27,15 @@ bsi_util_slot_connect(struct wl_signal* bsi_signal_memb,
                       wl_notify_func_t func);
 
 /**
+ * @brief Disconnects a listener. Is just a nice wrapper around
+ * `wl_list_remove`.
+ *
+ * @param bsi_listener_memb The listener.
+ */
+void
+bsi_util_slot_disconnect(struct wl_listener* bsi_listener_memb);
+
+/**
  * @brief Sets the proper environment and executes an execve call with the
  * specified argp.
  *

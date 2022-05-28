@@ -18,13 +18,14 @@ struct bsi_view;
 #include "bonsai/desktop/workspace.h"
 #include "bonsai/events.h"
 #include "bonsai/input/cursor.h"
+#include "bonsai/log.h"
 #include "bonsai/server.h"
 
 void
 bsi_view_destroy_xdg_surface_notify(struct wl_listener* listener,
                                     __attribute__((unused)) void* data)
 {
-    wlr_log(WLR_DEBUG, "Got event destroy from wlr_xdg_surface");
+    bsi_log(WLR_DEBUG, "Got event destroy from wlr_xdg_surface");
 
     struct bsi_view* view = wl_container_of(listener, view, listen.destroy);
     struct bsi_server* server = view->server;
@@ -35,7 +36,7 @@ bsi_view_destroy_xdg_surface_notify(struct wl_listener* listener,
     bsi_view_finish(view);
     bsi_view_destroy(view);
 
-    wlr_log(WLR_DEBUG,
+    bsi_log(WLR_DEBUG,
             "Workspace %s now has %ld views",
             workspace->name,
             workspace->len_views);
@@ -45,7 +46,7 @@ void
 bsi_view_map_notify(struct wl_listener* listener,
                     __attribute__((unused)) void* data)
 {
-    wlr_log(WLR_DEBUG, "Got event map from wlr_xdg_surface");
+    bsi_log(WLR_DEBUG, "Got event map from wlr_xdg_surface");
 
     struct bsi_view* view = wl_container_of(listener, view, listen.map);
     struct bsi_server* server = view->server;
@@ -76,7 +77,7 @@ void
 bsi_view_unmap_notify(struct wl_listener* listener,
                       __attribute__((unused)) void* data)
 {
-    wlr_log(WLR_DEBUG, "Got event unmap from wlr_xdg_surface");
+    bsi_log(WLR_DEBUG, "Got event unmap from wlr_xdg_surface");
 
     struct bsi_view* view = wl_container_of(listener, view, listen.unmap);
     struct bsi_server* server = view->server;
@@ -89,7 +90,7 @@ void
 bsi_view_request_maximize_notify(struct wl_listener* listener,
                                  __attribute__((unused)) void* data)
 {
-    wlr_log(WLR_DEBUG, "Got event request_maximize from wlr_xdg_toplevel");
+    bsi_log(WLR_DEBUG, "Got event request_maximize from wlr_xdg_toplevel");
 
     // TODO: This should probably take into account the panels and such stuff.
     // Also take a look at
@@ -109,7 +110,7 @@ bsi_view_request_maximize_notify(struct wl_listener* listener,
 void
 bsi_view_request_fullscreen_notify(struct wl_listener* listener, void* data)
 {
-    wlr_log(WLR_DEBUG, "Got event request_fullscreen from wlr_xdg_toplevel");
+    bsi_log(WLR_DEBUG, "Got event request_fullscreen from wlr_xdg_toplevel");
 
     struct bsi_view* view =
         wl_container_of(listener, view, listen.request_fullscreen);
@@ -125,7 +126,7 @@ bsi_view_request_fullscreen_notify(struct wl_listener* listener, void* data)
 void
 bsi_view_request_minimize_notify(struct wl_listener* listener, void* data)
 {
-    wlr_log(WLR_DEBUG, "Got event request_minimize from wlr_xdg_toplevel");
+    bsi_log(WLR_DEBUG, "Got event request_minimize from wlr_xdg_toplevel");
 
     struct bsi_view* view =
         wl_container_of(listener, view, listen.request_minimize);
@@ -148,7 +149,7 @@ bsi_view_request_minimize_notify(struct wl_listener* listener, void* data)
 void
 bsi_view_request_move_notify(struct wl_listener* listener, void* data)
 {
-    wlr_log(WLR_DEBUG, "Got event request_move from wlr_xdg_toplevel");
+    bsi_log(WLR_DEBUG, "Got event request_move from wlr_xdg_toplevel");
 
     /* The user would like to begin an interactive move operation. This is
      * raised when a user clicks on the client side decorations. */
@@ -163,7 +164,7 @@ bsi_view_request_move_notify(struct wl_listener* listener, void* data)
 void
 bsi_view_request_resize_notify(struct wl_listener* listener, void* data)
 {
-    wlr_log(WLR_DEBUG, "Got event request_resize from wlr_xdg_toplevel");
+    bsi_log(WLR_DEBUG, "Got event request_resize from wlr_xdg_toplevel");
 
     /* The user would like to begin an interactive resize operation. This is
      * raised when a use clicks on the client side decorations. */
@@ -179,7 +180,7 @@ void
 bsi_view_request_show_window_menu_notify(struct wl_listener* listener,
                                          void* data)
 {
-    wlr_log(WLR_DEBUG,
+    bsi_log(WLR_DEBUG,
             "Got event request_show_window_menu from wlr_xdg_toplevel");
 
     struct bsi_view* view =
@@ -187,6 +188,6 @@ bsi_view_request_show_window_menu_notify(struct wl_listener* listener,
     struct wlr_xdg_toplevel_show_window_menu_event* event = data;
 
     if (wlr_seat_client_validate_event_serial(event->seat, event->serial))
-        wlr_log(WLR_DEBUG, "Should show window menu");
+        bsi_log(WLR_DEBUG, "Should show window menu");
     // TODO: Handle show window menu
 }

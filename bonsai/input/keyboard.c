@@ -16,6 +16,7 @@
 
 #include "bonsai/input.h"
 #include "bonsai/input/keyboard.h"
+#include "bonsai/log.h"
 #include "bonsai/server.h"
 #include "bonsai/util.h"
 
@@ -111,7 +112,7 @@ bool
 bsi_keyboard_mod_ctrl_handle(struct bsi_server* bsi_server, xkb_keysym_t sym)
 {
 #ifdef GIMME_ALL_KEYBINDINGS
-    wlr_log(WLR_DEBUG, "Got Ctrl mod");
+    bsi_log(WLR_DEBUG, "Got Ctrl mod");
 #endif
     return false;
 }
@@ -120,7 +121,7 @@ bool
 bsi_keyboard_mod_alt_handle(struct bsi_server* bsi_server, xkb_keysym_t sym)
 {
 #ifdef GIMME_ALL_KEYBINDINGS
-    wlr_log(WLR_DEBUG, "Got Alt mod");
+    bsi_log(WLR_DEBUG, "Got Alt mod");
 #endif
     return false;
 }
@@ -129,16 +130,16 @@ bool
 bsi_keyboard_mod_super_handle(struct bsi_server* bsi_server, xkb_keysym_t sym)
 {
 #ifdef GIMME_ALL_KEYBINDINGS
-    wlr_log(WLR_DEBUG, "Got Super mod");
+    bsi_log(WLR_DEBUG, "Got Super mod");
 #endif
     switch (sym) {
         case XKB_KEY_d: {
-            wlr_log(WLR_DEBUG, "Got Super+d -> menu");
+            bsi_log(WLR_DEBUG, "Got Super+d -> menu");
             char* const argp[] = { "/usr/bin/bemenu-run", "-c", "-i", NULL };
             return bsi_util_forkexec(argp, 4);
         }
         case XKB_KEY_Return: {
-            wlr_log(WLR_DEBUG, "Got Super+Return -> term");
+            bsi_log(WLR_DEBUG, "Got Super+Return -> term");
             char* const argp[] = { "/usr/bin/foot", NULL };
             return bsi_util_forkexec(argp, 2);
         }
@@ -151,7 +152,7 @@ bsi_keyboard_mod_ctrl_alt_handle(struct bsi_server* bsi_server,
                                  xkb_keysym_t sym)
 {
 #ifdef GIMME_ALL_KEYBINDINGS
-    wlr_log(WLR_DEBUG, "Got Ctrl+Alt mod");
+    bsi_log(WLR_DEBUG, "Got Ctrl+Alt mod");
 #endif
     return false;
 }
@@ -161,7 +162,7 @@ bsi_keyboard_mod_ctrl_shift_handle(struct bsi_server* bsi_server,
                                    xkb_keysym_t sym)
 {
 #ifdef GIMME_ALL_KEYBINDINGS
-    wlr_log(WLR_DEBUG, "Got Ctrl+Shift mod");
+    bsi_log(WLR_DEBUG, "Got Ctrl+Shift mod");
 #endif
     return false;
 }
@@ -171,7 +172,7 @@ bsi_keyboard_mod_ctrl_alt_shift_handle(struct bsi_server* bsi_server,
                                        xkb_keysym_t sym)
 {
 #ifdef GIMME_ALL_KEYBINDINGS
-    wlr_log(WLR_DEBUG, "Got Ctrl+Alt+Shift mod");
+    bsi_log(WLR_DEBUG, "Got Ctrl+Alt+Shift mod");
 #endif
     return false;
 }
@@ -181,11 +182,11 @@ bsi_keyboard_mod_super_shift_handle(struct bsi_server* bsi_server,
                                     xkb_keysym_t sym)
 {
 #ifdef GIMME_ALL_KEYBINDINGS
-    wlr_log(WLR_DEBUG, "Got Super+Shift mod");
+    bsi_log(WLR_DEBUG, "Got Super+Shift mod");
 #endif
     switch (sym) {
         case XKB_KEY_Q:
-            wlr_log(WLR_INFO, "Got Super+Shift+Q -> exit");
+            bsi_log(WLR_INFO, "Got Super+Shift+Q -> exit");
             bsi_server_exit(bsi_server);
             break;
     }

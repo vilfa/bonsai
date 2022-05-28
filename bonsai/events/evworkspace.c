@@ -9,12 +9,13 @@
 
 #include "bonsai/desktop/view.h"
 #include "bonsai/events.h"
+#include "bonsai/log.h"
 #include "bonsai/server.h"
 
 void
 bsi_workspace_active_notify(struct wl_listener* listener, void* data)
 {
-    wlr_log(WLR_DEBUG, "Got event active from bsi_workspace");
+    bsi_log(WLR_DEBUG, "Got event active from bsi_workspace");
 
     // struct bsi_view* view =
     // wl_container_of(listener, view, listen.active_workspace);

@@ -164,6 +164,9 @@ bsi_workspace_view_add(struct bsi_workspace* bsi_workspace,
 
     ++bsi_workspace->len_views;
     wl_list_insert(&bsi_workspace->views, &bsi_view->link_workspace);
+    bsi_util_slot_connect(&bsi_workspace->signal.active,
+                          &bsi_view->listen.workspace_active,
+                          bsi_workspace_active_notify);
     bsi_view->parent_workspace = bsi_workspace;
 }
 
@@ -176,6 +179,7 @@ bsi_workspace_view_remove(struct bsi_workspace* bsi_workspace,
 
     --bsi_workspace->len_views;
     wl_list_remove(&bsi_view->link_workspace);
+    bsi_util_slot_disconnect(&bsi_view->listen.workspace_active);
     bsi_view->parent_workspace = NULL;
 }
 

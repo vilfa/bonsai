@@ -10,6 +10,7 @@
 #include <wlr/util/log.h>
 
 #include "bonsai/events.h"
+#include "bonsai/log.h"
 #include "bonsai/output.h"
 #include "bonsai/server.h"
 #include "bonsai/util.h"
@@ -18,7 +19,7 @@ void
 bsi_output_frame_notify(struct wl_listener* listener,
                         __attribute((unused)) void* data)
 {
-    wlr_log(WLR_DEBUG, "Got event frame from wlr_output");
+    bsi_log(WLR_DEBUG, "Got event frame from wlr_output");
 
     struct bsi_output* output = wl_container_of(listener, output, listen.frame);
     struct wlr_scene* wlr_scene = output->server->wlr_scene;
@@ -36,7 +37,7 @@ void
 bsi_output_destroy_notify(struct wl_listener* listener,
                           __attribute__((unused)) void* data)
 {
-    wlr_log(WLR_DEBUG, "Got event destroy from wlr_output");
+    bsi_log(WLR_DEBUG, "Got event destroy from wlr_output");
 
     struct bsi_output* output =
         wl_container_of(listener, output, listen.destroy);
@@ -47,7 +48,7 @@ bsi_output_destroy_notify(struct wl_listener* listener,
     bsi_output_destroy(output);
 
     if (server->output.len == 0) {
-        wlr_log(WLR_INFO, "Out of outputs, exiting");
+        bsi_log(WLR_INFO, "Out of outputs, exiting");
         bsi_server_exit(server);
     }
 }

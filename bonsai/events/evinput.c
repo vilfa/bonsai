@@ -19,6 +19,7 @@
 #include "bonsai/input.h"
 #include "bonsai/input/cursor.h"
 #include "bonsai/input/keyboard.h"
+#include "bonsai/log.h"
 #include "bonsai/server.h"
 
 #define GIMME_ALL_POINTER_EVENTS
@@ -28,7 +29,7 @@ void
 bsi_input_pointer_motion_notify(struct wl_listener* listener, void* data)
 {
 #ifdef GIMME_ALL_POINTER_EVENTS
-    wlr_log(WLR_DEBUG, "Got event motion from wlr_input_device");
+    bsi_log(WLR_DEBUG, "Got event motion from wlr_input_device");
 #endif
 
     struct bsi_input_pointer* pointer =
@@ -50,7 +51,7 @@ bsi_input_pointer_motion_absolute_notify(struct wl_listener* listener,
                                          void* data)
 {
 #ifdef GIMME_ALL_POINTER_EVENTS
-    wlr_log(WLR_DEBUG, "Got event motion_absolute from wlr_input_device");
+    bsi_log(WLR_DEBUG, "Got event motion_absolute from wlr_input_device");
 #endif
 
     struct bsi_input_pointer* pointer =
@@ -71,7 +72,7 @@ void
 bsi_input_pointer_button_notify(struct wl_listener* listener, void* data)
 {
 #ifdef GIMME_ALL_POINTER_EVENTS
-    wlr_log(WLR_DEBUG, "Got event button from wlr_input_device");
+    bsi_log(WLR_DEBUG, "Got event button from wlr_input_device");
 #endif
 
     /* This event is forwarded by wlr_cursor, when a pointer emits a button
@@ -111,7 +112,7 @@ void
 bsi_input_pointer_axis_notify(struct wl_listener* listener, void* data)
 {
 #ifdef GIMME_ALL_POINTER_EVENTS
-    wlr_log(WLR_DEBUG, "Got event axis from wlr_input_device");
+    bsi_log(WLR_DEBUG, "Got event axis from wlr_input_device");
 #endif
 
     struct bsi_input_pointer* pointer =
@@ -133,7 +134,7 @@ bsi_input_pointer_frame_notify(struct wl_listener* listener,
                                __attribute__((unused)) void* data)
 {
 #ifdef GIMME_ALL_POINTER_EVENTS
-    wlr_log(WLR_DEBUG, "Got event frame from wlr_input_device");
+    bsi_log(WLR_DEBUG, "Got event frame from wlr_input_device");
 #endif
 
     struct bsi_input_pointer* pointer =
@@ -148,7 +149,7 @@ void
 bsi_input_pointer_swipe_begin_notify(struct wl_listener* listener, void* data)
 {
 #ifdef GIMME_ALL_POINTER_EVENTS
-    wlr_log(WLR_DEBUG, "Got event swipe_begin from wlr_input_device");
+    bsi_log(WLR_DEBUG, "Got event swipe_begin from wlr_input_device");
 #endif
 
     // struct bsi_input_pointer* pointer =
@@ -163,7 +164,7 @@ void
 bsi_input_pointer_swipe_update_notify(struct wl_listener* listener, void* data)
 {
 #ifdef GIMME_ALL_POINTER_EVENTS
-    wlr_log(WLR_DEBUG, "Got event swipe_update from wlr_input_device");
+    bsi_log(WLR_DEBUG, "Got event swipe_update from wlr_input_device");
 #endif
 
     // struct bsi_input_pointer* pointer =
@@ -178,7 +179,7 @@ void
 bsi_input_pointer_swipe_end_notify(struct wl_listener* listener, void* data)
 {
 #ifdef GIMME_ALL_POINTER_EVENTS
-    wlr_log(WLR_DEBUG, "Got event swipe_end from wlr_input_device");
+    bsi_log(WLR_DEBUG, "Got event swipe_end from wlr_input_device");
 #endif
 
     // struct bsi_input_pointer* pointer =
@@ -193,7 +194,7 @@ void
 bsi_input_pointer_pinch_begin_notify(struct wl_listener* listener, void* data)
 {
 #ifdef GIMME_ALL_POINTER_EVENTS
-    wlr_log(WLR_DEBUG, "Got event pinch_begin from wlr_input_device");
+    bsi_log(WLR_DEBUG, "Got event pinch_begin from wlr_input_device");
 #endif
 
     // struct bsi_input_pointer* pointer =
@@ -206,7 +207,7 @@ void
 bsi_input_pointer_pinch_update_notify(struct wl_listener* listener, void* data)
 {
 #ifdef GIMME_ALL_POINTER_EVENTS
-    wlr_log(WLR_DEBUG, "Got event pinch_update from wlr_input_device");
+    bsi_log(WLR_DEBUG, "Got event pinch_update from wlr_input_device");
 #endif
 
     // struct bsi_input_pointer* pointer =
@@ -219,7 +220,7 @@ void
 bsi_input_pointer_pinch_end_notify(struct wl_listener* listener, void* data)
 {
 #ifdef GIMME_ALL_POINTER_EVENTS
-    wlr_log(WLR_DEBUG, "Got event pinch_end from wlr_input_device");
+    bsi_log(WLR_DEBUG, "Got event pinch_end from wlr_input_device");
 #endif
 
     // struct bsi_input_pointer* pointer =
@@ -232,7 +233,7 @@ void
 bsi_input_pointer_hold_begin_notify(struct wl_listener* listener, void* data)
 {
 #ifdef GIMME_ALL_POINTER_EVENTS
-    wlr_log(WLR_DEBUG, "Got event hold_begin from wlr_input_device");
+    bsi_log(WLR_DEBUG, "Got event hold_begin from wlr_input_device");
 #endif
 
     // struct bsi_input_pointer* pointer =
@@ -245,7 +246,7 @@ void
 bsi_input_pointer_hold_end_notify(struct wl_listener* listener, void* data)
 {
 #ifdef GIMME_ALL_POINTER_EVENTS
-    wlr_log(WLR_DEBUG, "Got event hold_end from wlr_input_device");
+    bsi_log(WLR_DEBUG, "Got event hold_end from wlr_input_device");
 #endif
 
     // struct bsi_input_pointer* pointer =
@@ -258,7 +259,7 @@ void
 bsi_input_keyboard_key_notify(struct wl_listener* listener, void* data)
 {
 #ifdef GIMME_ALL_KEYBOARD_EVENTS
-    wlr_log(WLR_DEBUG, "Got event key from wlr_input_device");
+    bsi_log(WLR_DEBUG, "Got event key from wlr_input_device");
 #endif
 
     struct bsi_input_keyboard* keyboard =
@@ -283,7 +284,7 @@ bsi_input_keyboard_modifiers_notify(struct wl_listener* listener,
                                     __attribute__((unused)) void* data)
 {
 #ifdef GIMME_ALL_KEYBOARD_EVENTS
-    wlr_log(WLR_DEBUG, "Got event modifiers from wlr_input_device");
+    bsi_log(WLR_DEBUG, "Got event modifiers from wlr_input_device");
 #endif
 
     struct bsi_input_keyboard* keyboard =
@@ -303,7 +304,7 @@ void
 bsi_input_device_destroy_notify(struct wl_listener* listener, void* data)
 {
 #ifdef GIMME_ALL_KEYBOARD_EVENTS
-    wlr_log(WLR_DEBUG, "Got event destroy from wlr_input_device");
+    bsi_log(WLR_DEBUG, "Got event destroy from wlr_input_device");
 #endif
 
     struct wlr_input_device* device = data;

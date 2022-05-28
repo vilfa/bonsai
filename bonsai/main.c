@@ -26,6 +26,7 @@
 #include "bonsai/events.h"
 #include "bonsai/input.h"
 #include "bonsai/input/cursor.h"
+#include "bonsai/log.h"
 #include "bonsai/output.h"
 #include "bonsai/server.h"
 #include "bonsai/util.h"
@@ -43,10 +44,10 @@ main(void)
     bsi_server_init(&server);
 
     server.wl_socket = wl_display_add_socket_auto(server.wl_display);
-    wlr_log(WLR_DEBUG, "Created server socket '%s'", server.wl_socket);
+    bsi_log(WLR_DEBUG, "Created server socket '%s'", server.wl_socket);
 
     if (setenv("WAYLAND_DISPLAY", server.wl_socket, true) != 0) {
-        wlr_log(WLR_ERROR,
+        bsi_log(WLR_ERROR,
                 "Failed to set WAYLAND_DISPLAY env var: %s",
                 strerror(errno));
         wlr_backend_destroy(server.wlr_backend);
@@ -60,7 +61,7 @@ main(void)
          * Note: Make sure the default cursor theme is set correctly in
          * `/usr/share/icons/default/index.theme` or
          * `$XDG_CONFIG_HOME/.icons/default/index.theme` */
-        wlr_log(WLR_ERROR,
+        bsi_log(WLR_ERROR,
                 "Failed to set WLR_NO_HARDWARE_CURSORS env var: %s",
                 strerror(errno));
         wlr_backend_destroy(server.wlr_backend);
@@ -69,13 +70,13 @@ main(void)
     }
 
     if (!wlr_backend_start(server.wlr_backend)) {
-        wlr_log(WLR_ERROR, "Failed to start backend");
+        bsi_log(WLR_ERROR, "Failed to start backend");
         wlr_backend_destroy(server.wlr_backend);
         wl_display_destroy(server.wl_display);
         exit(EXIT_FAILURE);
     }
 
-    wlr_log(WLR_INFO, "Running compositor on socket '%s'", server.wl_socket);
+    bsi_log(WLR_INFO, "Running compositor on socket '%s'", server.wl_socket);
     wl_display_run(server.wl_display);
 
     wl_display_destroy_clients(server.wl_display);
