@@ -1,3 +1,4 @@
+#include "bonsai/desktop/workspace.h"
 #define _POSIX_C_SOURCE 200809L
 #include <assert.h>
 #include <stdbool.h>
@@ -25,11 +26,11 @@ bsi_scene_add(struct bsi_server* bsi_server, struct bsi_view* bsi_view)
     ++bsi_server->scene.len;
     wl_list_insert(&bsi_server->scene.views, &bsi_view->link);
 
-    wlr_scene_node_set_enabled(bsi_view->wlr_scene_node, true);
+    wlr_scene_node_set_enabled(bsi_view->scene_node, true);
 
     /* Initialize geometry state. */
     struct wlr_box box;
-    wlr_xdg_surface_get_geometry(bsi_view->wlr_xdg_toplevel->base, &box);
+    wlr_xdg_surface_get_geometry(bsi_view->toplevel->base, &box);
     bsi_view->x = box.x;
     bsi_view->y = box.y;
     bsi_view->width = box.width;
@@ -51,23 +52,20 @@ bsi_scene_remove(struct bsi_server* bsi_server, struct bsi_view* bsi_view)
     --bsi_server->scene.len;
     wl_list_remove(&bsi_view->link);
 
-    wlr_scene_node_set_enabled(bsi_view->wlr_scene_node, false);
+    wlr_scene_node_set_enabled(bsi_view->scene_node, false);
 }
 
 struct bsi_view*
 bsi_view_init(struct bsi_view* bsi_view,
               struct bsi_server* bsi_server,
-              struct wlr_xdg_toplevel* wlr_xdg_toplevel,
-              struct bsi_workspace* bsi_workspace)
+              struct wlr_xdg_toplevel* wlr_xdg_toplevel)
 {
     assert(bsi_view);
     assert(bsi_server);
     assert(wlr_xdg_toplevel);
-    assert(bsi_workspace);
 
-    bsi_view->bsi_server = bsi_server;
-    bsi_view->wlr_xdg_toplevel = wlr_xdg_toplevel;
-    bsi_view->bsi_workspace = bsi_workspace;
+    bsi_view->server = bsi_server;
+    bsi_view->toplevel = wlr_xdg_toplevel;
     bsi_view->x = 0.0;
     bsi_view->y = 0.0;
     bsi_view->width = 0;
@@ -78,11 +76,10 @@ bsi_view_init(struct bsi_view* bsi_view,
     bsi_view->fullscreen = false;
 
     /* Create a new node from the root server node. */
-    bsi_view->wlr_scene_node =
-        wlr_scene_xdg_surface_create(&bsi_view->bsi_server->wlr_scene->node,
-                                     bsi_view->wlr_xdg_toplevel->base);
-    bsi_view->wlr_scene_node->data = bsi_view;
-    wlr_xdg_toplevel->base->data = bsi_view->wlr_scene_node;
+    bsi_view->scene_node = wlr_scene_xdg_surface_create(
+        &bsi_view->server->wlr_scene->node, bsi_view->toplevel->base);
+    bsi_view->scene_node->data = bsi_view;
+    wlr_xdg_toplevel->base->data = bsi_view->scene_node;
 
     return bsi_view;
 }
@@ -93,7 +90,7 @@ bsi_view_finish(struct bsi_view* bsi_view)
     assert(bsi_view);
 
     /* wlr_xdg_surface */
-    wl_list_remove(&bsi_view->listen.destroy_xdg_surface.link);
+    wl_list_remove(&bsi_view->listen.destroy.link);
     wl_list_remove(&bsi_view->listen.map.link);
     wl_list_remove(&bsi_view->listen.unmap.link);
     /* wlr_xdg_toplevel */
@@ -120,12 +117,12 @@ bsi_view_focus(struct bsi_view* bsi_view)
 {
     assert(bsi_view);
 
-    struct bsi_server* bsi_server = bsi_view->bsi_server;
+    struct bsi_server* bsi_server = bsi_view->server;
     struct wlr_seat* wlr_seat = bsi_server->wlr_seat;
     struct wlr_surface* prev_focused = wlr_seat->keyboard_state.focused_surface;
 
     /* The surface is already focused. */
-    if (prev_focused == bsi_view->wlr_xdg_toplevel->base->surface)
+    if (prev_focused == bsi_view->toplevel->base->surface)
         return;
 
     if (prev_focused) {
@@ -137,17 +134,17 @@ bsi_view_focus(struct bsi_view* bsi_view)
     }
 
     /* Move view to top. */
-    wlr_scene_node_raise_to_top(bsi_view->wlr_scene_node);
+    wlr_scene_node_raise_to_top(bsi_view->scene_node);
     /* Add the view to the front of the list. */
     bsi_scene_remove(bsi_server, bsi_view);
     bsi_scene_add(bsi_server, bsi_view);
     /* Activate the view surface. */
-    wlr_xdg_toplevel_set_activated(bsi_view->wlr_xdg_toplevel, true);
+    wlr_xdg_toplevel_set_activated(bsi_view->toplevel, true);
     /* Tell seat to enter this surface with the keyboard. Don't touch the
      * pointer. */
     struct wlr_keyboard* wlr_keyboard = wlr_seat_get_keyboard(wlr_seat);
     wlr_seat_keyboard_notify_enter(wlr_seat,
-                                   bsi_view->wlr_xdg_toplevel->base->surface,
+                                   bsi_view->toplevel->base->surface,
                                    wlr_keyboard->keycodes,
                                    wlr_keyboard->num_keycodes,
                                    &wlr_keyboard->modifiers);
@@ -162,12 +159,12 @@ bsi_view_interactive_begin(struct bsi_view* bsi_view,
 
     /* Sets up an interactive move or resize operation. The compositor consumes
      * these events. */
-    struct bsi_server* bsi_server = bsi_view->bsi_server;
+    struct bsi_server* bsi_server = bsi_view->server;
     struct wlr_surface* focused_surface =
         bsi_server->wlr_seat->pointer_state.focused_surface;
 
     /* Deny requests from unfocused clients. */
-    if (bsi_view->wlr_xdg_toplevel->base->surface !=
+    if (bsi_view->toplevel->base->surface !=
         wlr_surface_get_root_surface(focused_surface))
         return;
 
@@ -180,7 +177,7 @@ bsi_view_interactive_begin(struct bsi_view* bsi_view,
         bsi_server->cursor.grab_y = bsi_server->wlr_cursor->y - bsi_view->y;
     } else {
         struct wlr_box box;
-        wlr_xdg_surface_get_geometry(bsi_view->wlr_xdg_toplevel->base, &box);
+        wlr_xdg_surface_get_geometry(bsi_view->toplevel->base, &box);
 
         // TODO: Not sure what is happening here
         double border_x =
@@ -211,21 +208,21 @@ bsi_view_set_maximized(struct bsi_view* bsi_view, bool maximized)
         /* Save the geometry. */
         struct wlr_box box;
         int32_t lx, ly;
-        wlr_xdg_surface_get_geometry(bsi_view->wlr_xdg_toplevel->base, &box);
-        wlr_scene_node_coords(bsi_view->wlr_scene_node, &lx, &ly);
+        wlr_xdg_surface_get_geometry(bsi_view->toplevel->base, &box);
+        wlr_scene_node_coords(bsi_view->scene_node, &lx, &ly);
         bsi_view->x = lx;
         bsi_view->y = ly;
         bsi_view->width = box.width;
         bsi_view->height = box.height;
 
-        struct bsi_server* server = bsi_view->bsi_server;
-        struct bsi_output* output = bsi_view->bsi_workspace->bsi_output;
+        struct bsi_server* server = bsi_view->server;
+        struct bsi_output* output = bsi_view->parent_workspace->output;
         struct wlr_box output_box;
         wlr_output_layout_get_box(
             server->wlr_output_layout, output->wlr_output, &output_box);
-        wlr_scene_node_set_position(bsi_view->wlr_scene_node, 0, 0);
+        wlr_scene_node_set_position(bsi_view->scene_node, 0, 0);
         wlr_xdg_toplevel_set_size(
-            bsi_view->wlr_xdg_toplevel, output_box.width, output_box.height);
+            bsi_view->toplevel, output_box.width, output_box.height);
     }
 }
 
@@ -238,19 +235,19 @@ bsi_view_set_minimized(struct bsi_view* bsi_view, bool minimized)
 
     if (!minimized) {
         bsi_view_restore_prev(bsi_view);
-        wlr_scene_node_set_enabled(bsi_view->wlr_scene_node, !minimized);
+        wlr_scene_node_set_enabled(bsi_view->scene_node, !minimized);
     } else {
         /* Save the geometry. */
         struct wlr_box box;
         int32_t lx, ly;
-        wlr_xdg_surface_get_geometry(bsi_view->wlr_xdg_toplevel->base, &box);
-        wlr_scene_node_coords(bsi_view->wlr_scene_node, &lx, &ly);
+        wlr_xdg_surface_get_geometry(bsi_view->toplevel->base, &box);
+        wlr_scene_node_coords(bsi_view->scene_node, &lx, &ly);
         bsi_view->x = lx;
         bsi_view->y = ly;
         bsi_view->width = box.width;
         bsi_view->height = box.height;
 
-        wlr_scene_node_set_enabled(bsi_view->wlr_scene_node, false);
+        wlr_scene_node_set_enabled(bsi_view->scene_node, false);
     }
 }
 
@@ -267,8 +264,8 @@ bsi_view_set_fullscreen(struct bsi_view* bsi_view, bool fullscreen)
         /* Save the geometry. */
         struct wlr_box box;
         int32_t lx, ly;
-        wlr_xdg_surface_get_geometry(bsi_view->wlr_xdg_toplevel->base, &box);
-        wlr_scene_node_coords(bsi_view->wlr_scene_node, &lx, &ly);
+        wlr_xdg_surface_get_geometry(bsi_view->toplevel->base, &box);
+        wlr_scene_node_coords(bsi_view->scene_node, &lx, &ly);
         bsi_view->x = lx;
         bsi_view->y = ly;
         bsi_view->width = box.width;
@@ -276,24 +273,23 @@ bsi_view_set_fullscreen(struct bsi_view* bsi_view, bool fullscreen)
 
         // TODO: This should probably get rid of decorations to put the entire
         // app fullscreen
-        struct bsi_server* server = bsi_view->bsi_server;
-        struct bsi_output* output = bsi_view->bsi_workspace->bsi_output;
+        struct bsi_server* server = bsi_view->server;
+        struct bsi_output* output = bsi_view->parent_workspace->output;
         struct wlr_box output_box;
         wlr_output_layout_get_box(
             server->wlr_output_layout, output->wlr_output, &output_box);
-        wlr_scene_node_set_position(bsi_view->wlr_scene_node, 0, 0);
+        wlr_scene_node_set_position(bsi_view->scene_node, 0, 0);
         wlr_xdg_toplevel_set_size(
-            bsi_view->wlr_xdg_toplevel, output_box.width, output_box.height);
+            bsi_view->toplevel, output_box.width, output_box.height);
     }
 }
 
 void
 bsi_view_restore_prev(struct bsi_view* bsi_view)
 {
-    wlr_xdg_toplevel_set_resizing(bsi_view->wlr_xdg_toplevel, true);
+    wlr_xdg_toplevel_set_resizing(bsi_view->toplevel, true);
     wlr_xdg_toplevel_set_size(
-        bsi_view->wlr_xdg_toplevel, bsi_view->width, bsi_view->height);
-    wlr_xdg_toplevel_set_resizing(bsi_view->wlr_xdg_toplevel, false);
-    wlr_scene_node_set_position(
-        bsi_view->wlr_scene_node, bsi_view->x, bsi_view->y);
+        bsi_view->toplevel, bsi_view->width, bsi_view->height);
+    wlr_xdg_toplevel_set_resizing(bsi_view->toplevel, false);
+    wlr_scene_node_set_position(bsi_view->scene_node, bsi_view->x, bsi_view->y);
 }

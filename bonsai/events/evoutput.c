@@ -21,7 +21,7 @@ bsi_output_frame_notify(struct wl_listener* listener,
     wlr_log(WLR_DEBUG, "Got event frame from wlr_output");
 
     struct bsi_output* output = wl_container_of(listener, output, listen.frame);
-    struct wlr_scene* wlr_scene = output->bsi_server->wlr_scene;
+    struct wlr_scene* wlr_scene = output->server->wlr_scene;
 
     struct wlr_scene_output* wlr_scene_output =
         wlr_scene_get_scene_output(wlr_scene, output->wlr_output);
@@ -33,13 +33,14 @@ bsi_output_frame_notify(struct wl_listener* listener,
 }
 
 void
-bsi_output_destroy_notify(struct wl_listener* listener, void* data)
+bsi_output_destroy_notify(struct wl_listener* listener,
+                          __attribute__((unused)) void* data)
 {
     wlr_log(WLR_DEBUG, "Got event destroy from wlr_output");
 
     struct bsi_output* output =
         wl_container_of(listener, output, listen.destroy);
-    struct bsi_server* server = output->bsi_server;
+    struct bsi_server* server = output->server;
 
     bsi_outputs_remove(server, output);
     bsi_output_finish(output);

@@ -56,14 +56,14 @@ bsi_output_init(struct bsi_output* bsi_output,
     assert(wlr_output);
 
     bsi_output->id = bsi_server->output.len;
-    bsi_output->bsi_server = bsi_server;
+    bsi_output->server = bsi_server;
     bsi_output->wlr_output = wlr_output;
     /* Initialize workspaces. */
-    bsi_output->workspace.len = 0;
-    wl_list_init(&bsi_output->workspace.workspaces);
+    bsi_output->wspace.len = 0;
+    wl_list_init(&bsi_output->wspace.workspaces);
     /* Initialize layer shell. */
     for (size_t i = 0; i < 4; ++i) {
-        bsi_output->layer.len_layers[i] = 0;
+        bsi_output->layer.len[i] = 0;
         wl_list_init(&bsi_output->layer.layers[i]);
     }
 
@@ -87,7 +87,7 @@ bsi_output_destroy(struct bsi_output* bsi_output)
 {
     assert(bsi_output);
 
-    struct bsi_server* server = bsi_output->bsi_server;
+    struct bsi_server* server = bsi_output->server;
 
     if (server->output.len > 0) {
         /* Move the views on all workspaces that belong to the destroyed output
@@ -97,7 +97,7 @@ bsi_output_destroy(struct bsi_output* bsi_output)
         struct bsi_workspace* next_output_wspace =
             bsi_workspaces_get_active(next_output);
 
-        struct wl_list* curr_output_wspaces = &bsi_output->workspace.workspaces;
+        struct wl_list* curr_output_wspaces = &bsi_output->wspace.workspaces;
         struct bsi_workspace *wspace, *wspace_tmp;
         wl_list_for_each_safe(wspace, wspace_tmp, curr_output_wspaces, link)
         {
@@ -110,7 +110,7 @@ bsi_output_destroy(struct bsi_output* bsi_output)
         }
     } else {
         /* Destroy everything, there are no more outputs. */
-        struct wl_list* curr_output_wspaces = &bsi_output->workspace.workspaces;
+        struct wl_list* curr_output_wspaces = &bsi_output->wspace.workspaces;
 
         struct bsi_workspace *wspace, *wspace_tmp;
         wl_list_for_each_safe(wspace, wspace_tmp, curr_output_wspaces, link)
@@ -130,7 +130,7 @@ bsi_output_destroy(struct bsi_output* bsi_output)
         wl_list_for_each_safe(
             surf, surf_tmp, &bsi_output->layer.layers[i], link)
         {
-            wlr_layer_surface_v1_destroy(surf->wlr_layer_surface);
+            wlr_layer_surface_v1_destroy(surf->layer_surface);
             union bsi_layer_surface surface = { .toplevel = surf };
             bsi_layer_surface_finish(surface, BSI_LAYER_SURFACE_TOPLEVEL);
             bsi_layer_surface_destroy(surface, BSI_LAYER_SURFACE_TOPLEVEL);

@@ -25,9 +25,8 @@ bool
 bsi_keyboard_keybinds_process(struct bsi_input_keyboard* bsi_input_keyboard,
                               struct wlr_keyboard_key_event* event)
 {
-    struct bsi_server* bsi_server = bsi_input_keyboard->bsi_server;
-    struct wlr_keyboard* keyboard =
-        bsi_input_keyboard->wlr_input_device->keyboard;
+    struct bsi_server* bsi_server = bsi_input_keyboard->server;
+    struct wlr_keyboard* keyboard = bsi_input_keyboard->device->keyboard;
 
     /* Translate libinput -> xkbcommon keycode. */
     uint32_t keycode = event->keycode + 8;

@@ -34,7 +34,7 @@ union bsi_layer_surface
 
 struct bsi_layer_surface_toplevel
 {
-    struct wlr_layer_surface_v1* wlr_layer_surface;
+    struct wlr_layer_surface_v1* layer_surface;
     struct wl_list subsurfaces;
 
     /* Am member of this type of layer. This will be passed in
@@ -50,8 +50,8 @@ struct bsi_layer_surface_toplevel
         struct wl_listener destroy;
         struct wl_listener new_popup;
         /* wlr_surface -> wlr_layer_surface::surface */
-        struct wl_listener wlr_surface_commit;
-        struct wl_listener wlr_surface_new_subsurface;
+        struct wl_listener surface_commit;
+        struct wl_listener surface_new_subsurface;
     } listen;
 
     struct wl_list link;
@@ -59,7 +59,7 @@ struct bsi_layer_surface_toplevel
 
 struct bsi_layer_surface_popup
 {
-    struct wlr_xdg_popup* wlr_xdg_popup;
+    struct wlr_xdg_popup* popup;
 
     enum bsi_layer_surface_type parent_type;
     union bsi_layer_surface parent; /* Tagged by `parent_type`. */
@@ -76,7 +76,7 @@ struct bsi_layer_surface_popup
 
 struct bsi_layer_surface_subsurface
 {
-    struct wlr_subsurface* wlr_subsurface;
+    struct wlr_subsurface* subsurface;
 
     /* Am member of this layer_surface. */
     struct bsi_layer_surface_toplevel* member_of;

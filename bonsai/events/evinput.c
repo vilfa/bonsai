@@ -33,15 +33,13 @@ bsi_input_pointer_motion_notify(struct wl_listener* listener, void* data)
 
     struct bsi_input_pointer* pointer =
         wl_container_of(listener, pointer, listen.motion);
-    struct bsi_server* server = pointer->bsi_server;
+    struct bsi_server* server = pointer->server;
     struct wlr_pointer_motion_event* event = data;
     union bsi_cursor_event bsi_cursor_event = { .motion = event };
 
     /* Firstly, move the cursor. */
-    wlr_cursor_move(pointer->wlr_cursor,
-                    pointer->wlr_input_device,
-                    event->delta_x,
-                    event->delta_y);
+    wlr_cursor_move(
+        pointer->cursor, pointer->device, event->delta_x, event->delta_y);
 
     /* Secondly, check if we have any view stuff to do. */
     bsi_cursor_process_motion(server, bsi_cursor_event);
@@ -57,13 +55,13 @@ bsi_input_pointer_motion_absolute_notify(struct wl_listener* listener,
 
     struct bsi_input_pointer* pointer =
         wl_container_of(listener, pointer, listen.motion_absolute);
-    struct bsi_server* server = pointer->bsi_server;
+    struct bsi_server* server = pointer->server;
     struct wlr_pointer_motion_absolute_event* event = data;
     union bsi_cursor_event bsi_cursor_event = { .motion_absolute = event };
 
     /* Firstly, warp the absolute motion to our output layout constraints. */
     wlr_cursor_warp_absolute(
-        server->wlr_cursor, pointer->wlr_input_device, event->x, event->y);
+        server->wlr_cursor, pointer->device, event->x, event->y);
 
     /* Secondly, check if we have any view stuff to do. */
     bsi_cursor_process_motion(server, bsi_cursor_event);
@@ -81,8 +79,8 @@ bsi_input_pointer_button_notify(struct wl_listener* listener, void* data)
 
     struct bsi_input_pointer* pointer =
         wl_container_of(listener, pointer, listen.button);
-    struct bsi_server* server = pointer->bsi_server;
-    struct wlr_seat* wlr_seat = pointer->bsi_server->wlr_seat;
+    struct bsi_server* server = pointer->server;
+    struct wlr_seat* wlr_seat = pointer->server->wlr_seat;
     struct wlr_pointer_button_event* event = data;
 
     /* Notify client that has pointer focus of the event. */
@@ -118,7 +116,7 @@ bsi_input_pointer_axis_notify(struct wl_listener* listener, void* data)
 
     struct bsi_input_pointer* pointer =
         wl_container_of(listener, pointer, listen.axis);
-    struct wlr_seat* wlr_seat = pointer->bsi_server->wlr_seat;
+    struct wlr_seat* wlr_seat = pointer->server->wlr_seat;
     struct wlr_pointer_axis_event* event = data;
 
     /* Notify client that has pointer focus of the event. */
@@ -140,7 +138,7 @@ bsi_input_pointer_frame_notify(struct wl_listener* listener,
 
     struct bsi_input_pointer* pointer =
         wl_container_of(listener, pointer, listen.frame);
-    struct wlr_seat* wlr_seat = pointer->bsi_server->wlr_seat;
+    struct wlr_seat* wlr_seat = pointer->server->wlr_seat;
 
     /* Notify client that has pointer focus of the event. */
     wlr_seat_pointer_notify_frame(wlr_seat);
@@ -265,14 +263,14 @@ bsi_input_keyboard_key_notify(struct wl_listener* listener, void* data)
 
     struct bsi_input_keyboard* keyboard =
         wl_container_of(listener, keyboard, listen.key);
-    struct wlr_seat* wlr_seat = keyboard->bsi_server->wlr_seat;
+    struct wlr_seat* wlr_seat = keyboard->server->wlr_seat;
     struct wlr_keyboard_key_event* event = data;
 
     if (!bsi_keyboard_keybinds_process(keyboard, event)) {
         /* A seat can only have one keyboard, but multiple keyboards can be
          * attached. Switch the seat to the correct underlying keyboard. Roots
          * handles this for us :). */
-        wlr_seat_set_keyboard(wlr_seat, keyboard->wlr_input_device->keyboard);
+        wlr_seat_set_keyboard(wlr_seat, keyboard->device->keyboard);
         /* The server knows not thy keybind, the client shall handle it. Notify
          * client of keys not handled by the server. */
         wlr_seat_keyboard_notify_key(
@@ -290,8 +288,8 @@ bsi_input_keyboard_modifiers_notify(struct wl_listener* listener,
 
     struct bsi_input_keyboard* keyboard =
         wl_container_of(listener, keyboard, listen.modifiers);
-    struct wlr_seat* wlr_seat = keyboard->bsi_server->wlr_seat;
-    struct wlr_input_device* device = keyboard->wlr_input_device;
+    struct wlr_seat* wlr_seat = keyboard->server->wlr_seat;
+    struct wlr_input_device* device = keyboard->device;
 
     /* A seat can only have one keyboard, but multiple keyboards can be
      * attached. Switch the seat to the correct underlying keyboard. Roots
@@ -313,7 +311,7 @@ bsi_input_device_destroy_notify(struct wl_listener* listener, void* data)
         case WLR_INPUT_DEVICE_KEYBOARD: {
             struct bsi_input_keyboard* keyboard =
                 wl_container_of(listener, keyboard, listen.destroy);
-            struct bsi_server* server = keyboard->bsi_server;
+            struct bsi_server* server = keyboard->server;
             bsi_inputs_keyboard_remove(server, keyboard);
             bsi_input_keyboard_finish(keyboard);
             bsi_input_keyboard_destroy(keyboard);
@@ -322,7 +320,7 @@ bsi_input_device_destroy_notify(struct wl_listener* listener, void* data)
         case WLR_INPUT_DEVICE_POINTER: {
             struct bsi_input_pointer* pointer =
                 wl_container_of(listener, pointer, listen.destroy);
-            struct bsi_server* server = pointer->bsi_server;
+            struct bsi_server* server = pointer->server;
             bsi_inputs_pointer_remove(server, pointer);
             bsi_input_pointer_finish(pointer);
             bsi_input_pointer_destroy(pointer);

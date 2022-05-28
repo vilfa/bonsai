@@ -20,45 +20,36 @@ struct bsi_view;
 #include "bonsai/input/cursor.h"
 #include "bonsai/server.h"
 
-#define GIMME_ALL_VIEW_EVENTS
-
 void
 bsi_view_destroy_xdg_surface_notify(struct wl_listener* listener,
                                     __attribute__((unused)) void* data)
 {
-#ifdef GIMME_ALL_VIEW_EVENTS
     wlr_log(WLR_DEBUG, "Got event destroy from wlr_xdg_surface");
-#endif
 
-    struct bsi_view* view =
-        wl_container_of(listener, view, listen.destroy_xdg_surface);
-    struct bsi_server* server = view->bsi_server;
-    struct bsi_workspace* wspace = view->bsi_workspace;
+    struct bsi_view* view = wl_container_of(listener, view, listen.destroy);
+    struct bsi_server* server = view->server;
+    struct bsi_workspace* workspace = view->parent_workspace;
 
     bsi_scene_remove(server, view);
-    bsi_workspace_view_remove(wspace, view);
+    bsi_workspace_view_remove(workspace, view);
     bsi_view_finish(view);
     bsi_view_destroy(view);
 
-#ifdef GIMME_ALL_VIEW_EVENTS
     wlr_log(WLR_DEBUG,
             "Workspace %s now has %ld views",
-            wspace->name,
-            wspace->len_views);
-#endif
+            workspace->name,
+            workspace->len_views);
 }
 
 void
 bsi_view_map_notify(struct wl_listener* listener,
                     __attribute__((unused)) void* data)
 {
-#ifdef GIMME_ALL_VIEW_EVENTS
     wlr_log(WLR_DEBUG, "Got event map from wlr_xdg_surface");
-#endif
 
     struct bsi_view* view = wl_container_of(listener, view, listen.map);
-    struct bsi_server* server = view->bsi_server;
-    struct wlr_xdg_toplevel* toplevel = view->wlr_xdg_toplevel;
+    struct bsi_server* server = view->server;
+    struct wlr_xdg_toplevel* toplevel = view->toplevel;
 
     struct wlr_xdg_toplevel_requested* requested = &toplevel->requested;
 
@@ -68,12 +59,10 @@ bsi_view_map_notify(struct wl_listener* listener,
         // TODO: Should there be code handling fullscreen_output_destroy, we
         // already handle moving views in workspace code
         bsi_view_set_fullscreen(view, requested->fullscreen);
-        wlr_xdg_toplevel_set_fullscreen(view->wlr_xdg_toplevel,
-                                        requested->fullscreen);
+        wlr_xdg_toplevel_set_fullscreen(view->toplevel, requested->fullscreen);
     } else if (requested->maximized) {
         bsi_view_set_maximized(view, requested->maximized);
-        wlr_xdg_toplevel_set_maximized(view->wlr_xdg_toplevel,
-                                       requested->maximized);
+        wlr_xdg_toplevel_set_maximized(view->toplevel, requested->maximized);
     } else if (requested->minimized) {
         bsi_view_set_minimized(view, requested->minimized);
     }
@@ -87,12 +76,10 @@ void
 bsi_view_unmap_notify(struct wl_listener* listener,
                       __attribute__((unused)) void* data)
 {
-#ifdef GIMME_ALL_VIEW_EVENTS
     wlr_log(WLR_DEBUG, "Got event unmap from wlr_xdg_surface");
-#endif
 
     struct bsi_view* view = wl_container_of(listener, view, listen.unmap);
-    struct bsi_server* server = view->bsi_server;
+    struct bsi_server* server = view->server;
 
     view->mapped = false;
     bsi_scene_remove(server, view);
@@ -102,9 +89,7 @@ void
 bsi_view_request_maximize_notify(struct wl_listener* listener,
                                  __attribute__((unused)) void* data)
 {
-#ifdef GIMME_ALL_VIEW_EVENTS
     wlr_log(WLR_DEBUG, "Got event request_maximize from wlr_xdg_toplevel");
-#endif
 
     // TODO: This should probably take into account the panels and such stuff.
     // Also take a look at
@@ -112,7 +97,7 @@ bsi_view_request_maximize_notify(struct wl_listener* listener,
 
     struct bsi_view* view =
         wl_container_of(listener, view, listen.request_maximize);
-    struct wlr_xdg_toplevel* toplevel = view->wlr_xdg_toplevel;
+    struct wlr_xdg_toplevel* toplevel = view->toplevel;
     struct wlr_xdg_toplevel_requested* requested = &toplevel->requested;
 
     bsi_view_set_maximized(view, requested->maximized);
@@ -124,13 +109,11 @@ bsi_view_request_maximize_notify(struct wl_listener* listener,
 void
 bsi_view_request_fullscreen_notify(struct wl_listener* listener, void* data)
 {
-#ifdef GIMME_ALL_VIEW_EVENTS
     wlr_log(WLR_DEBUG, "Got event request_fullscreen from wlr_xdg_toplevel");
-#endif
 
     struct bsi_view* view =
         wl_container_of(listener, view, listen.request_fullscreen);
-    struct wlr_xdg_toplevel* toplevel = view->wlr_xdg_toplevel;
+    struct wlr_xdg_toplevel* toplevel = view->toplevel;
     struct wlr_xdg_toplevel_requested* requested = &toplevel->requested;
 
     bsi_view_set_fullscreen(view, requested->fullscreen);
@@ -142,13 +125,11 @@ bsi_view_request_fullscreen_notify(struct wl_listener* listener, void* data)
 void
 bsi_view_request_minimize_notify(struct wl_listener* listener, void* data)
 {
-#ifdef GIMME_ALL_VIEW_EVENTS
     wlr_log(WLR_DEBUG, "Got event request_minimize from wlr_xdg_toplevel");
-#endif
 
     struct bsi_view* view =
         wl_container_of(listener, view, listen.request_minimize);
-    struct bsi_server* server = view->bsi_server;
+    struct bsi_server* server = view->server;
     struct wlr_xdg_surface* surface = data;
 
     /* Again, not sure if this is necessary, only a toplevel surface should be
@@ -167,9 +148,7 @@ bsi_view_request_minimize_notify(struct wl_listener* listener, void* data)
 void
 bsi_view_request_move_notify(struct wl_listener* listener, void* data)
 {
-#ifdef GIMME_ALL_VIEW_EVENTS
     wlr_log(WLR_DEBUG, "Got event request_move from wlr_xdg_toplevel");
-#endif
 
     /* The user would like to begin an interactive move operation. This is
      * raised when a user clicks on the client side decorations. */
@@ -177,21 +156,14 @@ bsi_view_request_move_notify(struct wl_listener* listener, void* data)
         wl_container_of(listener, view, listen.request_move);
     struct wlr_xdg_toplevel_move_event* event = data;
 
-    if (wlr_seat_client_validate_event_serial(event->seat, event->serial)) {
+    if (wlr_seat_client_validate_event_serial(event->seat, event->serial))
         bsi_view_interactive_begin(view, BSI_CURSOR_MOVE, 0);
-    } else {
-#ifdef GIMME_ALL_VIEW_EVENTS
-        wlr_log(WLR_DEBUG, "Invalid request_move event serial, dropping");
-#endif
-    }
 }
 
 void
 bsi_view_request_resize_notify(struct wl_listener* listener, void* data)
 {
-#ifdef GIMME_ALL_VIEW_EVENTS
     wlr_log(WLR_DEBUG, "Got event request_resize from wlr_xdg_toplevel");
-#endif
 
     /* The user would like to begin an interactive resize operation. This is
      * raised when a use clicks on the client side decorations. */
@@ -199,37 +171,22 @@ bsi_view_request_resize_notify(struct wl_listener* listener, void* data)
         wl_container_of(listener, view, listen.request_resize);
     struct wlr_xdg_toplevel_resize_event* event = data;
 
-    if (wlr_seat_client_validate_event_serial(event->seat, event->serial)) {
+    if (wlr_seat_client_validate_event_serial(event->seat, event->serial))
         bsi_view_interactive_begin(view, BSI_CURSOR_RESIZE, event->edges);
-    } else {
-#ifdef GIMME_ALL_VIEW_EVENTS
-        wlr_log(WLR_DEBUG, "Invalid request_resize event serial, dropping");
-#endif
-    }
 }
 
 void
 bsi_view_request_show_window_menu_notify(struct wl_listener* listener,
                                          void* data)
 {
-#ifdef GIMME_ALL_VIEW_EVENTS
     wlr_log(WLR_DEBUG,
             "Got event request_show_window_menu from wlr_xdg_toplevel");
-#endif
 
     struct bsi_view* view =
         wl_container_of(listener, view, listen.request_show_window_menu);
     struct wlr_xdg_toplevel_show_window_menu_event* event = data;
 
-    if (wlr_seat_client_validate_event_serial(event->seat, event->serial)) {
-// TODO: Handle show window menu
-#ifdef GIMME_ALL_VIEW_EVENTS
-        wlr_log(WLR_DEBUG, "Validated serial");
-#endif
-    } else {
-#ifdef GIMME_ALL_VIEW_EVENTS
-        wlr_log(WLR_DEBUG,
-                "Invalid request_show_window_menu event serial, dropping");
-#endif
-    }
+    if (wlr_seat_client_validate_event_serial(event->seat, event->serial))
+        wlr_log(WLR_DEBUG, "Should show window menu");
+    // TODO: Handle show window menu
 }

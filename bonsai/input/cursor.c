@@ -126,18 +126,17 @@ bsi_cursor_process_view_move(struct bsi_server* bsi_server,
     struct wlr_box box;
     bsi_view->x = bsi_server->wlr_cursor->x - bsi_server->cursor.grab_x;
     bsi_view->y = bsi_server->wlr_cursor->y - bsi_server->cursor.grab_y;
-    wlr_xdg_surface_get_geometry(bsi_view->wlr_xdg_toplevel->base, &box);
+    wlr_xdg_surface_get_geometry(bsi_view->toplevel->base, &box);
     bsi_view->width = box.width;
     bsi_view->height = box.height;
 
     if (bsi_view->maximized) {
         bsi_view_set_maximized(bsi_view, false);
-        wlr_xdg_toplevel_set_maximized(bsi_view->wlr_xdg_toplevel, false);
-        wlr_xdg_surface_schedule_configure(bsi_view->wlr_xdg_toplevel->base);
+        wlr_xdg_toplevel_set_maximized(bsi_view->toplevel, false);
+        wlr_xdg_surface_schedule_configure(bsi_view->toplevel->base);
     }
 
-    wlr_scene_node_set_position(
-        bsi_view->wlr_scene_node, bsi_view->x, bsi_view->y);
+    wlr_scene_node_set_position(bsi_view->scene_node, bsi_view->x, bsi_view->y);
 }
 
 void
@@ -162,8 +161,8 @@ bsi_cursor_process_view_resize(struct bsi_server* bsi_server,
     if (bsi_view->maximized || bsi_view->minimized || bsi_view->fullscreen)
         return;
 
-    wlr_xdg_toplevel_set_resizing(bsi_view->wlr_xdg_toplevel, true);
-    wlr_xdg_surface_schedule_configure(bsi_view->wlr_xdg_toplevel->base);
+    wlr_xdg_toplevel_set_resizing(bsi_view->toplevel, true);
+    wlr_xdg_surface_schedule_configure(bsi_view->toplevel->base);
 
     // TODO: Not sure what is happening here.
     double border_x = bsi_server->wlr_cursor->x - bsi_server->cursor.grab_x;
@@ -222,19 +221,17 @@ bsi_cursor_process_view_resize(struct bsi_server* bsi_server,
     // }
 
     struct wlr_box box;
-    wlr_xdg_surface_get_geometry(bsi_view->wlr_xdg_toplevel->base, &box);
+    wlr_xdg_surface_get_geometry(bsi_view->toplevel->base, &box);
     bsi_view->x = new_left - box.x;
     bsi_view->y = new_top - box.y;
     bsi_view->width = box.width;
     bsi_view->height = box.height;
-    wlr_scene_node_set_position(
-        bsi_view->wlr_scene_node, bsi_view->x, bsi_view->y);
+    wlr_scene_node_set_position(bsi_view->scene_node, bsi_view->x, bsi_view->y);
 
     int32_t new_width = new_right - new_left;
     int32_t new_height = new_bottom - new_top;
-    wlr_xdg_toplevel_set_size(
-        bsi_view->wlr_xdg_toplevel, new_width, new_height);
+    wlr_xdg_toplevel_set_size(bsi_view->toplevel, new_width, new_height);
 
-    wlr_xdg_toplevel_set_resizing(bsi_view->wlr_xdg_toplevel, false);
-    wlr_xdg_surface_schedule_configure(bsi_view->wlr_xdg_toplevel->base);
+    wlr_xdg_toplevel_set_resizing(bsi_view->toplevel, false);
+    wlr_xdg_surface_schedule_configure(bsi_view->toplevel->base);
 }

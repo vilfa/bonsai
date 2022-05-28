@@ -25,8 +25,6 @@ extern bsi_notify_func_t bsi_global_xdg_shell_new_surface_notify;
 /* wlr_layer_shell_v1 */
 extern bsi_notify_func_t bsi_layer_shell_new_surface_notify;
 
-// TODO: Get rid of other useless listeners.
-
 /* bsi_view */
 extern bsi_notify_func_t bsi_view_destroy_xdg_surface_notify;
 extern bsi_notify_func_t bsi_view_map_notify;

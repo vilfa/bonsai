@@ -12,10 +12,10 @@
  */
 struct bsi_view
 {
-    struct bsi_server* bsi_server;
-    struct wlr_xdg_toplevel* wlr_xdg_toplevel;
-    struct wlr_scene_node* wlr_scene_node;
-    struct bsi_workspace* bsi_workspace; /* Belongs to this workspace. */
+    struct bsi_server* server;
+    struct wlr_xdg_toplevel* toplevel;
+    struct wlr_scene_node* scene_node;
+    struct bsi_workspace* parent_workspace;
 
     bool mapped;
     bool maximized, minimized, fullscreen;
@@ -32,7 +32,7 @@ struct bsi_view
     struct
     {
         /* wlr_xdg_surface */
-        struct wl_listener destroy_xdg_surface;
+        struct wl_listener destroy;
         struct wl_listener map;
         struct wl_listener unmap;
         /* wlr_xdg_toplevel */
@@ -79,8 +79,7 @@ bsi_scene_remove(struct bsi_server* bsi_server, struct bsi_view* bsi_view);
 struct bsi_view*
 bsi_view_init(struct bsi_view* bsi_view,
               struct bsi_server* bsi_server,
-              struct wlr_xdg_toplevel* wlr_xdg_toplevel,
-              struct bsi_workspace* bsi_workspace);
+              struct wlr_xdg_toplevel* wlr_xdg_toplevel);
 
 /**
  * @brief Unlinks all active listeners from a `bsi_view`.

@@ -55,8 +55,11 @@ main(void)
     }
 
     if (setenv("WLR_NO_HARDWARE_CURSORS", "1", true) != 0) {
-        // Workaround for https://github.com/swaywm/wlroots/issues/3189
         // TODO: Idk man these cursors are weird.
+        /* Workaround for https://github.com/swaywm/wlroots/issues/3189
+         * Note: Make sure the default cursor theme is set correctly in
+         * `/usr/share/icons/default/index.theme` or
+         * `$XDG_CONFIG_HOME/.icons/default/index.theme` */
         wlr_log(WLR_ERROR,
                 "Failed to set WLR_NO_HARDWARE_CURSORS env var: %s",
                 strerror(errno));

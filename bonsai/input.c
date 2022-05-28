@@ -17,8 +17,8 @@ bsi_inputs_pointer_add(struct bsi_server* bsi_server,
 {
     assert(bsi_server);
     assert(bsi_input_pointer);
-    assert(bsi_input_pointer->wlr_cursor);
-    assert(bsi_input_pointer->wlr_input_device);
+    assert(bsi_input_pointer->cursor);
+    assert(bsi_input_pointer->device);
 
     ++bsi_server->input.len_pointers;
     wl_list_insert(&bsi_server->input.pointers, &bsi_input_pointer->link);
@@ -41,7 +41,7 @@ bsi_inputs_keyboard_add(struct bsi_server* bsi_server,
 {
     assert(bsi_server);
     assert(bsi_input_keyboard);
-    assert(bsi_input_keyboard->wlr_input_device);
+    assert(bsi_input_keyboard->device);
 
     ++bsi_server->input.len_keyboards;
     wl_list_insert(&bsi_server->input.keyboards, &bsi_input_keyboard->link);
@@ -67,9 +67,9 @@ bsi_input_pointer_init(struct bsi_input_pointer* bsi_input_pointer,
     assert(bsi_server);
     assert(wlr_input_device);
 
-    bsi_input_pointer->bsi_server = bsi_server;
-    bsi_input_pointer->wlr_cursor = bsi_server->wlr_cursor;
-    bsi_input_pointer->wlr_input_device = wlr_input_device;
+    bsi_input_pointer->server = bsi_server;
+    bsi_input_pointer->cursor = bsi_server->wlr_cursor;
+    bsi_input_pointer->device = wlr_input_device;
 
     return bsi_input_pointer;
 }
@@ -111,8 +111,8 @@ bsi_input_keyboard_init(struct bsi_input_keyboard* bsi_input_keyboard,
     assert(bsi_server);
     assert(wlr_input_device);
 
-    bsi_input_keyboard->bsi_server = bsi_server;
-    bsi_input_keyboard->wlr_input_device = wlr_input_device;
+    bsi_input_keyboard->server = bsi_server;
+    bsi_input_keyboard->device = wlr_input_device;
 
     return bsi_input_keyboard;
 }
@@ -198,8 +198,7 @@ bsi_input_keyboard_keymap_set(struct bsi_input_keyboard* bsi_input_keyboard,
     struct xkb_keymap* xkb_keymap = xkb_keymap_new_from_names(
         xkb_context, &xkb_rules_all, XKB_KEYMAP_COMPILE_NO_FLAGS);
 
-    wlr_keyboard_set_keymap(bsi_input_keyboard->wlr_input_device->keyboard,
-                            xkb_keymap);
+    wlr_keyboard_set_keymap(bsi_input_keyboard->device->keyboard, xkb_keymap);
 
     xkb_keymap_unref(xkb_keymap);
     xkb_context_unref(xkb_context);

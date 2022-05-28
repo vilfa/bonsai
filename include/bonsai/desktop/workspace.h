@@ -15,21 +15,20 @@ struct bsi_view;
  */
 struct bsi_workspace
 {
-    struct bsi_server* bsi_server;
-    struct bsi_output* bsi_output; /* Workspace belongs to a single output. */
+    struct bsi_server* server;
+    struct bsi_output* output; /* Workspace belongs to a single output. */
 
     size_t id;   /* Incremental id. */
     char* name;  /* User given name. */
     bool active; /* A single workspace can be active at one time per output. */
 
-    // TODO: Figure this out.
     size_t len_views;
     struct wl_list views;
 
-    // struct
-    // {
-    //     struct wl_signal active;
-    // } signal;
+    struct
+    {
+        struct wl_signal active;
+    } signal;
 
     struct wl_list link;
 };

@@ -17,7 +17,7 @@ struct bsi_server;
  */
 struct bsi_output
 {
-    struct bsi_server* bsi_server;
+    struct bsi_server* server;
     struct wlr_output* wlr_output;
     struct timespec last_frame;
     size_t id; /* Incremental id. */
@@ -26,7 +26,7 @@ struct bsi_output
     {
         size_t len;
         struct wl_list workspaces;
-    } workspace;
+    } wspace;
 
     struct
     {
@@ -35,7 +35,7 @@ struct bsi_output
          * ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM = 1,
          * ZWLR_LAYER_SHELL_V1_LAYER_TOP = 2,
          * ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY = 3, */
-        size_t len_layers[4];
+        size_t len[4];
         struct wl_list layers[4];
     } layer;
 
@@ -43,8 +43,11 @@ struct bsi_output
      * number of listeners. */
     struct
     {
+        /* wlr_output */
         struct wl_listener frame;
         struct wl_listener destroy;
+        /* bsi_workspace */
+        struct wl_listener workspace_active;
     } listen;
 
     struct wl_list link;

@@ -24,7 +24,7 @@ bsi_layer_surface_toplevel_init(
 {
     assert(layer_surface);
 
-    layer_surface->wlr_layer_surface = wlr_layer_surface;
+    layer_surface->layer_surface = wlr_layer_surface;
     wlr_layer_surface->data = layer_surface;
     wl_list_init(&layer_surface->subsurfaces);
     return layer_surface;
@@ -38,7 +38,7 @@ bsi_layer_surface_popup_init(struct bsi_layer_surface_popup* layer_surface,
 {
     assert(layer_surface);
 
-    layer_surface->wlr_xdg_popup = wlr_xdg_popup;
+    layer_surface->popup = wlr_xdg_popup;
     layer_surface->parent_type = parent_type;
     layer_surface->parent = parent;
     return layer_surface;
@@ -52,7 +52,7 @@ bsi_layer_surface_subsurface_init(
 {
     assert(layer_subsurface);
 
-    layer_subsurface->wlr_subsurface = wlr_subsurface;
+    layer_subsurface->subsurface = wlr_subsurface;
     layer_subsurface->member_of = member_of;
     return layer_subsurface;
 }
@@ -71,9 +71,8 @@ bsi_layer_surface_finish(union bsi_layer_surface bsi_layer_surface,
             wl_list_remove(&layer_surface->listen.destroy.link);
             wl_list_remove(&layer_surface->listen.new_popup.link);
             /* wlr_surface -> wlr_layer_surface::surface */
-            wl_list_remove(&layer_surface->listen.wlr_surface_commit.link);
-            wl_list_remove(
-                &layer_surface->listen.wlr_surface_new_subsurface.link);
+            wl_list_remove(&layer_surface->listen.surface_commit.link);
+            wl_list_remove(&layer_surface->listen.surface_new_subsurface.link);
             break;
         }
         case BSI_LAYER_SURFACE_POPUP: {

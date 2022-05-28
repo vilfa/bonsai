@@ -4,6 +4,8 @@
 #include <wlr/types/wlr_scene.h>
 #include <wlr/util/box.h>
 
+struct bsi_server;
+
 /**
  * @brief Holds all possible modes for a cursor.
  *

@@ -13,13 +13,12 @@
  */
 struct bsi_input_pointer
 {
-    struct bsi_server* bsi_server;
-    struct wlr_cursor* wlr_cursor;
-    struct wlr_input_device* wlr_input_device;
+    struct bsi_server* server;
+    struct wlr_cursor* cursor;
+    struct wlr_input_device* device;
 
     /* Either we listen for all or none, doesn't make sense to keep track of
      * number of listeners. */
-    // TODO: What is actually necessary here?
     struct
     {
         /* wlr_cursor */
@@ -49,8 +48,8 @@ struct bsi_input_pointer
  */
 struct bsi_input_keyboard
 {
-    struct bsi_server* bsi_server;
-    struct wlr_input_device* wlr_input_device;
+    struct bsi_server* server;
+    struct wlr_input_device* device;
 
     /* Either we listen for all or none, doesn't make sense to keep track of
      * number of listeners. */

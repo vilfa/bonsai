@@ -29,25 +29,25 @@ struct bsi_server
     struct
     {
         /* wlr_backend */
-        struct wl_listener wlr_backend_new_output;
-        struct wl_listener wlr_backend_new_input;
+        struct wl_listener backend_new_output;
+        struct wl_listener backend_new_input;
         /* wlr_seat */
-        struct wl_listener wlr_seat_pointer_grab_begin;
-        struct wl_listener wlr_seat_pointer_grab_end;
-        struct wl_listener wlr_seat_keyboard_grab_begin;
-        struct wl_listener wlr_seat_keyboard_grab_end;
-        struct wl_listener wlr_seat_touch_grab_begin;
-        struct wl_listener wlr_seat_touch_grab_end;
-        struct wl_listener wlr_seat_request_set_cursor;
-        struct wl_listener wlr_seat_request_set_selection;
+        struct wl_listener seat_pointer_grab_begin;
+        struct wl_listener seat_pointer_grab_end;
+        struct wl_listener seat_keyboard_grab_begin;
+        struct wl_listener seat_keyboard_grab_end;
+        struct wl_listener seat_touch_grab_begin;
+        struct wl_listener seat_touch_grab_end;
+        struct wl_listener seat_request_set_cursor;
+        struct wl_listener seat_request_set_selection;
         struct wl_listener wlr_seat_request_set_primary_selection;
-        struct wl_listener wlr_seat_request_start_drag;
+        struct wl_listener seat_request_start_drag;
         /* wlr_xdg_shell */
-        struct wl_listener wlr_xdg_shell_new_surface;
+        struct wl_listener xdg_shell_new_surface;
         /* wlr_layer_shell_v1 */
-        struct wl_listener wlr_layer_shell_new_surface;
+        struct wl_listener layer_shell_new_surface;
         /* bsi_workspace */
-        // struct wl_listener bsi_workspace_active;
+        struct wl_listener workspace_active;
     } listen;
 
     /* Keeps track of all server outputs. */

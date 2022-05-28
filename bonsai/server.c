@@ -29,10 +29,10 @@ bsi_server_init(struct bsi_server* bsi_server)
 
     bsi_server->wlr_backend = wlr_backend_autocreate(bsi_server->wl_display);
     bsi_util_slot_connect(&bsi_server->wlr_backend->events.new_output,
-                          &bsi_server->listen.wlr_backend_new_output,
+                          &bsi_server->listen.backend_new_output,
                           bsi_global_backend_new_output_notify);
     bsi_util_slot_connect(&bsi_server->wlr_backend->events.new_input,
-                          &bsi_server->listen.wlr_backend_new_input,
+                          &bsi_server->listen.backend_new_input,
                           bsi_global_backend_new_input_notify);
     wlr_log(WLR_DEBUG, "Autocreated backend & attached handlers");
 
@@ -67,14 +67,14 @@ bsi_server_init(struct bsi_server* bsi_server)
 
     bsi_server->wlr_xdg_shell = wlr_xdg_shell_create(bsi_server->wl_display, 2);
     bsi_util_slot_connect(&bsi_server->wlr_xdg_shell->events.new_surface,
-                          &bsi_server->listen.wlr_xdg_shell_new_surface,
+                          &bsi_server->listen.xdg_shell_new_surface,
                           bsi_global_xdg_shell_new_surface_notify);
     wlr_log(WLR_DEBUG, "Created wlr_xdg_shell & attached handlers");
 
     bsi_server->wlr_layer_shell =
         wlr_layer_shell_v1_create(bsi_server->wl_display);
     bsi_util_slot_connect(&bsi_server->wlr_layer_shell->events.new_surface,
-                          &bsi_server->listen.wlr_layer_shell_new_surface,
+                          &bsi_server->listen.layer_shell_new_surface,
                           bsi_layer_shell_new_surface_notify);
     wlr_log(WLR_DEBUG, "Created wlr_layer_shell_v1 & attached handlers");
 
@@ -102,35 +102,35 @@ bsi_server_init(struct bsi_server* bsi_server)
     wlr_log(WLR_DEBUG, "Initialized bsi_inputs");
 
     bsi_util_slot_connect(&bsi_server->wlr_seat->events.pointer_grab_begin,
-                          &bsi_server->listen.wlr_seat_pointer_grab_begin,
+                          &bsi_server->listen.seat_pointer_grab_begin,
                           bsi_global_seat_pointer_grab_begin_notify);
     bsi_util_slot_connect(&bsi_server->wlr_seat->events.pointer_grab_end,
-                          &bsi_server->listen.wlr_seat_pointer_grab_end,
+                          &bsi_server->listen.seat_pointer_grab_end,
                           bsi_global_seat_pointer_grab_end_notify);
     bsi_util_slot_connect(&bsi_server->wlr_seat->events.keyboard_grab_begin,
-                          &bsi_server->listen.wlr_seat_keyboard_grab_begin,
+                          &bsi_server->listen.seat_keyboard_grab_begin,
                           bsi_global_seat_keyboard_grab_begin_notify);
     bsi_util_slot_connect(&bsi_server->wlr_seat->events.keyboard_grab_end,
-                          &bsi_server->listen.wlr_seat_keyboard_grab_end,
+                          &bsi_server->listen.seat_keyboard_grab_end,
                           bsi_global_seat_keyboard_grab_end_notify);
     bsi_util_slot_connect(&bsi_server->wlr_seat->events.touch_grab_begin,
-                          &bsi_server->listen.wlr_seat_touch_grab_begin,
+                          &bsi_server->listen.seat_touch_grab_begin,
                           bsi_global_seat_touch_grab_begin_notify);
     bsi_util_slot_connect(&bsi_server->wlr_seat->events.touch_grab_end,
-                          &bsi_server->listen.wlr_seat_touch_grab_end,
+                          &bsi_server->listen.seat_touch_grab_end,
                           bsi_global_seat_touch_grab_end_notify);
     bsi_util_slot_connect(&bsi_server->wlr_seat->events.request_set_cursor,
-                          &bsi_server->listen.wlr_seat_request_set_cursor,
+                          &bsi_server->listen.seat_request_set_cursor,
                           bsi_global_seat_request_set_cursor_notify);
     bsi_util_slot_connect(&bsi_server->wlr_seat->events.request_set_selection,
-                          &bsi_server->listen.wlr_seat_request_set_selection,
+                          &bsi_server->listen.seat_request_set_selection,
                           bsi_global_seat_request_set_selection_notify);
     bsi_util_slot_connect(
         &bsi_server->wlr_seat->events.request_set_primary_selection,
         &bsi_server->listen.wlr_seat_request_set_primary_selection,
         bsi_global_seat_request_set_primary_selection_notify);
     bsi_util_slot_connect(&bsi_server->wlr_seat->events.request_start_drag,
-                          &bsi_server->listen.wlr_seat_request_start_drag,
+                          &bsi_server->listen.seat_request_start_drag,
                           bsi_global_seat_request_start_drag_notify);
     wlr_log(WLR_DEBUG, "Attached handlers for seat '%s'", seat_name);
 
@@ -182,24 +182,24 @@ void
 bsi_server_finish(struct bsi_server* bsi_server)
 {
     /* wlr_backend */
-    wl_list_remove(&bsi_server->listen.wlr_backend_new_output.link);
-    wl_list_remove(&bsi_server->listen.wlr_backend_new_input.link);
+    wl_list_remove(&bsi_server->listen.backend_new_output.link);
+    wl_list_remove(&bsi_server->listen.backend_new_input.link);
     /* wlr_seat */
-    wl_list_remove(&bsi_server->listen.wlr_seat_pointer_grab_begin.link);
-    wl_list_remove(&bsi_server->listen.wlr_seat_pointer_grab_end.link);
-    wl_list_remove(&bsi_server->listen.wlr_seat_keyboard_grab_begin.link);
-    wl_list_remove(&bsi_server->listen.wlr_seat_keyboard_grab_end.link);
-    wl_list_remove(&bsi_server->listen.wlr_seat_touch_grab_begin.link);
-    wl_list_remove(&bsi_server->listen.wlr_seat_touch_grab_end.link);
-    wl_list_remove(&bsi_server->listen.wlr_seat_request_set_cursor.link);
-    wl_list_remove(&bsi_server->listen.wlr_seat_request_set_selection.link);
+    wl_list_remove(&bsi_server->listen.seat_pointer_grab_begin.link);
+    wl_list_remove(&bsi_server->listen.seat_pointer_grab_end.link);
+    wl_list_remove(&bsi_server->listen.seat_keyboard_grab_begin.link);
+    wl_list_remove(&bsi_server->listen.seat_keyboard_grab_end.link);
+    wl_list_remove(&bsi_server->listen.seat_touch_grab_begin.link);
+    wl_list_remove(&bsi_server->listen.seat_touch_grab_end.link);
+    wl_list_remove(&bsi_server->listen.seat_request_set_cursor.link);
+    wl_list_remove(&bsi_server->listen.seat_request_set_selection.link);
     wl_list_remove(
         &bsi_server->listen.wlr_seat_request_set_primary_selection.link);
-    wl_list_remove(&bsi_server->listen.wlr_seat_request_start_drag.link);
+    wl_list_remove(&bsi_server->listen.seat_request_start_drag.link);
     /* wlr_xdg_shell */
-    wl_list_remove(&bsi_server->listen.wlr_xdg_shell_new_surface.link);
+    wl_list_remove(&bsi_server->listen.xdg_shell_new_surface.link);
     /* bsi_workspace */
-    // wl_list_remove(&bsi_server->listen.bsi_workspace_active.link);
+    wl_list_remove(&bsi_server->listen.workspace_active.link);
 }
 
 void
