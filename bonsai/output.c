@@ -6,6 +6,7 @@
 #include <wayland-util.h>
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_output.h>
+#include <wlr/types/wlr_output_damage.h>
 
 #include "bonsai/desktop/layer.h"
 #include "bonsai/desktop/view.h"
@@ -22,6 +23,24 @@ bsi_outputs_add(struct bsi_server* bsi_server, struct bsi_output* bsi_output)
 
     ++bsi_server->output.len;
     wl_list_insert(&bsi_server->output.outputs, &bsi_output->link);
+}
+
+struct bsi_output*
+bsi_outputs_find(struct bsi_server* bsi_server, struct wlr_output* wlr_output)
+{
+    assert(bsi_server);
+    assert(wlr_output);
+
+    struct bsi_output* output;
+    wl_list_for_each(output, &bsi_server->output.outputs, link)
+    {
+        if (output->wlr_output == wlr_output)
+            return output;
+    }
+
+    /* Should not happen. */
+    assert(false);
+    return NULL;
 }
 
 void
@@ -58,6 +77,8 @@ bsi_output_init(struct bsi_output* bsi_output,
     bsi_output->id = bsi_server->output.len;
     bsi_output->server = bsi_server;
     bsi_output->wlr_output = wlr_output;
+    /* Initialize damage. */
+    bsi_output->damage = wlr_output_damage_create(wlr_output);
     /* Initialize workspaces. */
     bsi_output->wspace.len = 0;
     wl_list_init(&bsi_output->wspace.workspaces);
@@ -125,17 +146,8 @@ bsi_output_destroy(struct bsi_output* bsi_output)
         }
     }
 
-    for (size_t i = 0; i < 4; ++i) {
-        struct bsi_layer_surface_toplevel *surf, *surf_tmp;
-        wl_list_for_each_safe(
-            surf, surf_tmp, &bsi_output->layer.layers[i], link)
-        {
-            wlr_layer_surface_v1_destroy(surf->layer_surface);
-            union bsi_layer_surface surface = { .toplevel = surf };
-            bsi_layer_surface_finish(surface, BSI_LAYER_SURFACE_TOPLEVEL);
-            bsi_layer_surface_destroy(surface, BSI_LAYER_SURFACE_TOPLEVEL);
-        }
-    }
+    /* Cleanup of layer shell surfaces is taken care of by toplevel layer
+     * output_destroy listeners. */
 
     free(bsi_output);
 }

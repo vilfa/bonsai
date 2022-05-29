@@ -22,6 +22,8 @@ struct bsi_output
     struct timespec last_frame;
     size_t id; /* Incremental id. */
 
+    struct wlr_output_damage* damage;
+
     struct
     {
         size_t len;
@@ -61,6 +63,16 @@ struct bsi_output
  */
 void
 bsi_outputs_add(struct bsi_server* bsi_server, struct bsi_output* bsi_output);
+
+/**
+ * @brief Gets the bsi_output that contains the wlr_output
+ *
+ * @param bsi_server The server.
+ * @param wlr_output The output.
+ * @return struct bsi_output* The output container.
+ */
+struct bsi_output*
+bsi_outputs_find(struct bsi_server* bsi_server, struct wlr_output* wlr_output);
 
 /**
  * @brief Removes an output from the known server outputs. Make sure to destroy

@@ -72,16 +72,20 @@ extern bsi_notify_func_t bsi_layer_surface_toplevel_new_popup_notify;
 extern bsi_notify_func_t bsi_layer_surface_toplevel_wlr_surface_commit_notify;
 extern bsi_notify_func_t
     bsi_layer_surface_toplevel_wlr_surface_new_subsurface_notify;
+/* wlr_output -> output::wlr_output */
+extern bsi_notify_func_t bsi_layer_surface_toplevel_wlr_output_destroy_notify;
 
 /* bsi_layer_surface_popup */
 /* wlr_xdg_surface -> wlr_xdg_popup::base */
-extern bsi_notify_func_t bsi_layer_surface_popup_destroy_notify;
-extern bsi_notify_func_t bsi_layer_surface_popup_new_popup_notify;
 extern bsi_notify_func_t bsi_layer_surface_popup_map_notify;
 extern bsi_notify_func_t bsi_layer_surface_popup_unmap_notify;
+extern bsi_notify_func_t bsi_layer_surface_popup_destroy_notify;
+extern bsi_notify_func_t bsi_layer_surface_popup_new_popup_notify;
+extern bsi_notify_func_t bsi_layer_surface_popup_wlr_surface_commit_notify;
 
 /* bsi_layer_surface_subsurface */
 /* wlr_subsurface */
-extern bsi_notify_func_t bsi_layer_surface_subsurface_destroy_notify;
 extern bsi_notify_func_t bsi_layer_surface_subsurface_map_notify;
 extern bsi_notify_func_t bsi_layer_surface_subsurface_unmap_notify;
+extern bsi_notify_func_t bsi_layer_surface_subsurface_destroy_notify;
+extern bsi_notify_func_t bsi_layer_surface_subsurface_wlr_surface_commit_notify;

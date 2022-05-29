@@ -49,14 +49,16 @@ struct bsi_layer_surface_toplevel
 
     struct
     {
-        /* wlr_layer_surface_v1 */
+        /* wlr_layer_surface_v1 -> layer_surface */
         struct wl_listener map;
         struct wl_listener unmap;
         struct wl_listener destroy;
         struct wl_listener new_popup;
-        /* wlr_surface -> wlr_layer_surface::surface */
+        /* wlr_surface -> layer_surface::surface */
         struct wl_listener surface_commit;
         struct wl_listener surface_new_subsurface;
+        /* wlr_output -> output::wlr_output */
+        struct wl_listener output_destroy;
     } listen;
 
     struct wl_list link;
@@ -71,11 +73,13 @@ struct bsi_layer_surface_popup
 
     struct
     {
-        /* wlr_xdg_surface -> wlr_xdg_popup::base */
-        struct wl_listener destroy;
-        struct wl_listener new_popup;
+        /* wlr_xdg_surface -> popup::base */
         struct wl_listener map;
         struct wl_listener unmap;
+        struct wl_listener destroy;
+        struct wl_listener new_popup;
+        /* wlr_surface -> popup::base::surface */
+        struct wl_listener surface_commit;
     } listen;
 };
 
@@ -88,10 +92,12 @@ struct bsi_layer_surface_subsurface
 
     struct
     {
-        /* wlr_subsurface */
-        struct wl_listener destroy;
+        /* wlr_subsurface -> subsurface */
         struct wl_listener map;
         struct wl_listener unmap;
+        struct wl_listener destroy;
+        /* wlr_surface -> subsurface::surface */
+        struct wl_listener surface_commit;
     } listen;
 
     struct wl_list link;
@@ -101,6 +107,9 @@ void
 bsi_layers_add(struct bsi_output* bsi_output,
                struct bsi_layer_surface_toplevel* bsi_layer_surface_toplevel,
                enum zwlr_layer_shell_v1_layer at_layer);
+
+void
+bsi_layers_arrange(struct bsi_output* output);
 
 struct bsi_layer_surface_toplevel*
 bsi_layer_surface_toplevel_init(
@@ -119,6 +128,11 @@ bsi_layer_surface_subsurface_init(
     struct bsi_layer_surface_subsurface* layer_subsurface,
     struct wlr_subsurface* wlr_subsurface,
     struct bsi_layer_surface_toplevel* member_of);
+
+struct bsi_layer_surface_toplevel*
+bsi_layer_surface_get_toplevel_parent(
+    union bsi_layer_surface bsi_layer_surface,
+    enum bsi_layer_surface_type layer_surface_type);
 
 void
 bsi_layer_surface_finish(union bsi_layer_surface bsi_layer_surface,
