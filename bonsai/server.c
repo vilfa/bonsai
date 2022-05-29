@@ -23,10 +23,10 @@ bsi_server_init(struct bsi_server* bsi_server)
     assert(bsi_server);
 
     bsi_server_output_init(bsi_server);
-    bsi_log(WLR_DEBUG, "Initialized bsi_outputs");
+    bsi_debug("Initialized bsi_outputs");
 
     bsi_server->wl_display = wl_display_create();
-    bsi_log(WLR_DEBUG, "Created display");
+    bsi_debug("Created display");
 
     bsi_server->wlr_backend = wlr_backend_autocreate(bsi_server->wl_display);
     bsi_util_slot_connect(&bsi_server->wlr_backend->events.new_output,
@@ -35,72 +35,70 @@ bsi_server_init(struct bsi_server* bsi_server)
     bsi_util_slot_connect(&bsi_server->wlr_backend->events.new_input,
                           &bsi_server->listen.backend_new_input,
                           bsi_global_backend_new_input_notify);
-    bsi_log(WLR_DEBUG, "Autocreated backend & attached handlers");
+    bsi_debug("Autocreated backend & attached handlers");
 
     bsi_server->wlr_renderer = wlr_renderer_autocreate(bsi_server->wlr_backend);
     if (!wlr_renderer_init_wl_display(bsi_server->wlr_renderer,
                                       bsi_server->wl_display)) {
-        bsi_log(WLR_ERROR, "Failed to intitialize renderer with wl_display");
+        bsi_error("Failed to intitialize renderer with wl_display");
         wlr_backend_destroy(bsi_server->wlr_backend);
         wl_display_destroy(bsi_server->wl_display);
         exit(EXIT_FAILURE);
     }
-    bsi_log(WLR_DEBUG, "Autocreated renderer & initialized wl_display");
+    bsi_debug("Autocreated renderer & initialized wl_display");
 
     bsi_server->wlr_allocator = wlr_allocator_autocreate(
         bsi_server->wlr_backend, bsi_server->wlr_renderer);
-    bsi_log(WLR_DEBUG, "Autocreated wlr_allocator");
+    bsi_debug("Autocreated wlr_allocator");
 
     wlr_compositor_create(bsi_server->wl_display, bsi_server->wlr_renderer);
     wlr_subcompositor_create(bsi_server->wl_display);
     wlr_data_device_manager_create(bsi_server->wl_display);
-    bsi_log(
-        WLR_DEBUG,
+    bsi_debug(
         "Created wlr_compositor, wlr_subcompositor & wlr_data_device_manager");
 
     bsi_server->wlr_output_layout = wlr_output_layout_create();
-    bsi_log(WLR_DEBUG, "Created output layout");
+    bsi_debug("Created output layout");
 
     bsi_server->wlr_scene = wlr_scene_create();
     wlr_scene_attach_output_layout(bsi_server->wlr_scene,
                                    bsi_server->wlr_output_layout);
-    bsi_log(WLR_DEBUG, "Created wlr_scene & attached wlr_output_layout");
+    bsi_debug("Created wlr_scene & attached wlr_output_layout");
 
     bsi_server->wlr_xdg_shell = wlr_xdg_shell_create(bsi_server->wl_display, 2);
     bsi_util_slot_connect(&bsi_server->wlr_xdg_shell->events.new_surface,
                           &bsi_server->listen.xdg_shell_new_surface,
                           bsi_global_xdg_shell_new_surface_notify);
-    bsi_log(WLR_DEBUG, "Created wlr_xdg_shell & attached handlers");
+    bsi_debug("Created wlr_xdg_shell & attached handlers");
 
     bsi_server->wlr_layer_shell =
         wlr_layer_shell_v1_create(bsi_server->wl_display);
     bsi_util_slot_connect(&bsi_server->wlr_layer_shell->events.new_surface,
                           &bsi_server->listen.layer_shell_new_surface,
                           bsi_layer_shell_new_surface_notify);
-    bsi_log(WLR_DEBUG, "Created wlr_layer_shell_v1 & attached handlers");
+    bsi_debug("Created wlr_layer_shell_v1 & attached handlers");
 
     bsi_server->wlr_cursor = wlr_cursor_create();
     wlr_cursor_attach_output_layout(bsi_server->wlr_cursor,
                                     bsi_server->wlr_output_layout);
-    bsi_log(WLR_DEBUG, "Created wlr_cursor & attached it to wlr_output_layout");
+    bsi_debug("Created wlr_cursor & attached it to wlr_output_layout");
 
     const float cursor_scale = 1.0f;
     bsi_server->wlr_xcursor_manager = wlr_xcursor_manager_create("default", 24);
     wlr_xcursor_manager_load(bsi_server->wlr_xcursor_manager, cursor_scale);
-    bsi_log(
-        WLR_DEBUG,
+    bsi_debug(
         "Created wlr_xcursor_manager & loaded xcursor theme with scale %.1f",
         cursor_scale);
 
     bsi_server_cursor_init(bsi_server);
-    bsi_log(WLR_DEBUG, "Initialized bsi_cursor");
+    bsi_debug("Initialized bsi_cursor");
 
     const char* seat_name = "seat0";
     bsi_server->wlr_seat = wlr_seat_create(bsi_server->wl_display, seat_name);
-    bsi_log(WLR_DEBUG, "Created seat '%s'", seat_name);
+    bsi_debug("Created seat '%s'", seat_name);
 
     bsi_server_input_init(bsi_server);
-    bsi_log(WLR_DEBUG, "Initialized bsi_inputs");
+    bsi_debug("Initialized bsi_inputs");
 
     bsi_util_slot_connect(&bsi_server->wlr_seat->events.pointer_grab_begin,
                           &bsi_server->listen.seat_pointer_grab_begin,
@@ -133,10 +131,10 @@ bsi_server_init(struct bsi_server* bsi_server)
     bsi_util_slot_connect(&bsi_server->wlr_seat->events.request_start_drag,
                           &bsi_server->listen.seat_request_start_drag,
                           bsi_global_seat_request_start_drag_notify);
-    bsi_log(WLR_DEBUG, "Attached handlers for seat '%s'", seat_name);
+    bsi_debug("Attached handlers for seat '%s'", seat_name);
 
     bsi_server_scene_init(bsi_server);
-    bsi_log(WLR_DEBUG, "Initialized bsi_views");
+    bsi_debug("Initialized bsi_views");
 
     return bsi_server;
 }

@@ -54,12 +54,12 @@ bsi_util_forkexec(char* const* argp, const size_t len_argp)
 
             execve(argp[0], argp, environ);
 
-            bsi_log(WLR_ERROR, "Exec failed: %s", strerror(errno));
+            bsi_errno("Exec failed");
             _exit(EXIT_FAILURE);
             break;
         }
         case -1:
-            bsi_log(WLR_ERROR, "Fork failed: %s", strerror(errno));
+            bsi_errno("Fork failed");
             return false;
         default:
             return true;

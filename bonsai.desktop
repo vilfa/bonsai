@@ -1,0 +1,5 @@
+[Desktop Entry]
+Name=Bonsai
+Comment=A compositor focusing on OOB user experience.
+Exec=bonsai
+Type=Application

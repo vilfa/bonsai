@@ -20,11 +20,13 @@ bsi_layers_add(struct bsi_output* bsi_output,
 struct bsi_layer_surface_toplevel*
 bsi_layer_surface_toplevel_init(
     struct bsi_layer_surface_toplevel* layer_surface,
-    struct wlr_layer_surface_v1* wlr_layer_surface)
+    struct wlr_layer_surface_v1* wlr_layer_surface,
+    struct bsi_output* bsi_output)
 {
     assert(layer_surface);
 
     layer_surface->layer_surface = wlr_layer_surface;
+    layer_surface->output = bsi_output;
     wlr_layer_surface->data = layer_surface;
     wl_list_init(&layer_surface->subsurfaces);
     return layer_surface;

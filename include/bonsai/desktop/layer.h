@@ -5,6 +5,7 @@
 #include <wayland-util.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
+#include <wlr/util/box.h>
 
 #include "bonsai/output.h"
 #include "wlr-layer-shell-unstable-v1-protocol.h"
@@ -34,8 +35,12 @@ union bsi_layer_surface
 
 struct bsi_layer_surface_toplevel
 {
+    struct bsi_output* output;
     struct wlr_layer_surface_v1* layer_surface;
     struct wl_list subsurfaces;
+
+    bool mapped;
+    struct wlr_box box, extent;
 
     /* Am member of this type of layer. This will be passed in
      * wlr_layer_surface::pending when a client is configuring. This is the type
@@ -100,7 +105,8 @@ bsi_layers_add(struct bsi_output* bsi_output,
 struct bsi_layer_surface_toplevel*
 bsi_layer_surface_toplevel_init(
     struct bsi_layer_surface_toplevel* layer_surface,
-    struct wlr_layer_surface_v1* wlr_layer_surface);
+    struct wlr_layer_surface_v1* wlr_layer_surface,
+    struct bsi_output* bsi_output);
 
 struct bsi_layer_surface_popup*
 bsi_layer_surface_popup_init(struct bsi_layer_surface_popup* layer_surface,

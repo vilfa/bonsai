@@ -1,23 +1,34 @@
 #pragma once
 
-#define bsi_log(verb, fmt, ...)                                                \
-    _wlr_log(verb,                                                             \
-             "\033[1;32m[bonsai]\033[0m"                                       \
+#define bsi_debug(fmt, ...)                                                    \
+    _wlr_log(3,                                                                \
+             "\x1B[38;5;121m[bonsai]\x1B[1;90m"                                \
              "[%s:%d] " fmt,                                                   \
              __FILE_NAME__,                                                    \
              __LINE__,                                                         \
              ##__VA_ARGS__)
 
-#define bsi_vlog(verb, fmt, args)                                              \
-    _wlr_vlog(verb,                                                            \
-              "\033[1;32m[bonsai]\033[0m"                                      \
-              "[%s:%d] " fmt,                                                  \
-              __FILE_NAME__,                                                   \
-              __LINE__,                                                        \
-              args)
+#define bsi_info(fmt, ...)                                                     \
+    _wlr_log(2,                                                                \
+             "\x1B[38;5;121m[bonsai]\x1B[1;34m"                                \
+             "[%s:%d] " fmt,                                                   \
+             __FILE_NAME__,                                                    \
+             __LINE__,                                                         \
+             ##__VA_ARGS__)
 
-#define bsi_log_errno(verb, fmt, ...)                                          \
-    wlr_log(verb,                                                              \
-            "\033[1;32m[bonsai]\033[0m" fmt ": %s",                            \
-            ##__VA_ARGS__,                                                     \
-            strerror(errno))
+#define bsi_error(fmt, ...)                                                    \
+    _wlr_log(1,                                                                \
+             "[bonsai]"                                                        \
+             "[%s:%d] " fmt,                                                   \
+             __FILE_NAME__,                                                    \
+             __LINE__,                                                         \
+             ##__VA_ARGS__)
+
+#define bsi_errno(fmt, ...)                                                    \
+    _wlr_log(1,                                                                \
+             "[bonsai]"                                                        \
+             "[%s:%d] " fmt ": %s",                                            \
+             __FILE_NAME__,                                                    \
+             __LINE__,                                                         \
+             ##__VA_ARGS__,                                                    \
+             strerror(errno));
