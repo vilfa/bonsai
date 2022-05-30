@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 #include <wayland-server-core.h>
 #include <wayland-util.h>
 
@@ -96,6 +97,38 @@ bsi_layer_surface_get_toplevel_parent(
     }
 
     return NULL;
+}
+
+void
+bsi_layer_surface_focus(struct bsi_layer_surface_toplevel* bsi_layer_surface)
+{
+    assert(bsi_layer_surface);
+
+    /* The `bsi_cursor_scene_data_at()` function always returns the topmost
+     * scene node that any one surface belongs to, so we will always get a
+     * toplevel layer shell surface as an argument for focus. */
+    struct bsi_server* server = bsi_layer_surface->output->server;
+    struct wlr_seat* seat = server->wlr_seat;
+    struct wlr_keyboard* keyboard = wlr_seat_get_keyboard(seat);
+    struct wlr_surface* prev_focused = seat->keyboard_state.focused_surface;
+
+    /* The surface is already focused. */
+    if (prev_focused == bsi_layer_surface->layer_surface->surface)
+        return;
+
+    if (prev_focused && strcmp(prev_focused->role->name, "xdg_toplevel") == 0) {
+        /* Deactivate the previously focused surface and notify the client. */
+        struct wlr_xdg_surface* prev_focused_xdg =
+            wlr_xdg_surface_from_wlr_surface(prev_focused);
+        assert(prev_focused_xdg->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL);
+        wlr_xdg_toplevel_set_activated(prev_focused_xdg->toplevel, false);
+    }
+
+    wlr_seat_keyboard_notify_enter(seat,
+                                   bsi_layer_surface->layer_surface->surface,
+                                   keyboard->keycodes,
+                                   keyboard->num_keycodes,
+                                   &keyboard->modifiers);
 }
 
 void

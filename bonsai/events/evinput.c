@@ -6,6 +6,7 @@
  */
 
 #include <assert.h>
+#include <string.h>
 #include <wayland-server-core.h>
 #include <wayland-util.h>
 #include <wlr/types/wlr_cursor.h>
@@ -14,6 +15,7 @@
 #include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/util/log.h>
 
+#include "bonsai/desktop/layer.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/events.h"
 #include "bonsai/input.h"
@@ -88,23 +90,40 @@ bsi_input_pointer_button_notify(struct wl_listener* listener, void* data)
     wlr_seat_pointer_notify_button(
         wlr_seat, event->time_msec, event->button, event->state);
 
-    /* Get the view under pointer, its surface, and surface relative pointer
-     * coordinates. */
-    double sx, sy;
-    struct wlr_surface* surface = NULL;
-    struct bsi_view* view = bsi_cursor_view_at(server, &surface, &sx, &sy);
-
     switch (event->state) {
         case WLR_BUTTON_RELEASED:
             /* Exit interactive mode. */
             server->cursor.cursor_mode = BSI_CURSOR_NORMAL;
             bsi_cursor_image_set(server, BSI_CURSOR_IMAGE_NORMAL);
             break;
-        case WLR_BUTTON_PRESSED:
+        case WLR_BUTTON_PRESSED: {
+            /* Get the view under pointer, its surface, and surface relative
+             * pointer coordinates. */
+            double sx, sy;
+            struct wlr_scene_surface* scene_surface_at = NULL;
+            struct wlr_surface* surface_at = NULL;
+            char* surface_role = NULL;
+            void* scene_data = bsi_cursor_scene_data_at(server,
+                                                        &scene_surface_at,
+                                                        &surface_at,
+                                                        &surface_role,
+                                                        &sx,
+                                                        &sy);
+
+            if (scene_data == NULL) {
+                wlr_seat_pointer_notify_clear_focus(wlr_seat);
+                wlr_seat_keyboard_notify_clear_focus(wlr_seat);
+                return;
+            }
+
             /* Focus a client that was clicked. */
-            if (view != NULL)
-                bsi_view_focus(view);
+            if (strcmp(surface_role, "zwlr_layer_surface_v1") == 0) {
+                bsi_layer_surface_focus(scene_data);
+            } else if (strcmp(surface_role, "xdg_toplevel") == 0) {
+                bsi_view_focus(scene_data);
+            }
             break;
+        }
     }
 }
 
@@ -313,6 +332,9 @@ bsi_input_device_destroy_notify(struct wl_listener* listener, void* data)
             struct bsi_input_keyboard* keyboard =
                 wl_container_of(listener, keyboard, listen.destroy);
             struct bsi_server* server = keyboard->server;
+
+            bsi_debug("Destroying input device %s", keyboard->device->name);
+
             bsi_inputs_keyboard_remove(server, keyboard);
             bsi_input_keyboard_finish(keyboard);
             bsi_input_keyboard_destroy(keyboard);
@@ -322,6 +344,9 @@ bsi_input_device_destroy_notify(struct wl_listener* listener, void* data)
             struct bsi_input_pointer* pointer =
                 wl_container_of(listener, pointer, listen.destroy);
             struct bsi_server* server = pointer->server;
+
+            bsi_debug("Destroying input device %s", pointer->device->name);
+
             bsi_inputs_pointer_remove(server, pointer);
             bsi_input_pointer_finish(pointer);
             bsi_input_pointer_destroy(pointer);

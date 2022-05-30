@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <string.h>
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_pointer.h>
 #include <wlr/types/wlr_scene.h>
@@ -24,11 +25,13 @@ bsi_cursor_image_set(struct bsi_server* bsi_server,
                                          bsi_server->wlr_cursor);
 }
 
-struct bsi_view*
-bsi_cursor_view_at(struct bsi_server* bsi_server,
-                   struct wlr_surface** surface_at,
-                   double* sx,
-                   double* sy)
+void*
+bsi_cursor_scene_data_at(struct bsi_server* bsi_server,
+                         struct wlr_scene_surface** scene_surface_at,
+                         struct wlr_surface** surface_at,
+                         char** surface_role,
+                         double* sx,
+                         double* sy)
 {
     assert(bsi_server);
 
@@ -55,7 +58,9 @@ bsi_cursor_view_at(struct bsi_server* bsi_server,
 
     /* Get the `wlr_surface` of the scene node of the right type. */
     // *surface_at = wlr_scene_surface_from_node(node)->surface;
+    *scene_surface_at = scene_surface;
     *surface_at = scene_surface->surface;
+    *surface_role = scene_surface->surface->role->name;
 
     /* Find the actual topmost node of this node tree. */
     while (node != NULL && node->data == NULL)
@@ -79,15 +84,23 @@ bsi_cursor_process_motion(struct bsi_server* bsi_server,
         /* The cursor is in normal mode, so find the view under the cursor, and
          * send the event to the client that owns it. */
         double sx, sy; /* Surface relative coordinates for our client. */
+        struct wlr_scene_surface* scene_surface_at = NULL;
         struct wlr_surface* surface_at = NULL; /* Surface under cursor. */
-        struct bsi_view* bsi_view =
-            bsi_cursor_view_at(bsi_server, &surface_at, &sx, &sy);
+        char* surface_role = NULL;
 
-        if (!bsi_view) {
+        void* scene_data = bsi_cursor_scene_data_at(bsi_server,
+                                                    &scene_surface_at,
+                                                    &surface_at,
+                                                    &surface_role,
+                                                    &sx,
+                                                    &sy);
+
+        if (scene_data == NULL) {
             /* The cursor is in an empty area, set the deafult cursor image.
              * This makes the cursor image appear when moving around the empty
              * desktop. */
             bsi_cursor_image_set(bsi_server, BSI_CURSOR_IMAGE_NORMAL);
+            return;
         }
 
         if (surface_at) {

@@ -87,19 +87,25 @@ bsi_cursor_image_set(struct bsi_server* bsi_server,
  * wlr_surface, that is under the cursor and is a member of the view.
  *
  * @param bsi_server The server.
+ * @param scene_surface_at Pointer to `wlr_scene_surface*` to set to the
+ * scene_surface under the cursor.
  * @param surface_at Pointer to `wlr_surface*` to set to the surface under the
  * cursor.
+ * @param surface_role The role of the `wlr_surface*`. Check this to know the
+ * type of the data pointer returned from this function.
  * @param sx Pointer to `double` to set to the surface local coordinate x of the
  * surface under the cursor.
  * @param sy Pointer to `double` to set to the surface local coordinate y of the
  * surface under the cursor.
  * @return struct bsi_view* The view under the cursor.
  */
-struct bsi_view*
-bsi_cursor_view_at(struct bsi_server* bsi_server,
-                   struct wlr_surface** surface_at,
-                   double* sx,
-                   double* sy);
+void*
+bsi_cursor_scene_data_at(struct bsi_server* bsi_server,
+                         struct wlr_scene_surface** scene_surface_at,
+                         struct wlr_surface** surface_at,
+                         char** surface_role,
+                         double* sx,
+                         double* sy);
 
 /**
  * @brief Process the cursor motion.

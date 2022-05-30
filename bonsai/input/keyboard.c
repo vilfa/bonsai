@@ -134,9 +134,14 @@ bsi_keyboard_mod_super_handle(struct bsi_server* bsi_server, xkb_keysym_t sym)
 #endif
     switch (sym) {
         case XKB_KEY_d: {
-            bsi_debug("Got Super+d -> menu");
+            bsi_debug("Got Super+d -> bemenu");
             char* const argp[] = { "/usr/bin/bemenu-run", "-c", "-i", NULL };
             return bsi_util_forkexec(argp, 4);
+        }
+        case XKB_KEY_b: {
+            bsi_debug("Got Super+b -> waybar");
+            char* const argp[] = { "/usr/bin/waybar", NULL };
+            return bsi_util_forkexec(argp, 2);
         }
         case XKB_KEY_Return: {
             bsi_debug("Got Super+Return -> term");

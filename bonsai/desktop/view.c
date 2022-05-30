@@ -125,7 +125,7 @@ bsi_view_focus(struct bsi_view* bsi_view)
     if (prev_focused == bsi_view->toplevel->base->surface)
         return;
 
-    if (prev_focused) {
+    if (prev_focused && strcmp(prev_focused->role->name, "xdg_toplevel") == 0) {
         /* Deactivate the previously focused surface and notify the client. */
         struct wlr_xdg_surface* prev_focused_xdg =
             wlr_xdg_surface_from_wlr_surface(prev_focused);

@@ -134,6 +134,9 @@ bsi_layer_surface_get_toplevel_parent(
     enum bsi_layer_surface_type layer_surface_type);
 
 void
+bsi_layer_surface_focus(struct bsi_layer_surface_toplevel* bsi_layer_surface);
+
+void
 bsi_layer_surface_finish(union bsi_layer_surface bsi_layer_surface,
                          enum bsi_layer_surface_type layer_surface_type);
 
