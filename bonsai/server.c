@@ -136,6 +136,8 @@ bsi_server_init(struct bsi_server* bsi_server)
     bsi_server_scene_init(bsi_server);
     bsi_debug("Initialized bsi_views");
 
+    bsi_server->shutting_down = false;
+
     return bsi_server;
 }
 

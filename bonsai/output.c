@@ -11,6 +11,7 @@
 #include "bonsai/desktop/layer.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/desktop/workspace.h"
+#include "bonsai/log.h"
 #include "bonsai/output.h"
 #include "bonsai/server.h"
 #include "bonsai/util.h"
@@ -108,12 +109,18 @@ bsi_output_destroy(struct bsi_output* bsi_output)
 {
     assert(bsi_output);
 
-    struct bsi_server* server = bsi_output->server;
+    bsi_info("Destroying output %ld/%s",
+             bsi_output->id,
+             bsi_output->wlr_output->name);
 
+    struct bsi_server* server = bsi_output->server;
     if (server->output.len > 0) {
         /* Move the views on all workspaces that belong to the destroyed output
          * to the active workspace of the active output, or the first workspace
          * of the first output.  */
+
+        bsi_debug("Moving member views to next workspace");
+
         struct bsi_output* next_output = bsi_outputs_get_active(server);
         struct bsi_workspace* next_output_wspace =
             bsi_workspaces_get_active(next_output);
@@ -131,6 +138,9 @@ bsi_output_destroy(struct bsi_output* bsi_output)
         }
     } else {
         /* Destroy everything, there are no more outputs. */
+
+        bsi_debug("Last output, destroy everything");
+
         struct wl_list* curr_output_wspaces = &bsi_output->wspace.workspaces;
 
         struct bsi_workspace *wspace, *wspace_tmp;
@@ -148,6 +158,22 @@ bsi_output_destroy(struct bsi_output* bsi_output)
 
     /* Cleanup of layer shell surfaces is taken care of by toplevel layer
      * output_destroy listeners. */
+    bsi_debug("Destroying layer surfaces for output %ld/%s",
+              bsi_output->id,
+              bsi_output->wlr_output->name);
+    for (size_t i = 0; i < 4; i++) {
+        if (!wl_list_empty(&bsi_output->layer.layers[i])) {
+            struct bsi_layer_surface_toplevel *surf, *surf_tmp;
+            wl_list_for_each_safe(
+                surf, surf_tmp, &bsi_output->layer.layers[i], link)
+            {
+                union bsi_layer_surface lsurf = { .toplevel = surf };
+                wlr_layer_surface_v1_destroy(surf->layer_surface);
+                bsi_layer_surface_finish(lsurf, BSI_LAYER_SURFACE_TOPLEVEL);
+                bsi_layer_surface_destroy(lsurf, BSI_LAYER_SURFACE_TOPLEVEL);
+            }
+        }
+    }
 
     free(bsi_output);
 }

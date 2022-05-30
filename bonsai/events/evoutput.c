@@ -43,12 +43,17 @@ bsi_output_destroy_notify(struct wl_listener* listener,
         wl_container_of(listener, output, listen.destroy);
     struct bsi_server* server = output->server;
 
+    if (server->output.len == 1) {
+        bsi_info("Last output destroyed, shutting down");
+        server->shutting_down = true;
+    }
+
     bsi_outputs_remove(server, output);
     bsi_output_finish(output);
     bsi_output_destroy(output);
 
     if (server->output.len == 0) {
-        bsi_info("Out of outputs, exiting");
+        bsi_debug("Out of outputs, exiting");
         bsi_server_exit(server);
     }
 }

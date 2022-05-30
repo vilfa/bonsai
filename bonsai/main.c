@@ -37,7 +37,7 @@
 int
 main(void)
 {
-    wlr_log_init(WLR_DEBUG, NULL);
+    wlr_log_init(WLR_INFO, NULL);
 
     struct bsi_server server;
 

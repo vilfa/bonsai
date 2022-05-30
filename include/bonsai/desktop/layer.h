@@ -57,8 +57,6 @@ struct bsi_layer_surface_toplevel
         /* wlr_surface -> layer_surface::surface */
         struct wl_listener surface_commit;
         struct wl_listener surface_new_subsurface;
-        /* wlr_output -> output::wlr_output */
-        struct wl_listener output_destroy;
     } listen;
 
     struct wl_list link;

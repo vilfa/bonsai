@@ -410,9 +410,6 @@ bsi_layer_shell_new_surface_notify(struct wl_listener* listener, void* data)
     bsi_util_slot_connect(&layer_surface->surface->events.commit,
                           &bsi_layer->listen.surface_commit,
                           bsi_layer_surface_toplevel_wlr_surface_commit_notify);
-    bsi_util_slot_connect(&active_output->wlr_output->events.destroy,
-                          &bsi_layer->listen.output_destroy,
-                          bsi_layer_surface_toplevel_wlr_output_destroy_notify);
     bsi_layers_add(active_output, bsi_layer, layer_surface->pending.layer);
 
     /* Overwrite the current state with pending, so we can look up the desired

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <wlr/util/log.h>
+
 #define bsi_debug(fmt, ...)                                                    \
     _wlr_log(3,                                                                \
              "\x1B[38;5;121m[bonsai]\x1B[1;90m"                                \

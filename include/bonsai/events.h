@@ -72,8 +72,6 @@ extern bsi_notify_func_t bsi_layer_surface_toplevel_new_popup_notify;
 extern bsi_notify_func_t bsi_layer_surface_toplevel_wlr_surface_commit_notify;
 extern bsi_notify_func_t
     bsi_layer_surface_toplevel_wlr_surface_new_subsurface_notify;
-/* wlr_output -> output::wlr_output */
-extern bsi_notify_func_t bsi_layer_surface_toplevel_wlr_output_destroy_notify;
 
 /* bsi_layer_surface_popup */
 /* wlr_xdg_surface -> wlr_xdg_popup::base */

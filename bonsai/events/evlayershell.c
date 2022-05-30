@@ -251,6 +251,10 @@ bsi_layer_surface_toplevel_unmap_notify(struct wl_listener* listener,
     struct bsi_layer_surface_toplevel* layer_toplevel =
         wl_container_of(listener, layer_toplevel, listen.unmap);
     struct bsi_output* output = layer_toplevel->output;
+    struct bsi_server* server = output->server;
+
+    if (server->shutting_down)
+        return;
 
     if (wlr_seat_pointer_surface_has_focus(
             output->server->wlr_seat, layer_toplevel->layer_surface->surface))
@@ -270,6 +274,11 @@ bsi_layer_surface_toplevel_destroy_notify(struct wl_listener* listener,
     struct bsi_layer_surface_toplevel* layer_toplevel =
         wl_container_of(listener, layer_toplevel, listen.destroy);
     struct bsi_output* output = layer_toplevel->output;
+    struct bsi_server* server = output->server;
+
+    if (server->shutting_down)
+        return;
+
     union bsi_layer_surface layer_surface = { .toplevel = layer_toplevel };
     bsi_layer_surface_finish(layer_surface, BSI_LAYER_SURFACE_TOPLEVEL);
     bsi_layer_surface_destroy(layer_surface, BSI_LAYER_SURFACE_TOPLEVEL);
@@ -390,22 +399,6 @@ bsi_layer_surface_toplevel_wlr_surface_new_subsurface_notify(
         bsi_layer_surface_subsurface_wlr_surface_commit_notify);
 }
 
-void
-bsi_layer_surface_toplevel_wlr_output_destroy_notify(
-    struct wl_listener* listener,
-    void* data)
-{
-    bsi_debug("Got event destroy for wlr_layer_surface from wlr_output");
-
-    struct bsi_layer_surface_toplevel* layer_toplevel =
-        wl_container_of(listener, layer_toplevel, listen.destroy);
-    // TODO: This crashes.
-    union bsi_layer_surface layer_surface = { .toplevel = layer_toplevel };
-    wlr_layer_surface_v1_destroy(layer_toplevel->layer_surface);
-    bsi_layer_surface_finish(layer_surface, BSI_LAYER_SURFACE_TOPLEVEL);
-    bsi_layer_surface_destroy(layer_surface, BSI_LAYER_SURFACE_TOPLEVEL);
-}
-
 /*
  * bsi_layer_surface_popup
  */
@@ -442,6 +435,10 @@ bsi_layer_surface_popup_unmap_notify(struct wl_listener* listener, void* data)
         bsi_layer_surface_get_toplevel_parent(layer_surface,
                                               BSI_LAYER_SURFACE_POPUP);
     struct bsi_output* output = toplevel_parent->output;
+    struct bsi_server* server = output->server;
+
+    if (server->shutting_down)
+        return;
 
     if (wlr_seat_pointer_surface_has_focus(output->server->wlr_seat,
                                            layer_popup->popup->base->surface))
@@ -458,6 +455,14 @@ bsi_layer_surface_popup_destroy_notify(struct wl_listener* listener, void* data)
     struct bsi_layer_surface_popup* layer_popup =
         wl_container_of(listener, layer_popup, listen.destroy);
     union bsi_layer_surface layer_surface = { .popup = layer_popup };
+    struct bsi_layer_surface_toplevel* toplevel_parent =
+        bsi_layer_surface_get_toplevel_parent(layer_surface,
+                                              BSI_LAYER_SURFACE_POPUP);
+    struct bsi_server* server = toplevel_parent->output->server;
+
+    if (server->shutting_down)
+        return;
+
     bsi_layer_surface_finish(layer_surface, BSI_LAYER_SURFACE_POPUP);
     bsi_layer_surface_destroy(layer_surface, BSI_LAYER_SURFACE_POPUP);
 }
@@ -560,6 +565,10 @@ bsi_layer_surface_subsurface_unmap_notify(struct wl_listener* listener,
     struct bsi_layer_surface_subsurface* layer_subsurface =
         wl_container_of(listener, layer_subsurface, listen.unmap);
     struct bsi_output* output = layer_subsurface->member_of->output;
+    struct bsi_server* server = output->server;
+
+    if (server->shutting_down)
+        return;
 
     if (wlr_seat_pointer_surface_has_focus(
             output->server->wlr_seat, layer_subsurface->subsurface->surface))
@@ -578,6 +587,14 @@ bsi_layer_surface_subsurface_destroy_notify(struct wl_listener* listener,
     struct bsi_layer_surface_subsurface* layer_subsurface =
         wl_container_of(listener, layer_subsurface, listen.destroy);
     union bsi_layer_surface layer_surface = { .subsurface = layer_subsurface };
+    struct bsi_layer_surface_toplevel* toplevel_parent =
+        bsi_layer_surface_get_toplevel_parent(layer_surface,
+                                              BSI_LAYER_SURFACE_TOPLEVEL);
+    struct bsi_server* server = toplevel_parent->output->server;
+
+    if (server->shutting_down)
+        return;
+
     bsi_layer_surface_finish(layer_surface, BSI_LAYER_SURFACE_SUBSURFACE);
     bsi_layer_surface_destroy(layer_surface, BSI_LAYER_SURFACE_SUBSURFACE);
 }

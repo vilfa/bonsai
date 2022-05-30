@@ -25,6 +25,9 @@ struct bsi_server
     struct wlr_xcursor_manager* wlr_xcursor_manager;
     struct wlr_layer_shell_v1* wlr_layer_shell;
 
+    /* Global state. */
+    bool shutting_down;
+
     /* Global server listeners. */
     struct
     {
