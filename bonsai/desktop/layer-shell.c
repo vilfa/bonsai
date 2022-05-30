@@ -4,6 +4,7 @@
 #include <wayland-util.h>
 
 #include "bonsai/desktop/layer.h"
+#include "bonsai/server.h"
 
 void
 bsi_layers_add(struct bsi_output* bsi_output,
@@ -31,6 +32,11 @@ bsi_layer_surface_toplevel_init(
     layer_surface->mapped = false;
     wlr_layer_surface->data = layer_surface;
     wl_list_init(&layer_surface->subsurfaces);
+
+    layer_surface->scene_node = wlr_scene_layer_surface_v1_create(
+        &bsi_output->server->wlr_scene->node, layer_surface->layer_surface);
+    layer_surface->scene_node->node->data = layer_surface;
+
     return layer_surface;
 }
 

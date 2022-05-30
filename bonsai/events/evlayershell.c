@@ -126,6 +126,8 @@ bsi_output_layer_arrange(struct bsi_output* output,
 
         wlr_layer_surface_v1_configure(
             layer_surf, wants_box.width, wants_box.height);
+        wlr_scene_layer_surface_v1_configure(
+            layer_toplevel->scene_node, &maxbounds_box, &wants_box);
     }
 }
 

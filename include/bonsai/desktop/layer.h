@@ -37,6 +37,7 @@ struct bsi_layer_surface_toplevel
 {
     struct bsi_output* output;
     struct wlr_layer_surface_v1* layer_surface;
+    struct wlr_scene_layer_surface_v1* scene_node;
     struct wl_list subsurfaces;
 
     bool mapped;

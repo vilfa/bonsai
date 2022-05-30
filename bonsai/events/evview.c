@@ -36,9 +36,9 @@ bsi_view_destroy_xdg_surface_notify(struct wl_listener* listener,
     bsi_view_finish(view);
     bsi_view_destroy(view);
 
-    bsi_debug("Workspace %s now has %ld views",
-              workspace->name,
-              workspace->len_views);
+    bsi_info("Workspace %s now has %ld views",
+             workspace->name,
+             workspace->len_views);
 }
 
 void
