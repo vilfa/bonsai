@@ -146,12 +146,15 @@ bsi_output_destroy(struct bsi_output* bsi_output)
         struct bsi_workspace *wspace, *wspace_tmp;
         wl_list_for_each_safe(wspace, wspace_tmp, curr_output_wspaces, link)
         {
-            struct bsi_view *view, *view_tmp;
-            wl_list_for_each_safe(view, view_tmp, &wspace->views, link)
-            {
-                bsi_view_finish(view);
-                bsi_view_destroy(view);
-            }
+            bsi_debug("Destroying %ld workspaces for output %ld/%s",
+                      bsi_output->wspace.len,
+                      bsi_output->id,
+                      bsi_output->wlr_output->name);
+
+            /* The view take care of themselves -- they receive an xdg_surface
+             * destroy event. Note that a workspace might be freed before the
+             * views, kind of depends on scheduling. */
+
             bsi_workspace_destroy(wspace);
         }
     }

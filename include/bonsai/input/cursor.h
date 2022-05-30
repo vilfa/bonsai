@@ -103,7 +103,7 @@ void*
 bsi_cursor_scene_data_at(struct bsi_server* bsi_server,
                          struct wlr_scene_surface** scene_surface_at,
                          struct wlr_surface** surface_at,
-                         char** surface_role,
+                         const char** surface_role,
                          double* sx,
                          double* sy);
 

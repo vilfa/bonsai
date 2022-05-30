@@ -1,4 +1,6 @@
 #include "bonsai/desktop/workspace.h"
+#include "bonsai/log.h"
+#include <stdint.h>
 #define _POSIX_C_SOURCE 200809L
 #include <assert.h>
 #include <stdbool.h>
@@ -172,9 +174,15 @@ bsi_view_interactive_begin(struct bsi_view* bsi_view,
     bsi_server->cursor.cursor_mode = bsi_cursor_mode;
 
     if (bsi_cursor_mode == BSI_CURSOR_MOVE) {
-        // TODO: Not sure what is happening here
-        bsi_server->cursor.grab_x = bsi_server->wlr_cursor->x - bsi_view->x;
-        bsi_server->cursor.grab_y = bsi_server->wlr_cursor->y - bsi_view->y;
+        /* Set the surface local coordinates for this grab. */
+        int32_t lx, ly;
+        wlr_scene_node_coords(bsi_view->scene_node, &lx, &ly);
+        bsi_server->cursor.grab_sx = bsi_server->wlr_cursor->x - lx;
+        bsi_server->cursor.grab_sy = bsi_server->wlr_cursor->y - ly;
+
+        bsi_debug("Surface local move coords are (%.2f, %.2f)",
+                  bsi_server->cursor.grab_sx,
+                  bsi_server->cursor.grab_sy);
     } else {
         struct wlr_box box;
         wlr_xdg_surface_get_geometry(bsi_view->toplevel->base, &box);
@@ -184,8 +192,8 @@ bsi_view_interactive_begin(struct bsi_view* bsi_view,
             (bsi_view->x + box.x) + ((edges & WLR_EDGE_RIGHT) ? box.width : 0);
         double border_y = (bsi_view->y + box.y) +
                           ((edges & WLR_EDGE_BOTTOM) ? box.height : 0);
-        bsi_server->cursor.grab_x = bsi_server->wlr_cursor->x - border_x;
-        bsi_server->cursor.grab_y = bsi_server->wlr_cursor->y - border_y;
+        bsi_server->cursor.grab_sx = bsi_server->wlr_cursor->x - border_x;
+        bsi_server->cursor.grab_sy = bsi_server->wlr_cursor->y - border_y;
 
         bsi_server->cursor.grab_box = box;
         bsi_server->cursor.grab_box.x += bsi_view->x;
@@ -203,8 +211,11 @@ bsi_view_set_maximized(struct bsi_view* bsi_view, bool maximized)
     bsi_view->maximized = maximized;
 
     if (!maximized) {
+        bsi_debug("Set not maximized for view %s, restore prev",
+                  bsi_view->toplevel->app_id);
         bsi_view_restore_prev(bsi_view);
     } else {
+        bsi_debug("Set maximized for view %s", bsi_view->toplevel->app_id);
         /* Save the geometry. */
         struct wlr_box box;
         int32_t lx, ly;
@@ -234,9 +245,12 @@ bsi_view_set_minimized(struct bsi_view* bsi_view, bool minimized)
     bsi_view->minimized = minimized;
 
     if (!minimized) {
+        bsi_debug("Set not minimized for view %s, restore prev",
+                  bsi_view->toplevel->app_id);
         bsi_view_restore_prev(bsi_view);
         wlr_scene_node_set_enabled(bsi_view->scene_node, !minimized);
     } else {
+        bsi_debug("Set minimized for view %s", bsi_view->toplevel->app_id);
         /* Save the geometry. */
         struct wlr_box box;
         int32_t lx, ly;
@@ -246,7 +260,6 @@ bsi_view_set_minimized(struct bsi_view* bsi_view, bool minimized)
         bsi_view->y = ly;
         bsi_view->width = box.width;
         bsi_view->height = box.height;
-
         wlr_scene_node_set_enabled(bsi_view->scene_node, false);
     }
 }
@@ -291,5 +304,9 @@ bsi_view_restore_prev(struct bsi_view* bsi_view)
     wlr_xdg_toplevel_set_size(
         bsi_view->toplevel, bsi_view->width, bsi_view->height);
     wlr_xdg_toplevel_set_resizing(bsi_view->toplevel, false);
+
+    bsi_debug(
+        "Restoring view position to (%.2lf, %.2lf)", bsi_view->x, bsi_view->y);
+
     wlr_scene_node_set_position(bsi_view->scene_node, bsi_view->x, bsi_view->y);
 }

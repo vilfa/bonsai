@@ -85,7 +85,7 @@ struct bsi_server
         uint32_t resize_edges;
         struct bsi_view* grabbed_view;
         struct wlr_box grab_box;
-        double grab_x, grab_y;
+        double grab_sx, grab_sy;
     } cursor;
 
     // TODO

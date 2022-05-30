@@ -169,8 +169,8 @@ bsi_server_cursor_init(struct bsi_server* bsi_server)
 {
     bsi_server->cursor.cursor_mode = BSI_CURSOR_NORMAL;
     bsi_server->cursor.cursor_image = BSI_CURSOR_IMAGE_NORMAL;
-    bsi_server->cursor.grab_x = 0.0;
-    bsi_server->cursor.grab_y = 0.0;
+    bsi_server->cursor.grab_sx = 0.0;
+    bsi_server->cursor.grab_sy = 0.0;
     bsi_server->cursor.resize_edges = 0;
     bsi_server->cursor.grab_box.width = 0;
     bsi_server->cursor.grab_box.height = 0;

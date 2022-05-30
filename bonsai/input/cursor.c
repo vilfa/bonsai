@@ -11,6 +11,7 @@
 
 #include "bonsai/desktop/view.h"
 #include "bonsai/input/cursor.h"
+#include "bonsai/log.h"
 #include "bonsai/server.h"
 
 void
@@ -29,7 +30,7 @@ void*
 bsi_cursor_scene_data_at(struct bsi_server* bsi_server,
                          struct wlr_scene_surface** scene_surface_at,
                          struct wlr_surface** surface_at,
-                         char** surface_role,
+                         const char** surface_role,
                          double* sx,
                          double* sy)
 {
@@ -86,7 +87,7 @@ bsi_cursor_process_motion(struct bsi_server* bsi_server,
         double sx, sy; /* Surface relative coordinates for our client. */
         struct wlr_scene_surface* scene_surface_at = NULL;
         struct wlr_surface* surface_at = NULL; /* Surface under cursor. */
-        char* surface_role = NULL;
+        const char* surface_role = NULL;
 
         void* scene_data = bsi_cursor_scene_data_at(bsi_server,
                                                     &scene_surface_at,
@@ -126,30 +127,34 @@ bsi_cursor_process_view_move(struct bsi_server* bsi_server,
     assert(bsi_server);
     assert(bsi_cursor_event.motion);
 
-    struct bsi_view* bsi_view = bsi_server->cursor.grabbed_view;
+    struct bsi_view* view = bsi_server->cursor.grabbed_view;
     struct wlr_pointer_motion_event* event = bsi_cursor_event.motion;
 
     /* A view in these states cannot be moved. Although, a minimized view
      * getting here is altogether impossible. */
-    if (bsi_view->fullscreen || bsi_view->minimized)
+    if (view->fullscreen || view->minimized)
         return;
 
     bsi_cursor_image_set(bsi_server, BSI_CURSOR_IMAGE_MOVE);
 
-    struct wlr_box box;
-    bsi_view->x = bsi_server->wlr_cursor->x - bsi_server->cursor.grab_x;
-    bsi_view->y = bsi_server->wlr_cursor->y - bsi_server->cursor.grab_y;
-    wlr_xdg_surface_get_geometry(bsi_view->toplevel->base, &box);
-    bsi_view->width = box.width;
-    bsi_view->height = box.height;
+    if (view->maximized) {
+        bsi_view_set_maximized(view, false);
+        view->x = bsi_server->wlr_cursor->x - (float)view->width / 2;
+        view->y = bsi_server->wlr_cursor->y - bsi_server->cursor.grab_sy;
+        wlr_xdg_toplevel_set_maximized(view->toplevel, false);
+        wlr_xdg_surface_schedule_configure(view->toplevel->base);
 
-    if (bsi_view->maximized) {
-        bsi_view_set_maximized(bsi_view, false);
-        wlr_xdg_toplevel_set_maximized(bsi_view->toplevel, false);
-        wlr_xdg_surface_schedule_configure(bsi_view->toplevel->base);
+        // TODO: Scene node position simply does not want to be set.
+
+        bsi_debug("Unmaximize by move, surface coords are (%.2lf, %.2lf)",
+                  view->x,
+                  view->y);
+    } else {
+        view->x = bsi_server->wlr_cursor->x - bsi_server->cursor.grab_sx;
+        view->y = bsi_server->wlr_cursor->y - bsi_server->cursor.grab_sy;
     }
 
-    wlr_scene_node_set_position(bsi_view->scene_node, bsi_view->x, bsi_view->y);
+    wlr_scene_node_set_position(view->scene_node, view->x, view->y);
 }
 
 void
@@ -178,8 +183,8 @@ bsi_cursor_process_view_resize(struct bsi_server* bsi_server,
     wlr_xdg_surface_schedule_configure(bsi_view->toplevel->base);
 
     // TODO: Not sure what is happening here.
-    double border_x = bsi_server->wlr_cursor->x - bsi_server->cursor.grab_x;
-    double border_y = bsi_server->wlr_cursor->y - bsi_server->cursor.grab_y;
+    double border_x = bsi_server->wlr_cursor->x - bsi_server->cursor.grab_sx;
+    double border_y = bsi_server->wlr_cursor->y - bsi_server->cursor.grab_sy;
     int32_t new_left = bsi_server->cursor.grab_box.x;
     int32_t new_right =
         bsi_server->cursor.grab_box.x + bsi_server->cursor.grab_box.width;
@@ -208,30 +213,6 @@ bsi_cursor_process_view_resize(struct bsi_server* bsi_server,
         if (new_right <= new_left)
             new_right = new_left + 1;
     }
-
-    /* Clients should take care of setting the right cursor. */
-    // if (bsi_server->cursor.resize_edges & WLR_EDGE_TOP & WLR_EDGE_LEFT) {
-    //     bsi_cursor_image_set(bsi_server, BSI_CURSOR_IMAGE_RESIZE_TOP_LEFT);
-    // } else if (bsi_server->cursor.resize_edges & WLR_EDGE_TOP &
-    //            WLR_EDGE_RIGHT) {
-    //     bsi_cursor_image_set(bsi_server, BSI_CURSOR_IMAGE_RESIZE_TOP_RIGHT);
-    // } else if (bsi_server->cursor.resize_edges & WLR_EDGE_BOTTOM &
-    //            WLR_EDGE_LEFT) {
-    //     bsi_cursor_image_set(bsi_server,
-    //     BSI_CURSOR_IMAGE_RESIZE_BOTTOM_LEFT);
-    // } else if (bsi_server->cursor.resize_edges & WLR_EDGE_BOTTOM &
-    //            WLR_EDGE_RIGHT) {
-    //     bsi_cursor_image_set(bsi_server,
-    //     BSI_CURSOR_IMAGE_RESIZE_BOTTOM_RIGHT);
-    // } else if (bsi_server->cursor.resize_edges & WLR_EDGE_TOP) {
-    //     bsi_cursor_image_set(bsi_server, BSI_CURSOR_IMAGE_RESIZE_TOP);
-    // } else if (bsi_server->cursor.resize_edges & WLR_EDGE_BOTTOM) {
-    //     bsi_cursor_image_set(bsi_server, BSI_CURSOR_IMAGE_RESIZE_BOTTOM);
-    // } else if (bsi_server->cursor.resize_edges & WLR_EDGE_LEFT) {
-    //     bsi_cursor_image_set(bsi_server, BSI_CURSOR_IMAGE_RESIZE_LEFT);
-    // } else if (bsi_server->cursor.resize_edges & WLR_EDGE_RIGHT) {
-    //     bsi_cursor_image_set(bsi_server, BSI_CURSOR_IMAGE_RESIZE_RIGHT);
-    // }
 
     struct wlr_box box;
     wlr_xdg_surface_get_geometry(bsi_view->toplevel->base, &box);

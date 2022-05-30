@@ -53,6 +53,27 @@ bsi_view_map_notify(struct wl_listener* listener,
 
     struct wlr_xdg_toplevel_requested* requested = &toplevel->requested;
 
+    if (toplevel->base->added) {
+        struct wlr_box wants_box;
+        int32_t output_w, output_h;
+        wlr_output_effective_resolution(
+            view->parent_workspace->output->wlr_output, &output_w, &output_h);
+        wlr_xdg_surface_get_geometry(toplevel->base, &wants_box);
+        wants_box.x = (output_w - wants_box.width) / 2;
+        wants_box.y = (output_h - wants_box.height) / 2;
+        wlr_scene_node_set_position(view->scene_node, wants_box.x, wants_box.y);
+
+        bsi_debug("Output effective resolution is %dx%d, client wants %dx%d",
+                  output_w,
+                  output_h,
+                  wants_box.width,
+                  wants_box.height);
+
+        bsi_debug("Set client node base position to (%d, %d)",
+                  wants_box.x,
+                  wants_box.y);
+    }
+
     /* Only honor one request of this type. A surface can't request to be
      * maximized and minimized at the same time. */
     if (requested->fullscreen) {
@@ -60,9 +81,11 @@ bsi_view_map_notify(struct wl_listener* listener,
         // already handle moving views in workspace code
         bsi_view_set_fullscreen(view, requested->fullscreen);
         wlr_xdg_toplevel_set_fullscreen(view->toplevel, requested->fullscreen);
+        wlr_xdg_surface_schedule_configure(view->toplevel->base);
     } else if (requested->maximized) {
         bsi_view_set_maximized(view, requested->maximized);
         wlr_xdg_toplevel_set_maximized(view->toplevel, requested->maximized);
+        wlr_xdg_surface_schedule_configure(view->toplevel->base);
     } else if (requested->minimized) {
         bsi_view_set_minimized(view, requested->minimized);
     }
