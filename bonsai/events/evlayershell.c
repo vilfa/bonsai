@@ -137,48 +137,20 @@ bsi_layers_arrange(struct bsi_output* output)
         output->wlr_output, &usable_box.width, &usable_box.height);
 
     /* Firstly, arrange exclusive layers. */
-    bsi_output_layer_arrange(
-        output,
-        &output->layer.layers[ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND],
-        &usable_box,
-        true);
-    bsi_output_layer_arrange(
-        output,
-        &output->layer.layers[ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM],
-        &usable_box,
-        true);
-    bsi_output_layer_arrange(
-        output,
-        &output->layer.layers[ZWLR_LAYER_SHELL_V1_LAYER_TOP],
-        &usable_box,
-        true);
-    bsi_output_layer_arrange(
-        output,
-        &output->layer.layers[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY],
-        &usable_box,
-        true);
+    for (size_t i = 0; i < 4; ++i) {
+        if (output->layer.len[i] > 0) {
+            bsi_output_layer_arrange(
+                output, &output->layer.layers[i], &usable_box, true);
+        }
+    }
 
     /* Secondly, arrange non-exclusive layers. */
-    bsi_output_layer_arrange(
-        output,
-        &output->layer.layers[ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND],
-        &usable_box,
-        false);
-    bsi_output_layer_arrange(
-        output,
-        &output->layer.layers[ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM],
-        &usable_box,
-        false);
-    bsi_output_layer_arrange(
-        output,
-        &output->layer.layers[ZWLR_LAYER_SHELL_V1_LAYER_TOP],
-        &usable_box,
-        false);
-    bsi_output_layer_arrange(
-        output,
-        &output->layer.layers[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY],
-        &usable_box,
-        false);
+    for (size_t i = 0; i < 4; ++i) {
+        if (output->layer.len[i] > 0) {
+            bsi_output_layer_arrange(
+                output, &output->layer.layers[i], &usable_box, false);
+        }
+    }
 
     /* Last, focus the topmost keyboard-interactive layer, if it exists. */
     // TODO: Focus topmost keyboard-interactive layer.

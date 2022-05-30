@@ -13,6 +13,7 @@ bsi_layers_add(struct bsi_output* bsi_output,
     assert(bsi_output);
     assert(bsi_layer_surface_toplevel);
 
+    ++bsi_output->layer.len[at_layer];
     wl_list_insert(&bsi_output->layer.layers[at_layer],
                    &bsi_layer_surface_toplevel->link);
 }
@@ -99,7 +100,6 @@ bsi_layer_surface_finish(union bsi_layer_surface bsi_layer_surface,
         case BSI_LAYER_SURFACE_TOPLEVEL: {
             struct bsi_layer_surface_toplevel* layer_surface =
                 bsi_layer_surface.toplevel;
-            // wl_list_remove(&layer_surface->link);
             /* wlr_layer_surface_v1 */
             wl_list_remove(&layer_surface->listen.map.link);
             wl_list_remove(&layer_surface->listen.unmap.link);
@@ -139,18 +139,22 @@ bsi_layer_surface_destroy(union bsi_layer_surface bsi_layer_surface,
 {
     switch (layer_surface_type) {
         case BSI_LAYER_SURFACE_TOPLEVEL: {
-            if (!wl_list_empty(&bsi_layer_surface.toplevel->subsurfaces)) {
+            struct bsi_layer_surface_toplevel* toplevel =
+                bsi_layer_surface.toplevel;
+
+            --toplevel->output->layer.len[toplevel->member_of_type];
+            wl_list_remove(&toplevel->link);
+
+            if (!wl_list_empty(&toplevel->subsurfaces)) {
                 struct bsi_layer_surface_subsurface *subsurf, *subsurf_tmp;
-                wl_list_for_each_safe(subsurf,
-                                      subsurf_tmp,
-                                      &bsi_layer_surface.toplevel->subsurfaces,
-                                      link)
+                wl_list_for_each_safe(
+                    subsurf, subsurf_tmp, &toplevel->subsurfaces, link)
                 {
                     wl_list_remove(&subsurf->link);
                     free(subsurf);
                 }
             }
-            free(bsi_layer_surface.toplevel);
+            free(toplevel);
             break;
         }
         case BSI_LAYER_SURFACE_POPUP:
