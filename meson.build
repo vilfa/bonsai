@@ -29,6 +29,10 @@ dep_wayland_protocols = dependency('wayland-protocols', required : true)
 dep_pixman = dependency('pixman-1', required : true)
 dep_math = cc.find_library('m', required : true)
 
+### Dependencies (Optional)
+dep_swaybg = dependency('swaybg', required : false)
+dep_bemenu = dependency('bemenu', required : false)
+
 ### Include dirs
 inc_default = include_directories('include')
 inc_protocols = include_directories('include/protocols')

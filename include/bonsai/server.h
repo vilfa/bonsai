@@ -1,6 +1,7 @@
 #pragma once
 
 #include "bonsai/desktop/view.h"
+#include "bonsai/desktop/workspace.h"
 #include "bonsai/input.h"
 #include "bonsai/input/cursor.h"
 #include "bonsai/output.h"
@@ -18,6 +19,8 @@ struct bsi_server
     struct wlr_renderer* wlr_renderer;
     struct wlr_allocator* wlr_allocator;
     struct wlr_output_layout* wlr_output_layout;
+    struct wlr_output_manager_v1* wlr_output_manager;
+    struct wlr_xdg_output_manager_v1* wlr_xdg_output_manager;
     struct wlr_scene* wlr_scene;
     struct wlr_xdg_shell* wlr_xdg_shell;
     struct wlr_seat* wlr_seat;
@@ -71,6 +74,7 @@ struct bsi_server
     } input;
 
     /* Keeps track of the scene and all views. */
+    struct bsi_workspace* active_workspace;
     struct
     {
         size_t len;

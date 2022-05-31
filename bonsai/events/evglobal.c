@@ -17,6 +17,7 @@
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_output_layout.h>
+#include <wlr/types/wlr_output_management_v1.h>
 #include <wlr/types/wlr_primary_selection.h>
 #include <wlr/types/wlr_scene.h>
 #include <wlr/types/wlr_seat.h>
@@ -81,6 +82,10 @@ bsi_global_backend_new_output_notify(struct wl_listener* listener, void* data)
     bsi_util_slot_connect(&output->wlr_output->events.destroy,
                           &output->listen.destroy,
                           bsi_output_destroy_notify);
+
+    wlr_output_manager_v1_set_configuration(server->wlr_output_manager,
+                                            output->wlr_output_config);
+    wlr_output_configuration_v1_send_succeeded(output->wlr_output_config);
 
     wlr_output_layout_add_auto(server->wlr_output_layout, wlr_output);
 }

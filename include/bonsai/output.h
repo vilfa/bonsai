@@ -19,8 +19,12 @@ struct bsi_output
 {
     struct bsi_server* server;
     struct wlr_output* wlr_output;
+    struct wlr_output_configuration_v1* wlr_output_config;
+    struct wlr_output_configuration_head_v1* wlr_output_config_head;
     struct timespec last_frame;
+
     size_t id; /* Incremental id. */
+    bool new;  /* If this output has just been added. */
 
     struct wlr_output_damage* damage;
 
@@ -53,6 +57,19 @@ struct bsi_output
     } listen;
 
     struct wl_list link;
+};
+
+enum bsi_output_extern_prog
+{
+    BSI_OUTPUT_EXTERN_PROG_WALLPAPER,
+    BSI_OUTPUT_EXTERN_PROG_MAX,
+};
+
+static char* bsi_output_extern_progs[] = { [BSI_OUTPUT_EXTERN_PROG_WALLPAPER] =
+                                               "/usr/bin/swaybg" };
+
+static char* bsi_output_extern_progs_args[] = {
+    [BSI_OUTPUT_EXTERN_PROG_WALLPAPER] = "--image=assets/Wallpaper-Default.jpg",
 };
 
 /**
@@ -100,6 +117,9 @@ struct bsi_output*
 bsi_output_init(struct bsi_output* bsi_output,
                 struct bsi_server* bsi_server,
                 struct wlr_output* wlr_output);
+
+void
+bsi_output_setup_extern_progs(struct bsi_output* bsi_output);
 
 /**
  * @brief Remove all active listeners from the specified `bsi_output`.

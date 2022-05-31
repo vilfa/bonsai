@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <math.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <wayland-server-core.h>
@@ -31,6 +32,29 @@
  * surface area.
  *
  */
+
+static void
+bsi_output_views_arrange(struct bsi_output* output, struct wl_list* layers)
+{
+    struct bsi_server* server = output->server;
+
+    struct bsi_layer_surface_toplevel* toplevel;
+    wl_list_for_each(toplevel, layers, link)
+    {
+        if (toplevel->member_of_type < ZWLR_LAYER_SHELL_V1_LAYER_TOP) {
+            /* These are background layers, arrange the views appropriately.*/
+            struct bsi_view* view;
+            wl_list_for_each_reverse(view, &server->scene.views, link)
+            {
+                wlr_scene_node_raise_to_top(view->scene_node);
+            }
+        } else if (toplevel->member_of_type >
+                   ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM) {
+            /* These are foreground layers, arrange the views appropriately. */
+            wlr_scene_node_raise_to_top(toplevel->scene_node->node);
+        }
+    }
+}
 
 static void
 bsi_output_layer_arrange(struct bsi_output* output,
@@ -152,6 +176,13 @@ bsi_layers_arrange(struct bsi_output* output)
         if (output->layer.len[i] > 0) {
             bsi_output_layer_arrange(
                 output, &output->layer.layers[i], &usable_box, false);
+        }
+    }
+
+    /* Arrange layers under windows. */
+    for (size_t i = 0; i < 4; ++i) {
+        if (output->layer.len[i] > 0) {
+            bsi_output_views_arrange(output, &output->layer.layers[i]);
         }
     }
 

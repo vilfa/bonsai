@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -64,4 +65,53 @@ bsi_util_forkexec(char* const* argp, const size_t len_argp)
         default:
             return true;
     }
+}
+
+size_t
+bsi_util_split_argsp(char* first, char* in, const char* delim, char*** out)
+{
+    if (*out != NULL)
+        return 0;
+
+    *out = realloc(*out, 2 * sizeof(char**));
+    (*out)[0] = first;
+
+    size_t len = 2;
+    char* tok = strtok(in, delim);
+    while (tok) {
+        (*out)[len - 1] = tok;
+        *out = realloc(*out, ++len * sizeof(char**));
+        tok = strtok(NULL, delim);
+    }
+
+    (*out)[len - 1] = NULL;
+
+    return len;
+}
+
+size_t
+bsi_util_split_delim(char* in, const char* delim, char*** out)
+{
+    if (*out != NULL)
+        return 0;
+
+    *out = realloc(*out, sizeof(char**));
+
+    size_t len = 1;
+    char* tok = strtok(in, delim);
+    while (tok) {
+        (*out)[len - 1] = tok;
+        *out = realloc(*out, ++len * sizeof(char**));
+        tok = strtok(NULL, delim);
+    }
+
+    (*out)[len - 1] = NULL;
+
+    return len;
+}
+
+void
+bsi_util_split_free(char*** out)
+{
+    free(*out);
 }

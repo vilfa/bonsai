@@ -32,10 +32,10 @@ bsi_workspaces_add(struct bsi_output* bsi_output,
     /* To whom it may concern.. */
     bsi_util_slot_connect(&bsi_workspace->signal.active,
                           &bsi_output->server->listen.workspace_active,
-                          bsi_workspace_active_notify);
+                          bsi_server_workspace_active_notify);
     bsi_util_slot_connect(&bsi_workspace->signal.active,
                           &bsi_output->listen.workspace_active,
-                          bsi_workspace_active_notify);
+                          bsi_output_workspace_active_notify);
 
     bsi_workspace_set_active(bsi_workspace, true);
 }
@@ -166,7 +166,7 @@ bsi_workspace_view_add(struct bsi_workspace* bsi_workspace,
     wl_list_insert(&bsi_workspace->views, &bsi_view->link_workspace);
     bsi_util_slot_connect(&bsi_workspace->signal.active,
                           &bsi_view->listen.workspace_active,
-                          bsi_workspace_active_notify);
+                          bsi_view_workspace_active_notify);
     bsi_view->parent_workspace = bsi_workspace;
 }
 

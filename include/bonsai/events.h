@@ -60,7 +60,9 @@ extern bsi_notify_func_t bsi_input_keyboard_modifiers_notify;
 extern bsi_notify_func_t bsi_input_device_destroy_notify;
 
 /* bsi_workspace */
-extern bsi_notify_func_t bsi_workspace_active_notify;
+extern bsi_notify_func_t bsi_server_workspace_active_notify;
+extern bsi_notify_func_t bsi_output_workspace_active_notify;
+extern bsi_notify_func_t bsi_view_workspace_active_notify;
 
 /* bsi_layer_surface_toplevel */
 /* wlr_layer_surface_v1 */

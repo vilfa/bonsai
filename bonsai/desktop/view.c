@@ -166,6 +166,9 @@ bsi_view_interactive_begin(struct bsi_view* bsi_view,
         bsi_server->wlr_seat->pointer_state.focused_surface;
 
     /* Deny requests from unfocused clients. */
+    if (focused_surface == NULL)
+        return;
+
     if (bsi_view->toplevel->base->surface !=
         wlr_surface_get_root_surface(focused_surface))
         return;

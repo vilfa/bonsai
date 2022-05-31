@@ -47,3 +47,40 @@ bsi_util_slot_disconnect(struct wl_listener* bsi_listener_memb);
  */
 bool
 bsi_util_forkexec(char* const* argp, const size_t len_argp);
+
+/**
+ * @brief Splits a string into parts and prepends the element passed as param
+ * `first`. Returns an allocated array of pointers to each split part, with a
+ * NULL terminating element.
+ *
+ * @param first The first element.
+ * @param in The string to split.
+ * @param delim The delimiter to look for.
+ * @param out The pointer to the array of strings allocated dynamically (pass
+ * `NULL`).
+ * @return size_t The size of the array, including the terminating element.
+ */
+size_t
+bsi_util_split_argsp(char* first, char* in, const char* delim, char*** out);
+
+/**
+ * @brief Splits a string into parts. Returns an allocated array of pointers to
+ * each split part, with a NULL terminating element.
+ *
+ * @param in The string to split.
+ * @param delim The delimiter to look for.
+ * @param out The pointer to the array of strings allocated dynamically (pass
+ * `NULL`).
+ * @return size_t The size of the array, including the terminating element.
+ */
+size_t
+bsi_util_split_delim(char* in, const char* delim, char*** out);
+
+/**
+ * @brief Frees the array and only the array containing the pointers to strings.
+ *
+ * @param out The array from `bsi_util_split_argsp()` or
+ * `bsi_util_split_delim()`.
+ */
+void
+bsi_util_split_free(char*** out);

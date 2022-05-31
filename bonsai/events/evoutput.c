@@ -6,6 +6,8 @@
  */
 
 #include <wayland-server-core.h>
+#include <wlr/types/wlr_output_layout.h>
+#include <wlr/types/wlr_output_management_v1.h>
 #include <wlr/types/wlr_scene.h>
 #include <wlr/util/log.h>
 
@@ -46,6 +48,7 @@ bsi_output_destroy_notify(struct wl_listener* listener,
         server->shutting_down = true;
     }
 
+    wlr_output_layout_remove(server->wlr_output_layout, output->wlr_output);
     bsi_outputs_remove(server, output);
     bsi_output_finish(output);
     bsi_output_destroy(output);

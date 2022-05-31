@@ -6,9 +6,11 @@
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_compositor.h>
 #include <wlr/types/wlr_data_device.h>
+#include <wlr/types/wlr_output_management_v1.h>
 #include <wlr/types/wlr_seat.h>
 #include <wlr/types/wlr_subcompositor.h>
 #include <wlr/types/wlr_xcursor_manager.h>
+#include <wlr/types/wlr_xdg_output_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 
@@ -59,6 +61,14 @@ bsi_server_init(struct bsi_server* bsi_server)
 
     bsi_server->wlr_output_layout = wlr_output_layout_create();
     bsi_debug("Created output layout");
+
+    bsi_server->wlr_output_manager =
+        wlr_output_manager_v1_create(bsi_server->wl_display);
+    bsi_debug("Created wlr_output_manager_v1");
+
+    bsi_server->wlr_xdg_output_manager = wlr_xdg_output_manager_v1_create(
+        bsi_server->wl_display, bsi_server->wlr_output_layout);
+    bsi_debug("Created xdg_output_manager_v1");
 
     bsi_server->wlr_scene = wlr_scene_create();
     wlr_scene_attach_output_layout(bsi_server->wlr_scene,
@@ -136,6 +146,7 @@ bsi_server_init(struct bsi_server* bsi_server)
     bsi_server_scene_init(bsi_server);
     bsi_debug("Initialized bsi_views");
 
+    bsi_server->active_workspace = NULL;
     bsi_server->shutting_down = false;
 
     return bsi_server;

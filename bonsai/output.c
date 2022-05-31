@@ -1,12 +1,14 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <wayland-server-core.h>
 #include <wayland-util.h>
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_output_damage.h>
+#include <wlr/types/wlr_output_management_v1.h>
 
 #include "bonsai/desktop/layer.h"
 #include "bonsai/desktop/view.h"
@@ -78,8 +80,13 @@ bsi_output_init(struct bsi_output* bsi_output,
     bsi_output->id = bsi_server->output.len;
     bsi_output->server = bsi_server;
     bsi_output->wlr_output = wlr_output;
-    /* Initialize damage. */
+    bsi_output->new = true;
+    /* Initialize damage. Initialize output configuration. */
     bsi_output->damage = wlr_output_damage_create(wlr_output);
+    bsi_output->wlr_output_config = wlr_output_configuration_v1_create();
+    bsi_output->wlr_output_config_head =
+        wlr_output_configuration_head_v1_create(bsi_output->wlr_output_config,
+                                                bsi_output->wlr_output);
     /* Initialize workspaces. */
     bsi_output->wspace.len = 0;
     wl_list_init(&bsi_output->wspace.workspaces);
@@ -93,6 +100,21 @@ bsi_output_init(struct bsi_output* bsi_output,
     bsi_output->last_frame = now;
 
     return bsi_output;
+}
+
+void
+bsi_output_setup_extern_progs(struct bsi_output* bsi_output)
+{
+    assert(bsi_output);
+
+    for (size_t i = 0; i < BSI_OUTPUT_EXTERN_PROG_MAX; ++i) {
+        const char* exep = bsi_output_extern_progs[i];
+        char* argsp = bsi_output_extern_progs_args[i];
+        char** argp = NULL;
+        size_t len_argp = bsi_util_split_argsp((char*)exep, argsp, " ", &argp);
+        bsi_util_forkexec(argp, len_argp);
+        bsi_util_split_free(&argp);
+    }
 }
 
 void
