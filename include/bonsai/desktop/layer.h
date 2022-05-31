@@ -103,43 +103,41 @@ struct bsi_layer_surface_subsurface
 };
 
 void
-bsi_layers_add(struct bsi_output* bsi_output,
-               struct bsi_layer_surface_toplevel* bsi_layer_surface_toplevel,
+bsi_layers_add(struct bsi_output* output,
+               struct bsi_layer_surface_toplevel* surface_toplevel,
                enum zwlr_layer_shell_v1_layer at_layer);
 
 void
 bsi_layers_arrange(struct bsi_output* output);
 
 struct bsi_layer_surface_toplevel*
-bsi_layer_surface_toplevel_init(
-    struct bsi_layer_surface_toplevel* layer_surface,
-    struct wlr_layer_surface_v1* wlr_layer_surface,
-    struct bsi_output* bsi_output);
+bsi_layer_surface_toplevel_init(struct bsi_layer_surface_toplevel* toplevel,
+                                struct wlr_layer_surface_v1* layer_surface,
+                                struct bsi_output* output);
 
 struct bsi_layer_surface_popup*
-bsi_layer_surface_popup_init(struct bsi_layer_surface_popup* layer_surface,
-                             struct wlr_xdg_popup* wlr_xdg_popup,
+bsi_layer_surface_popup_init(struct bsi_layer_surface_popup* popup,
+                             struct wlr_xdg_popup* xdg_popup,
                              enum bsi_layer_surface_type parent_type,
                              union bsi_layer_surface parent);
 
 struct bsi_layer_surface_subsurface*
 bsi_layer_surface_subsurface_init(
-    struct bsi_layer_surface_subsurface* layer_subsurface,
+    struct bsi_layer_surface_subsurface* subsurface,
     struct wlr_subsurface* wlr_subsurface,
     struct bsi_layer_surface_toplevel* member_of);
 
 struct bsi_layer_surface_toplevel*
-bsi_layer_surface_get_toplevel_parent(
-    union bsi_layer_surface bsi_layer_surface,
-    enum bsi_layer_surface_type layer_surface_type);
+bsi_layer_surface_get_toplevel_parent(union bsi_layer_surface layer_surface,
+                                      enum bsi_layer_surface_type type);
 
 void
-bsi_layer_surface_focus(struct bsi_layer_surface_toplevel* bsi_layer_surface);
+bsi_layer_surface_focus(struct bsi_layer_surface_toplevel* toplevel);
 
 void
-bsi_layer_surface_finish(union bsi_layer_surface bsi_layer_surface,
-                         enum bsi_layer_surface_type layer_surface_type);
+bsi_layer_surface_finish(union bsi_layer_surface layer_surface,
+                         enum bsi_layer_surface_type type);
 
 void
-bsi_layer_surface_destroy(union bsi_layer_surface bsi_layer_surface,
-                          enum bsi_layer_surface_type layer_surface_type);
+bsi_layer_surface_destroy(union bsi_layer_surface layer_surface,
+                          enum bsi_layer_surface_type type);

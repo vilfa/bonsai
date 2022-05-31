@@ -74,12 +74,12 @@ union bsi_cursor_event
 /**
  * @brief Sets the specified cursor image.
  *
- * @param bsi_server The server.
- * @param bsi_cursor_image The image.
+ * @param server The server.
+ * @param cursor_image The image.
  */
 void
-bsi_cursor_image_set(struct bsi_server* bsi_server,
-                     enum bsi_cursor_image bsi_cursor_image);
+bsi_cursor_image_set(struct bsi_server* server,
+                     enum bsi_cursor_image cursor_image);
 
 /**
  * @brief Returns the `bsi_view` at the cursor event surface coordinates. Pass a
@@ -100,7 +100,7 @@ bsi_cursor_image_set(struct bsi_server* bsi_server,
  * @return struct bsi_view* The view under the cursor.
  */
 void*
-bsi_cursor_scene_data_at(struct bsi_server* bsi_server,
+bsi_cursor_scene_data_at(struct bsi_server* server,
                          struct wlr_scene_surface** scene_surface_at,
                          struct wlr_surface** surface_at,
                          const char** surface_role,
@@ -110,29 +110,29 @@ bsi_cursor_scene_data_at(struct bsi_server* bsi_server,
 /**
  * @brief Process the cursor motion.
  *
- * @param bsi_server The server.
- * @param time_msec Cursor event being processed.
+ * @param server The server.
+ * @param event Cursor event being processed.
  */
 void
-bsi_cursor_process_motion(struct bsi_server* bsi_server,
-                          union bsi_cursor_event bsi_cursor_event);
+bsi_cursor_process_motion(struct bsi_server* server,
+                          union bsi_cursor_event event);
 
 /**
  * @brief Process view movement with cursor.
  *
- * @param bsi_server The server.
- * @param time_msec Cursor event being processed..
+ * @param server The server.
+ * @param event Cursor event being processed.
  */
 void
-bsi_cursor_process_view_move(struct bsi_server* bsi_server,
-                             union bsi_cursor_event bsi_cursor_event);
+bsi_cursor_process_view_move(struct bsi_server* server,
+                             union bsi_cursor_event event);
 
 /**
  * @brief
  *
- * @param bsi_server The server.
- * @param time_msec Cursor event being processed.
+ * @param server The server.
+ * @param event Cursor event being processed.
  */
 void
-bsi_cursor_process_view_resize(struct bsi_server* bsi_server,
-                               union bsi_cursor_event bsi_cursor_event);
+bsi_cursor_process_view_resize(struct bsi_server* server,
+                               union bsi_cursor_event event);

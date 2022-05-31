@@ -53,78 +53,78 @@ struct bsi_view
 /**
  * @brief Adds a view to the server views.
  *
- * @param bsi_server The server.
- * @param bsi_view The view to add.
+ * @param server The server.
+ * @param view The view to add.
  */
 void
-bsi_scene_add(struct bsi_server* bsi_server, struct bsi_view* bsi_view);
+bsi_scene_add_view(struct bsi_server* server, struct bsi_view* view);
 
 /**
  * @brief Removes a view from the server views.
  *
- * @param bsi_server The server.
- * @param bsi_view The view to remove.
+ * @param server The server.
+ * @param view The view to remove.
  */
 void
-bsi_scene_remove(struct bsi_server* bsi_server, struct bsi_view* bsi_view);
+bsi_scene_remove_view(struct bsi_server* server, struct bsi_view* view);
 
 /**
  * @brief Initializes a preallocated `bsi_view` representing a scene node.
  *
- * @param bsi_view The view.
- * @param bsi_server The server.
- * @param wlr_xdg_toplevel The xdg toplevel wrapper.
+ * @param view The view.
+ * @param server The server.
+ * @param toplevel The xdg toplevel wrapper.
  * @return struct bsi_view* Inititalized `bsi_view`.
  */
 struct bsi_view*
-bsi_view_init(struct bsi_view* bsi_view,
-              struct bsi_server* bsi_server,
-              struct wlr_xdg_toplevel* wlr_xdg_toplevel);
+bsi_view_init(struct bsi_view* view,
+              struct bsi_server* server,
+              struct wlr_xdg_toplevel* toplevel);
 
 /**
  * @brief Unlinks all active listeners from a `bsi_view`.
  *
- * @param bsi_view The view.
+ * @param view The view.
  */
 void
-bsi_view_finish(struct bsi_view* bsi_view);
+bsi_view_finish(struct bsi_view* view);
 
 /**
  * @brief Destroys (calls `free`) on the passed view.
  *
- * @param bsi_view The view to destroy.
+ * @param view The view to destroy.
  */
 void
-bsi_view_destroy(struct bsi_view* bsi_view);
+bsi_view_destroy(struct bsi_view* view);
 
 /**
  * @brief Focuses the view in the server scene graph.
  *
- * @param bsi_view The view.
+ * @param view The view.
  */
 void
-bsi_view_focus(struct bsi_view* bsi_view);
+bsi_view_focus(struct bsi_view* view);
 
 /**
  * @brief Begins interaction with a surface in the view.
  *
- * @param bsi_view The view.
- * @param bsi_cursor_mode The cursor mode.
+ * @param view The view.
+ * @param cursor_mode The cursor mode.
  * @param edges If this is a resize event, the edges from the resize event.
  */
 void
-bsi_view_interactive_begin(struct bsi_view* bsi_view,
-                           enum bsi_cursor_mode bsi_cursor_mode,
+bsi_view_interactive_begin(struct bsi_view* view,
+                           enum bsi_cursor_mode cursor_mode,
                            uint32_t edges);
 
 void
-bsi_view_set_maximized(struct bsi_view* bsi_view, bool maximized);
+bsi_view_set_maximized(struct bsi_view* view, bool maximized);
 
 void
-bsi_view_set_minimized(struct bsi_view* bsi_view, bool minimized);
+bsi_view_set_minimized(struct bsi_view* view, bool minimized);
 
 void
-bsi_view_set_fullscreen(struct bsi_view* bsi_view, bool fullscreen);
+bsi_view_set_fullscreen(struct bsi_view* view, bool fullscreen);
 
 void
-bsi_view_restore_prev(struct bsi_view* bsi_view);
+bsi_view_restore_prev(struct bsi_view* view);

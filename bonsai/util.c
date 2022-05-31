@@ -24,23 +24,19 @@ bsi_util_timespec_get()
 }
 
 void
-bsi_util_slot_connect(struct wl_signal* bsi_signal_memb,
-                      struct wl_listener* bsi_listener_memb,
+bsi_util_slot_connect(struct wl_signal* signal_memb,
+                      struct wl_listener* listener_memb,
                       wl_notify_func_t func)
 {
-    assert(bsi_listener_memb);
-    assert(bsi_signal_memb);
-    assert(func);
-
-    bsi_listener_memb->notify = func;
-    wl_signal_add(bsi_signal_memb, bsi_listener_memb);
+    listener_memb->notify = func;
+    wl_signal_add(signal_memb, listener_memb);
 }
 
 void
-bsi_util_slot_disconnect(struct wl_listener* bsi_listener_memb)
+bsi_util_slot_disconnect(struct wl_listener* listener_memb)
 {
-    assert(bsi_listener_memb);
-    wl_list_remove(&bsi_listener_memb->link);
+    assert(listener_memb);
+    wl_list_remove(&listener_memb->link);
 }
 
 bool

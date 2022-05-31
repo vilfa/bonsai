@@ -34,14 +34,14 @@ bsi_input_pointer_motion_notify(struct wl_listener* listener, void* data)
         wl_container_of(listener, pointer, listen.motion);
     struct bsi_server* server = pointer->server;
     struct wlr_pointer_motion_event* event = data;
-    union bsi_cursor_event bsi_cursor_event = { .motion = event };
+    union bsi_cursor_event cursor_event = { .motion = event };
 
     /* Firstly, move the cursor. */
     wlr_cursor_move(
         pointer->cursor, pointer->device, event->delta_x, event->delta_y);
 
     /* Secondly, check if we have any view stuff to do. */
-    bsi_cursor_process_motion(server, bsi_cursor_event);
+    bsi_cursor_process_motion(server, cursor_event);
 }
 
 void
@@ -52,14 +52,14 @@ bsi_input_pointer_motion_absolute_notify(struct wl_listener* listener,
         wl_container_of(listener, pointer, listen.motion_absolute);
     struct bsi_server* server = pointer->server;
     struct wlr_pointer_motion_absolute_event* event = data;
-    union bsi_cursor_event bsi_cursor_event = { .motion_absolute = event };
+    union bsi_cursor_event cursor_event = { .motion_absolute = event };
 
     /* Firstly, warp the absolute motion to our output layout constraints. */
     wlr_cursor_warp_absolute(
         server->wlr_cursor, pointer->device, event->x, event->y);
 
     /* Secondly, check if we have any view stuff to do. */
-    bsi_cursor_process_motion(server, bsi_cursor_event);
+    bsi_cursor_process_motion(server, cursor_event);
 }
 
 void
@@ -137,8 +137,7 @@ bsi_input_pointer_axis_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_input_pointer_frame_notify(struct wl_listener* listener,
-                               __attribute__((unused)) void* data)
+bsi_input_pointer_frame_notify(struct wl_listener* listener, void* data)
 {
     struct bsi_input_pointer* pointer =
         wl_container_of(listener, pointer, listen.frame);
@@ -265,8 +264,7 @@ bsi_input_keyboard_key_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_input_keyboard_modifiers_notify(struct wl_listener* listener,
-                                    __attribute__((unused)) void* data)
+bsi_input_keyboard_modifiers_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event modifiers from wlr_input_device");
 

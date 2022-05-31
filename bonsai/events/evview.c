@@ -22,8 +22,7 @@ struct bsi_view;
 #include "bonsai/server.h"
 
 void
-bsi_view_destroy_xdg_surface_notify(struct wl_listener* listener,
-                                    __attribute__((unused)) void* data)
+bsi_view_destroy_xdg_surface_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event destroy from wlr_xdg_surface");
 
@@ -31,7 +30,7 @@ bsi_view_destroy_xdg_surface_notify(struct wl_listener* listener,
     struct bsi_server* server = view->server;
     struct bsi_workspace* workspace = view->parent_workspace;
 
-    bsi_scene_remove(server, view);
+    bsi_scene_remove_view(server, view);
     bsi_workspace_view_remove(workspace, view);
     bsi_view_finish(view);
     bsi_view_destroy(view);
@@ -42,8 +41,7 @@ bsi_view_destroy_xdg_surface_notify(struct wl_listener* listener,
 }
 
 void
-bsi_view_map_notify(struct wl_listener* listener,
-                    __attribute__((unused)) void* data)
+bsi_view_map_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event map from wlr_xdg_surface");
 
@@ -91,13 +89,12 @@ bsi_view_map_notify(struct wl_listener* listener,
     }
 
     view->mapped = true;
-    bsi_scene_add(server, view);
+    bsi_scene_add_view(server, view);
     bsi_view_focus(view);
 }
 
 void
-bsi_view_unmap_notify(struct wl_listener* listener,
-                      __attribute__((unused)) void* data)
+bsi_view_unmap_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event unmap from wlr_xdg_surface");
 
@@ -105,12 +102,11 @@ bsi_view_unmap_notify(struct wl_listener* listener,
     struct bsi_server* server = view->server;
 
     view->mapped = false;
-    bsi_scene_remove(server, view);
+    bsi_scene_remove_view(server, view);
 }
 
 void
-bsi_view_request_maximize_notify(struct wl_listener* listener,
-                                 __attribute__((unused)) void* data)
+bsi_view_request_maximize_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event request_maximize from wlr_xdg_toplevel");
 
@@ -165,7 +161,7 @@ bsi_view_request_minimize_notify(struct wl_listener* listener, void* data)
 
     /* Remove surface from views. */
     bsi_view_set_minimized(view, requested->minimized);
-    bsi_scene_remove(server, view);
+    bsi_scene_remove_view(server, view);
 }
 
 void

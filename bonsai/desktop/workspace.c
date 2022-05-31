@@ -12,49 +12,42 @@
 #include "bonsai/util.h"
 
 void
-bsi_workspaces_add(struct bsi_output* bsi_output,
-                   struct bsi_workspace* bsi_workspace)
+bsi_workspaces_add(struct bsi_output* output, struct bsi_workspace* workspace)
 {
-    assert(bsi_output);
-    assert(bsi_workspace);
-
-    if (bsi_output->wspace.len > 0) {
+    if (output->wspace.len > 0) {
         struct bsi_workspace* workspace_active =
-            bsi_workspaces_get_active(bsi_output);
+            bsi_workspaces_get_active(output);
         assert(workspace_active);
         bsi_workspace_set_active(workspace_active, false);
-        bsi_workspace_set_active(bsi_workspace, true);
+        bsi_workspace_set_active(workspace, true);
     }
 
-    ++bsi_output->wspace.len;
-    wl_list_insert(&bsi_output->wspace.workspaces, &bsi_workspace->link);
+    ++output->wspace.len;
+    wl_list_insert(&output->wspace.workspaces, &workspace->link);
 
-    /* To whom it may concern.. */
-    bsi_util_slot_connect(&bsi_workspace->signal.active,
-                          &bsi_output->server->listen.workspace_active,
+    /* To whom it may concern... */
+    bsi_util_slot_connect(&workspace->signal.active,
+                          &output->server->listen.workspace_active,
                           bsi_server_workspace_active_notify);
-    bsi_util_slot_connect(&bsi_workspace->signal.active,
-                          &bsi_output->listen.workspace_active,
+    bsi_util_slot_connect(&workspace->signal.active,
+                          &output->listen.workspace_active,
                           bsi_output_workspace_active_notify);
 
-    bsi_workspace_set_active(bsi_workspace, true);
+    bsi_workspace_set_active(workspace, true);
 }
 
 void
-bsi_workspaces_remove(struct bsi_output* bsi_output,
-                      struct bsi_workspace* bsi_workspace)
+bsi_workspaces_remove(struct bsi_output* output,
+                      struct bsi_workspace* workspace)
 {
-    assert(bsi_output);
-    assert(bsi_workspace);
-
     /* Cannot remove the last workspace */
-    if (bsi_output->wspace.len == 1)
+    if (output->wspace.len == 1)
         return;
 
     /* Get the workspace adjacent to this one. */
     struct wl_list* workspace_adj_link;
-    for (size_t i = 0; i < bsi_output->wspace.len - 1; ++i) {
-        workspace_adj_link = bsi_output->wspace.workspaces.next;
+    for (size_t i = 0; i < output->wspace.len - 1; ++i) {
+        workspace_adj_link = output->wspace.workspaces.next;
     }
 
     struct bsi_workspace* workspace_adj =
@@ -63,26 +56,24 @@ bsi_workspaces_remove(struct bsi_output* bsi_output,
     /* Move all the views to adjacent workspace. */
     struct bsi_view* view;
     struct bsi_view* tmp;
-    wl_list_for_each_safe(view, tmp, &bsi_workspace->views, link_workspace)
+    wl_list_for_each_safe(view, tmp, &workspace->views, link_workspace)
     {
         // wl_list_remove(&view->link);
-        bsi_workspace_view_move(bsi_workspace, workspace_adj, view);
+        bsi_workspace_view_move(workspace, workspace_adj, view);
     }
 
     /* Take care of the workspaces state. */
-    --bsi_output->wspace.len;
-    wl_list_remove(&bsi_workspace->link);
-    bsi_workspace_set_active(bsi_workspace, false);
+    --output->wspace.len;
+    wl_list_remove(&workspace->link);
+    bsi_workspace_set_active(workspace, false);
     bsi_workspace_set_active(workspace_adj, true);
 }
 
 struct bsi_workspace*
-bsi_workspaces_get_active(struct bsi_output* bsi_output)
+bsi_workspaces_get_active(struct bsi_output* output)
 {
-    assert(bsi_output);
-
     struct bsi_workspace* wspace;
-    wl_list_for_each(wspace, &bsi_output->wspace.workspaces, link)
+    wl_list_for_each(wspace, &output->wspace.workspaces, link)
     {
         if (wspace->active)
             return wspace;
@@ -93,105 +84,81 @@ bsi_workspaces_get_active(struct bsi_output* bsi_output)
 }
 
 struct bsi_workspace*
-bsi_workspace_init(struct bsi_workspace* bsi_workspace,
-                   struct bsi_server* bsi_server,
-                   struct bsi_output* bsi_output,
+bsi_workspace_init(struct bsi_workspace* workspace,
+                   struct bsi_server* server,
+                   struct bsi_output* output,
                    const char* name)
 {
-    assert(bsi_workspace);
-    assert(bsi_server);
-    assert(bsi_output);
-    assert(name);
+    workspace->server = server;
+    workspace->output = output;
+    workspace->id = output->wspace.len + 1;
+    workspace->name = strdup(name);
+    workspace->active = false;
 
-    bsi_workspace->server = bsi_server;
-    bsi_workspace->output = bsi_output;
-    bsi_workspace->id = bsi_output->wspace.len + 1;
-    bsi_workspace->name = strdup(name);
-    bsi_workspace->active = false;
+    workspace->len_views = 0;
+    wl_list_init(&workspace->views);
+    wl_signal_init(&workspace->signal.active);
 
-    bsi_workspace->len_views = 0;
-    wl_list_init(&bsi_workspace->views);
-    wl_signal_init(&bsi_workspace->signal.active);
-
-    return bsi_workspace;
+    return workspace;
 }
 
 void
-bsi_workspace_finish(struct bsi_workspace* bsi_workspace)
+bsi_workspace_finish(struct bsi_workspace* workspace)
 {
-    assert(bsi_workspace);
-
-    wl_list_remove(&bsi_workspace->server->listen.workspace_active.link);
-    wl_list_remove(&bsi_workspace->output->listen.workspace_active.link);
+    wl_list_remove(&workspace->server->listen.workspace_active.link);
+    wl_list_remove(&workspace->output->listen.workspace_active.link);
 }
 
 void
-bsi_workspace_destroy(struct bsi_workspace* bsi_workspace)
+bsi_workspace_destroy(struct bsi_workspace* workspace)
 {
-    assert(bsi_workspace);
-
-    free(bsi_workspace->name);
-    free(bsi_workspace);
+    free(workspace->name);
+    free(workspace);
 }
 
 size_t
-bsi_workspace_get_global_id(struct bsi_workspace* bsi_workspace)
+bsi_workspace_get_global_id(struct bsi_workspace* workspace)
 {
-    assert(bsi_workspace);
-
-    struct bsi_output* bsi_output = bsi_workspace->output;
+    struct bsi_output* bsi_output = workspace->output;
     if (bsi_output->id > 0)
-        return bsi_output->id * 10 + bsi_workspace->id;
+        return bsi_output->id * 10 + workspace->id;
     else
-        return bsi_workspace->id;
+        return workspace->id;
 }
 
 void
-bsi_workspace_set_active(struct bsi_workspace* bsi_workspace, bool active)
+bsi_workspace_set_active(struct bsi_workspace* workspace, bool active)
 {
-    assert(bsi_workspace);
-
-    bsi_workspace->active = active;
-    wl_signal_emit(&bsi_workspace->signal.active, bsi_workspace);
+    workspace->active = active;
+    wl_signal_emit(&workspace->signal.active, workspace);
 }
 
 void
-bsi_workspace_view_add(struct bsi_workspace* bsi_workspace,
-                       struct bsi_view* bsi_view)
+bsi_workspace_view_add(struct bsi_workspace* workspace, struct bsi_view* view)
 {
-    assert(bsi_workspace);
-    assert(bsi_view);
-
-    ++bsi_workspace->len_views;
-    wl_list_insert(&bsi_workspace->views, &bsi_view->link_workspace);
-    bsi_util_slot_connect(&bsi_workspace->signal.active,
-                          &bsi_view->listen.workspace_active,
+    ++workspace->len_views;
+    wl_list_insert(&workspace->views, &view->link_workspace);
+    bsi_util_slot_connect(&workspace->signal.active,
+                          &view->listen.workspace_active,
                           bsi_view_workspace_active_notify);
-    bsi_view->parent_workspace = bsi_workspace;
+    view->parent_workspace = workspace;
 }
 
 void
-bsi_workspace_view_remove(struct bsi_workspace* bsi_workspace,
-                          struct bsi_view* bsi_view)
+bsi_workspace_view_remove(struct bsi_workspace* workspace,
+                          struct bsi_view* view)
 {
-    assert(bsi_workspace);
-    assert(bsi_view);
-
-    --bsi_workspace->len_views;
-    wl_list_remove(&bsi_view->link_workspace);
-    bsi_util_slot_disconnect(&bsi_view->listen.workspace_active);
-    bsi_view->parent_workspace = NULL;
+    --workspace->len_views;
+    wl_list_remove(&view->link_workspace);
+    bsi_util_slot_disconnect(&view->listen.workspace_active);
+    view->parent_workspace = NULL;
 }
 
 void
-bsi_workspace_view_move(struct bsi_workspace* bsi_workspace_from,
-                        struct bsi_workspace* bsi_workspace_to,
-                        struct bsi_view* bsi_view)
+bsi_workspace_view_move(struct bsi_workspace* workspace_from,
+                        struct bsi_workspace* workspace_to,
+                        struct bsi_view* view)
 {
-    assert(bsi_workspace_from);
-    assert(bsi_workspace_to);
-    assert(bsi_view);
-
-    bsi_workspace_view_remove(bsi_workspace_from, bsi_view);
-    bsi_workspace_view_add(bsi_workspace_to, bsi_view);
+    bsi_workspace_view_remove(workspace_from, view);
+    bsi_workspace_view_add(workspace_to, view);
 }

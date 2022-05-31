@@ -18,8 +18,7 @@
 #include "bonsai/util.h"
 
 void
-bsi_output_frame_notify(struct wl_listener* listener,
-                        __attribute((unused)) void* data)
+bsi_output_frame_notify(struct wl_listener* listener, void* data)
 {
     struct bsi_output* output = wl_container_of(listener, output, listen.frame);
     struct wlr_scene* wlr_scene = output->server->wlr_scene;
@@ -33,8 +32,7 @@ bsi_output_frame_notify(struct wl_listener* listener,
 }
 
 void
-bsi_output_destroy_notify(struct wl_listener* listener,
-                          __attribute__((unused)) void* data)
+bsi_output_destroy_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event destroy from wlr_output");
 

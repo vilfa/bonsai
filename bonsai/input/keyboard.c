@@ -23,20 +23,20 @@
 #define GIMME_ALL_KEYBINDINGS
 
 bool
-bsi_keyboard_keybinds_process(struct bsi_input_keyboard* bsi_input_keyboard,
+bsi_keyboard_keybinds_process(struct bsi_input_keyboard* keyboard,
                               struct wlr_keyboard_key_event* event)
 {
-    struct bsi_server* bsi_server = bsi_input_keyboard->server;
-    struct wlr_keyboard* keyboard = bsi_input_keyboard->device->keyboard;
+    struct bsi_server* server = keyboard->server;
+    struct wlr_keyboard* wlr_keyboard = keyboard->device->keyboard;
 
     /* Translate libinput -> xkbcommon keycode. */
     uint32_t keycode = event->keycode + 8;
-    uint32_t mods = wlr_keyboard_get_modifiers(keyboard);
+    uint32_t mods = wlr_keyboard_get_modifiers(wlr_keyboard);
 
     /* Get keysyms based on keyboard keymap. */
     const xkb_keysym_t* syms;
     const size_t syms_len =
-        xkb_state_key_get_syms(keyboard->xkb_state, keycode, &syms);
+        xkb_state_key_get_syms(wlr_keyboard->xkb_state, keycode, &syms);
 
     if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED && mods != 0) {
         uint32_t combo;
@@ -59,14 +59,14 @@ bsi_keyboard_keybinds_process(struct bsi_input_keyboard* bsi_input_keyboard,
         else
             return false;
 
-        return bsi_keyboard_keybinds_handle(bsi_server, combo, syms, syms_len);
+        return bsi_keyboard_keybinds_handle(server, combo, syms, syms_len);
     }
 
     return false;
 }
 
 bool
-bsi_keyboard_keybinds_handle(struct bsi_server* bsi_server,
+bsi_keyboard_keybinds_handle(struct bsi_server* server,
                              enum bsi_keyboard_modifier combo,
                              const xkb_keysym_t* syms,
                              const size_t syms_len)
@@ -75,41 +75,39 @@ bsi_keyboard_keybinds_handle(struct bsi_server* bsi_server,
     switch (combo) {
         case BSI_KEYBOARD_MOD_CTRL:
             for (size_t i = 0; i < syms_len; ++i)
-                handled = bsi_keyboard_mod_ctrl_handle(bsi_server, syms[i]);
+                handled = bsi_keyboard_mod_ctrl_handle(server, syms[i]);
             break;
         case BSI_KEYBOARD_MOD_ALT:
             for (size_t i = 0; i < syms_len; ++i)
-                handled = bsi_keyboard_mod_alt_handle(bsi_server, syms[i]);
+                handled = bsi_keyboard_mod_alt_handle(server, syms[i]);
             break;
         case BSI_KEYBOARD_MOD_SUPER:
             for (size_t i = 0; i < syms_len; ++i)
-                handled = bsi_keyboard_mod_super_handle(bsi_server, syms[i]);
+                handled = bsi_keyboard_mod_super_handle(server, syms[i]);
             break;
         case BSI_KEYBOARD_MOD_CTRL_ALT:
             for (size_t i = 0; i < syms_len; ++i)
-                handled = bsi_keyboard_mod_ctrl_alt_handle(bsi_server, syms[i]);
+                handled = bsi_keyboard_mod_ctrl_alt_handle(server, syms[i]);
             break;
         case BSI_KEYBOARD_MOD_CTRL_SHIFT:
             for (size_t i = 0; i < syms_len; ++i)
-                handled =
-                    bsi_keyboard_mod_ctrl_shift_handle(bsi_server, syms[i]);
+                handled = bsi_keyboard_mod_ctrl_shift_handle(server, syms[i]);
             break;
         case BSI_KEYBOARD_MOD_CTRL_ALT_SHIFT:
             for (size_t i = 0; i < syms_len; ++i)
                 handled =
-                    bsi_keyboard_mod_ctrl_alt_shift_handle(bsi_server, syms[i]);
+                    bsi_keyboard_mod_ctrl_alt_shift_handle(server, syms[i]);
             break;
         case BSI_KEYBOARD_MOD_SUPER_SHIFT:
             for (size_t i = 0; i < syms_len; i++)
-                handled =
-                    bsi_keyboard_mod_super_shift_handle(bsi_server, syms[i]);
+                handled = bsi_keyboard_mod_super_shift_handle(server, syms[i]);
             break;
     }
     return handled;
 }
 
 bool
-bsi_keyboard_mod_ctrl_handle(struct bsi_server* bsi_server, xkb_keysym_t sym)
+bsi_keyboard_mod_ctrl_handle(struct bsi_server* server, xkb_keysym_t sym)
 {
 #ifdef GIMME_ALL_KEYBINDINGS
     bsi_debug("Got Ctrl mod");
@@ -118,7 +116,7 @@ bsi_keyboard_mod_ctrl_handle(struct bsi_server* bsi_server, xkb_keysym_t sym)
 }
 
 bool
-bsi_keyboard_mod_alt_handle(struct bsi_server* bsi_server, xkb_keysym_t sym)
+bsi_keyboard_mod_alt_handle(struct bsi_server* server, xkb_keysym_t sym)
 {
 #ifdef GIMME_ALL_KEYBINDINGS
     bsi_debug("Got Alt mod");
@@ -127,7 +125,7 @@ bsi_keyboard_mod_alt_handle(struct bsi_server* bsi_server, xkb_keysym_t sym)
 }
 
 bool
-bsi_keyboard_mod_super_handle(struct bsi_server* bsi_server, xkb_keysym_t sym)
+bsi_keyboard_mod_super_handle(struct bsi_server* server, xkb_keysym_t sym)
 {
 #ifdef GIMME_ALL_KEYBINDINGS
     bsi_debug("Got Super mod");
@@ -153,8 +151,7 @@ bsi_keyboard_mod_super_handle(struct bsi_server* bsi_server, xkb_keysym_t sym)
 }
 
 bool
-bsi_keyboard_mod_ctrl_alt_handle(struct bsi_server* bsi_server,
-                                 xkb_keysym_t sym)
+bsi_keyboard_mod_ctrl_alt_handle(struct bsi_server* server, xkb_keysym_t sym)
 {
 #ifdef GIMME_ALL_KEYBINDINGS
     bsi_debug("Got Ctrl+Alt mod");
@@ -163,8 +160,7 @@ bsi_keyboard_mod_ctrl_alt_handle(struct bsi_server* bsi_server,
 }
 
 bool
-bsi_keyboard_mod_ctrl_shift_handle(struct bsi_server* bsi_server,
-                                   xkb_keysym_t sym)
+bsi_keyboard_mod_ctrl_shift_handle(struct bsi_server* server, xkb_keysym_t sym)
 {
 #ifdef GIMME_ALL_KEYBINDINGS
     bsi_debug("Got Ctrl+Shift mod");
@@ -173,7 +169,7 @@ bsi_keyboard_mod_ctrl_shift_handle(struct bsi_server* bsi_server,
 }
 
 bool
-bsi_keyboard_mod_ctrl_alt_shift_handle(struct bsi_server* bsi_server,
+bsi_keyboard_mod_ctrl_alt_shift_handle(struct bsi_server* server,
                                        xkb_keysym_t sym)
 {
 #ifdef GIMME_ALL_KEYBINDINGS
@@ -183,8 +179,7 @@ bsi_keyboard_mod_ctrl_alt_shift_handle(struct bsi_server* bsi_server,
 }
 
 bool
-bsi_keyboard_mod_super_shift_handle(struct bsi_server* bsi_server,
-                                    xkb_keysym_t sym)
+bsi_keyboard_mod_super_shift_handle(struct bsi_server* server, xkb_keysym_t sym)
 {
 #ifdef GIMME_ALL_KEYBINDINGS
     bsi_debug("Got Super+Shift mod");
@@ -192,7 +187,7 @@ bsi_keyboard_mod_super_shift_handle(struct bsi_server* bsi_server,
     switch (sym) {
         case XKB_KEY_Q:
             bsi_info("Got Super+Shift+Q -> exit");
-            bsi_server_exit(bsi_server);
+            bsi_server_exit(server);
             break;
     }
     return false;

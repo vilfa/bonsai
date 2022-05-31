@@ -5,6 +5,7 @@
  *
  */
 
+#include "bonsai/desktop/decoration.h"
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -48,7 +49,7 @@ bsi_backend_new_output_notify(struct wl_listener* listener, void* data)
     bsi_debug("Got event new_output from wlr_backend");
 
     struct bsi_server* server =
-        wl_container_of(listener, server, listen.backend_new_output);
+        wl_container_of(listener, server, listen.new_output);
     struct wlr_output* wlr_output = data;
 
     wlr_output_init_render(
@@ -102,7 +103,7 @@ bsi_backend_new_input_notify(struct wl_listener* listener, void* data)
     bsi_debug("Got event new_input from wlr_backend");
 
     struct bsi_server* server =
-        wl_container_of(listener, server, listen.backend_new_input);
+        wl_container_of(listener, server, listen.new_input);
     struct wlr_input_device* device = data;
 
     switch (device->type) {
@@ -350,7 +351,7 @@ bsi_seat_request_set_cursor_notify(struct wl_listener* listener, void* data)
     bsi_debug("Got event request_set_cursor from wlr_seat");
 
     struct bsi_server* server =
-        wl_container_of(listener, server, listen.seat_request_set_cursor);
+        wl_container_of(listener, server, listen.request_set_cursor);
     struct wlr_seat_pointer_request_set_cursor_event* event = data;
 
     if (wlr_seat_client_validate_event_serial(event->seat_client,
@@ -367,7 +368,7 @@ bsi_seat_request_set_selection_notify(struct wl_listener* listener, void* data)
     bsi_debug("Got event request_set_selection from wlr_seat");
 
     struct bsi_server* server =
-        wl_container_of(listener, server, listen.seat_request_set_selection);
+        wl_container_of(listener, server, listen.request_set_selection);
     struct wlr_seat_request_set_selection_event* event = data;
 
     /* This function also validates the event serial. */
@@ -380,8 +381,8 @@ bsi_seat_request_set_primary_selection_notify(struct wl_listener* listener,
 {
     bsi_debug("Got event request_set_primary_selection from wlr_seat");
 
-    struct bsi_server* server = wl_container_of(
-        listener, server, listen.wlr_seat_request_set_primary_selection);
+    struct bsi_server* server =
+        wl_container_of(listener, server, listen.request_set_primary_selection);
     struct wlr_seat_request_set_primary_selection_event* event = data;
 
     /* This function also validates the event serial. */
@@ -401,7 +402,7 @@ bsi_xdg_shell_new_surface_notify(struct wl_listener* listener, void* data)
     bsi_debug("Got event new_surface from wlr_xdg_shell");
 
     struct bsi_server* server =
-        wl_container_of(listener, server, listen.xdg_shell_new_surface);
+        wl_container_of(listener, server, listen.xdg_new_surface);
     struct wlr_xdg_surface* xdg_surface = data;
 
     assert(xdg_surface->role != WLR_XDG_SURFACE_ROLE_NONE);
@@ -467,7 +468,7 @@ bsi_layer_shell_new_surface_notify(struct wl_listener* listener, void* data)
     bsi_debug("Got event new_surface from wlr_layer_shell_v1");
 
     struct bsi_server* server =
-        wl_container_of(listener, server, listen.layer_shell_new_surface);
+        wl_container_of(listener, server, listen.layer_new_surface);
     struct wlr_layer_surface_v1* layer_surface = data;
 
     struct bsi_output* active_output;
@@ -512,4 +513,28 @@ bsi_layer_shell_new_surface_notify(struct wl_listener* listener, void* data)
     layer_surface->current = layer_surface->pending;
     bsi_layers_arrange(active_output);
     layer_surface->current = old;
+}
+
+void
+bsi_decoration_manager_new_decoration_notify(struct wl_listener* listener,
+                                             void* data)
+{
+    bsi_debug("Got event new_decoration from wlr_decoration_manager");
+
+    struct bsi_server* server =
+        wl_container_of(listener, server, listen.new_decoration);
+    struct wlr_server_decoration* deco = data;
+
+    struct bsi_server_decoration* server_deco =
+        calloc(1, sizeof(struct bsi_server_decoration));
+    bsi_server_decoration_init(server_deco, server, deco);
+
+    bsi_util_slot_connect(&deco->events.destroy,
+                          &server_deco->listen.destroy,
+                          bsi_server_decoration_destroy_notify);
+    bsi_util_slot_connect(&deco->events.mode,
+                          &server_deco->listen.mode,
+                          bsi_server_decoration_mode_notify);
+
+    bsi_scene_add_decoration(server, server_deco);
 }

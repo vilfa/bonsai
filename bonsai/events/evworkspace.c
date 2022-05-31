@@ -16,9 +16,7 @@
 #include "bonsai/server.h"
 
 void
-bsi_server_workspace_active_notify(
-    __attribute__((unused)) struct wl_listener* listener,
-    void* data)
+bsi_server_workspace_active_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event active for bsi_server from bsi_workspace");
 
@@ -26,7 +24,6 @@ bsi_server_workspace_active_notify(
     wspace->server->active_workspace = wspace;
 
     if (wspace->output->new) {
-        // TODO: Setup external programs for this workspace -- wallpaper, etc.
         bsi_output_setup_extern_progs(wspace->output);
         wspace->output->new = false;
     }
@@ -37,9 +34,7 @@ bsi_server_workspace_active_notify(
 }
 
 void
-bsi_output_workspace_active_notify(
-    __attribute__((unused)) struct wl_listener* listener,
-    void* data)
+bsi_output_workspace_active_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event active for bsi_output from bsi_workspace");
 
@@ -47,9 +42,7 @@ bsi_output_workspace_active_notify(
 }
 
 void
-bsi_view_workspace_active_notify(
-    __attribute__((unused)) struct wl_listener* listener,
-    void* data)
+bsi_view_workspace_active_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event active for bsi_view from bsi_workspace");
 

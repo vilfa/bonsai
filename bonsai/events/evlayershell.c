@@ -198,15 +198,12 @@ bsi_layers_arrange(struct bsi_output* output)
             struct bsi_layer_surface_toplevel* toplevel;
             wl_list_for_each(toplevel, &output->layer.layers[i], link)
             {
-                // if (toplevel->layer_surface->current.keyboard_interactive !=
-                // ZWLR_LAYER_SURFACE_V1_KEYBOARD_INTERACTIVITY_NONE) {
                 wlr_seat_keyboard_notify_enter(server->wlr_seat,
                                                toplevel->layer_surface->surface,
                                                keyboard->keycodes,
                                                keyboard->num_keycodes,
                                                &keyboard->modifiers);
                 focused = true;
-                // }
             }
         }
     }

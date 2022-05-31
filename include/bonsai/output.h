@@ -70,72 +70,40 @@ static char* bsi_output_extern_progs_args[] = {
     [BSI_OUTPUT_EXTERN_PROG_WALLPAPER] = "--image=assets/Wallpaper-Default.jpg",
 };
 
-/**
- * @brief Adds an output to the known server outputs.
- *
- * @param bsi_server The server.
- * @param bsi_output Pointer to output.
- */
 void
-bsi_outputs_add(struct bsi_server* bsi_server, struct bsi_output* bsi_output);
+bsi_outputs_add(struct bsi_server* server, struct bsi_output* output);
 
 /**
  * @brief Gets the bsi_output that contains the wlr_output
  *
- * @param bsi_server The server.
+ * @param server The server.
  * @param wlr_output The output.
  * @return struct bsi_output* The output container.
  */
 struct bsi_output*
-bsi_outputs_find(struct bsi_server* bsi_server, struct wlr_output* wlr_output);
+bsi_outputs_find(struct bsi_server* server, struct wlr_output* wlr_output);
 
-/**
- * @brief Removes an output from the known server outputs. Make sure to destroy
- * the output.
- *
- * @param bsi_server The server.
- * @param bsi_output Pointer to output.
- */
 void
-bsi_outputs_remove(struct bsi_server* bsi_server,
-                   struct bsi_output* bsi_output);
+bsi_outputs_remove(struct bsi_server* server, struct bsi_output* output);
 
 struct bsi_output*
-bsi_outputs_get_active(struct bsi_server* bsi_server);
+bsi_outputs_get_active(struct bsi_server* server);
 
-/**
- * @brief Initializes a preallocated bsi_output.
- *
- * @param bsi_output The bsi_output.
- * @param bsi_server The server.
- * @param wlr_output The output data.
- * @return struct bsi_output* Pointer to the initialized struct.
- */
 struct bsi_output*
-bsi_output_init(struct bsi_output* bsi_output,
-                struct bsi_server* bsi_server,
+bsi_output_init(struct bsi_output* output,
+                struct bsi_server* server,
                 struct wlr_output* wlr_output);
 
 void
-bsi_output_setup_extern_progs(struct bsi_output* bsi_output);
+bsi_output_setup_extern_progs(struct bsi_output* output);
 
 void
 bsi_output_surface_damage(struct bsi_output* output,
-                          struct wlr_surface* surface,
+                          struct wlr_surface* wlr_surface,
                           bool entire_output);
 
-/**
- * @brief Remove all active listeners from the specified `bsi_output`.
- *
- * @param bsi_output The output.
- */
 void
-bsi_output_finish(struct bsi_output* bsi_output);
+bsi_output_finish(struct bsi_output* output);
 
-/**
- * @brief Destroys (calls `free`) on an output.
- *
- * @param bsi_output The output.
- */
 void
-bsi_output_destroy(struct bsi_output* bsi_output);
+bsi_output_destroy(struct bsi_output* output);

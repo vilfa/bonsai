@@ -29,6 +29,8 @@ extern bsi_notify_func_t bsi_seat_request_start_drag_notify;
 extern bsi_notify_func_t bsi_xdg_shell_new_surface_notify;
 /* wlr_layer_shell_v1 */
 extern bsi_notify_func_t bsi_layer_shell_new_surface_notify;
+/* wlr_decoration_manager */
+extern bsi_notify_func_t bsi_decoration_manager_new_decoration_notify;
 
 /* bsi_view */
 extern bsi_notify_func_t bsi_view_destroy_xdg_surface_notify;
@@ -94,3 +96,7 @@ extern bsi_notify_func_t bsi_layer_surface_subsurface_map_notify;
 extern bsi_notify_func_t bsi_layer_surface_subsurface_unmap_notify;
 extern bsi_notify_func_t bsi_layer_surface_subsurface_destroy_notify;
 extern bsi_notify_func_t bsi_layer_surface_subsurface_wlr_surface_commit_notify;
+
+/* bsi_server_decoration */
+extern bsi_notify_func_t bsi_server_decoration_destroy_notify;
+extern bsi_notify_func_t bsi_server_decoration_mode_notify;
