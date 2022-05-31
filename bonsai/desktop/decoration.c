@@ -31,14 +31,9 @@ bsi_server_decoration_init(struct bsi_server_decoration* deco,
 }
 
 void
-bsi_server_decoration_finish(struct bsi_server_decoration* deco)
+bsi_server_decoration_destroy(struct bsi_server_decoration* deco)
 {
     wl_list_remove(&deco->listen.destroy.link);
     wl_list_remove(&deco->listen.mode.link);
-}
-
-void
-bsi_server_decoration_destroy(struct bsi_server_decoration* deco)
-{
     free(deco);
 }

@@ -1,9 +1,7 @@
-#include "bonsai/desktop/workspace.h"
-#include "bonsai/log.h"
-#include <stdint.h>
 #define _POSIX_C_SOURCE 200809L
 #include <assert.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <wayland-server-core.h>
@@ -15,7 +13,9 @@
 #include <wlr/util/edges.h>
 
 #include "bonsai/desktop/view.h"
+#include "bonsai/desktop/workspace.h"
 #include "bonsai/input/cursor.h"
+#include "bonsai/log.h"
 #include "bonsai/output.h"
 #include "bonsai/server.h"
 
@@ -77,7 +77,7 @@ bsi_view_init(struct bsi_view* view,
 }
 
 void
-bsi_view_finish(struct bsi_view* view)
+bsi_view_destroy(struct bsi_view* view)
 {
     /* wlr_xdg_surface */
     wl_list_remove(&view->listen.destroy.link);
@@ -91,12 +91,7 @@ bsi_view_finish(struct bsi_view* view)
     wl_list_remove(&view->listen.request_resize.link);
     wl_list_remove(&view->listen.request_show_window_menu.link);
     /* bsi_workspaces */
-    wl_list_remove(&view->listen.workspace_active.link);
-}
-
-void
-bsi_view_destroy(struct bsi_view* view)
-{
+    // wl_list_remove(&view->listen.workspace_active.link);
     free(view);
 }
 
@@ -215,7 +210,7 @@ bsi_view_set_maximized(struct bsi_view* view, bool maximized)
         struct bsi_output* output = view->parent_workspace->output;
         struct wlr_box output_box;
         wlr_output_layout_get_box(
-            server->wlr_output_layout, output->wlr_output, &output_box);
+            server->wlr_output_layout, output->output, &output_box);
         wlr_scene_node_set_position(view->scene_node, 0, 0);
         wlr_xdg_toplevel_set_size(
             view->toplevel, output_box.width, output_box.height);
@@ -275,7 +270,7 @@ bsi_view_set_fullscreen(struct bsi_view* view, bool fullscreen)
         struct bsi_output* output = view->parent_workspace->output;
         struct wlr_box output_box;
         wlr_output_layout_get_box(
-            server->wlr_output_layout, output->wlr_output, &output_box);
+            server->wlr_output_layout, output->output, &output_box);
         wlr_scene_node_set_position(view->scene_node, 0, 0);
         wlr_xdg_toplevel_set_size(
             view->toplevel, output_box.width, output_box.height);

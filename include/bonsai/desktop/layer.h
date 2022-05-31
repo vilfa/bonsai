@@ -56,8 +56,8 @@ struct bsi_layer_surface_toplevel
         struct wl_listener destroy;
         struct wl_listener new_popup;
         /* wlr_surface -> layer_surface::surface */
-        struct wl_listener surface_commit;
-        struct wl_listener surface_new_subsurface;
+        struct wl_listener commit;
+        struct wl_listener new_subsurface;
     } listen;
 
     struct wl_list link;
@@ -78,7 +78,7 @@ struct bsi_layer_surface_popup
         struct wl_listener destroy;
         struct wl_listener new_popup;
         /* wlr_surface -> popup::base::surface */
-        struct wl_listener surface_commit;
+        struct wl_listener commit;
     } listen;
 };
 
@@ -96,7 +96,7 @@ struct bsi_layer_surface_subsurface
         struct wl_listener unmap;
         struct wl_listener destroy;
         /* wlr_surface -> subsurface::surface */
-        struct wl_listener surface_commit;
+        struct wl_listener commit;
     } listen;
 
     struct wl_list link;
@@ -133,10 +133,6 @@ bsi_layer_surface_get_toplevel_parent(union bsi_layer_surface layer_surface,
 
 void
 bsi_layer_surface_focus(struct bsi_layer_surface_toplevel* toplevel);
-
-void
-bsi_layer_surface_finish(union bsi_layer_surface layer_surface,
-                         enum bsi_layer_surface_type type);
 
 void
 bsi_layer_surface_destroy(union bsi_layer_surface layer_surface,

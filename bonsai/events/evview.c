@@ -19,10 +19,11 @@ struct bsi_view;
 #include "bonsai/events.h"
 #include "bonsai/input/cursor.h"
 #include "bonsai/log.h"
+#include "bonsai/output.h"
 #include "bonsai/server.h"
 
 void
-bsi_view_destroy_xdg_surface_notify(struct wl_listener* listener, void* data)
+handle_xdg_surf_destroy(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event destroy from wlr_xdg_surface");
 
@@ -32,7 +33,6 @@ bsi_view_destroy_xdg_surface_notify(struct wl_listener* listener, void* data)
 
     bsi_scene_remove_view(server, view);
     bsi_workspace_view_remove(workspace, view);
-    bsi_view_finish(view);
     bsi_view_destroy(view);
 
     bsi_info("Workspace %s now has %ld views",
@@ -41,7 +41,7 @@ bsi_view_destroy_xdg_surface_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_view_map_notify(struct wl_listener* listener, void* data)
+handle_xdg_surf_map(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event map from wlr_xdg_surface");
 
@@ -55,7 +55,7 @@ bsi_view_map_notify(struct wl_listener* listener, void* data)
         struct wlr_box wants_box;
         int32_t output_w, output_h;
         wlr_output_effective_resolution(
-            view->parent_workspace->output->wlr_output, &output_w, &output_h);
+            view->parent_workspace->output->output, &output_w, &output_h);
         wlr_xdg_surface_get_geometry(toplevel->base, &wants_box);
         wants_box.x = (output_w - wants_box.width) / 2;
         wants_box.y = (output_h - wants_box.height) / 2;
@@ -94,7 +94,7 @@ bsi_view_map_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_view_unmap_notify(struct wl_listener* listener, void* data)
+handle_xdg_surf_unmap(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event unmap from wlr_xdg_surface");
 
@@ -106,7 +106,7 @@ bsi_view_unmap_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_view_request_maximize_notify(struct wl_listener* listener, void* data)
+handle_toplvl_request_maximize(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event request_maximize from wlr_xdg_toplevel");
 
@@ -126,7 +126,7 @@ bsi_view_request_maximize_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_view_request_fullscreen_notify(struct wl_listener* listener, void* data)
+handle_toplvl_request_fullscreen(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event request_fullscreen from wlr_xdg_toplevel");
 
@@ -142,7 +142,7 @@ bsi_view_request_fullscreen_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_view_request_minimize_notify(struct wl_listener* listener, void* data)
+handle_toplvl_request_minimize(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event request_minimize from wlr_xdg_toplevel");
 
@@ -165,7 +165,7 @@ bsi_view_request_minimize_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_view_request_move_notify(struct wl_listener* listener, void* data)
+handle_toplvl_request_move(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event request_move from wlr_xdg_toplevel");
 
@@ -180,7 +180,7 @@ bsi_view_request_move_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_view_request_resize_notify(struct wl_listener* listener, void* data)
+handle_toplvl_request_resize(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event request_resize from wlr_xdg_toplevel");
 
@@ -195,8 +195,7 @@ bsi_view_request_resize_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_view_request_show_window_menu_notify(struct wl_listener* listener,
-                                         void* data)
+handle_toplvl_request_show_window_menu(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event request_show_window_menu from wlr_xdg_toplevel");
 

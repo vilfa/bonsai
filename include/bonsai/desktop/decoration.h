@@ -44,7 +44,4 @@ bsi_server_decoration_init(struct bsi_server_decoration* deco,
                            struct wlr_server_decoration* wlr_server_deco);
 
 void
-bsi_server_decoration_finish(struct bsi_server_decoration* deco);
-
-void
 bsi_server_decoration_destroy(struct bsi_server_decoration* deco);

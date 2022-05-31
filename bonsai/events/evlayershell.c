@@ -64,7 +64,7 @@ bsi_output_layer_arrange(struct bsi_output* output,
 {
     struct wlr_box full_box = { 0 }; /* Full output area. */
     wlr_output_effective_resolution(
-        output->wlr_output, &full_box.width, &full_box.height);
+        output->output, &full_box.width, &full_box.height);
 
     struct bsi_layer_surface_toplevel* layer_toplevel;
     wl_list_for_each(layer_toplevel, shell_layer, link)
@@ -161,7 +161,7 @@ bsi_layers_arrange(struct bsi_output* output)
 {
     struct wlr_box usable_box = { 0 }; /* Output usable area. */
     wlr_output_effective_resolution(
-        output->wlr_output, &usable_box.width, &usable_box.height);
+        output->output, &usable_box.width, &usable_box.height);
 
     /* Firstly, arrange exclusive layers. */
     for (size_t i = 0; i < 4; ++i) {
@@ -214,7 +214,7 @@ bsi_layers_arrange(struct bsi_output* output)
  */
 /* wlr_layer_surface_v1 -> layer_surface */
 void
-bsi_layer_surface_toplevel_map_notify(struct wl_listener* listener, void* data)
+handle_layershell_toplvl_map(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event map from bsi_layer_surface_toplevel");
 
@@ -223,14 +223,13 @@ bsi_layer_surface_toplevel_map_notify(struct wl_listener* listener, void* data)
     struct bsi_output* output = layer_toplevel->output;
 
     wlr_surface_send_enter(layer_toplevel->layer_surface->surface,
-                           output->wlr_output);
+                           output->output);
     bsi_output_surface_damage(
         output, layer_toplevel->layer_surface->surface, true);
 }
 
 void
-bsi_layer_surface_toplevel_unmap_notify(struct wl_listener* listener,
-                                        void* data)
+handle_layershell_toplvl_unmap(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event unmap from bsi_layer_surface_toplevel");
 
@@ -252,8 +251,7 @@ bsi_layer_surface_toplevel_unmap_notify(struct wl_listener* listener,
 }
 
 void
-bsi_layer_surface_toplevel_destroy_notify(struct wl_listener* listener,
-                                          void* data)
+handle_layershell_toplvl_destroy(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event destroy from bsi_layer_surface_toplevel");
 
@@ -266,15 +264,13 @@ bsi_layer_surface_toplevel_destroy_notify(struct wl_listener* listener,
         return;
 
     union bsi_layer_surface layer_surface = { .toplevel = layer_toplevel };
-    bsi_layer_surface_finish(layer_surface, BSI_LAYER_SURFACE_TOPLEVEL);
     bsi_layer_surface_destroy(layer_surface, BSI_LAYER_SURFACE_TOPLEVEL);
     /* Rearrange this output. */
     bsi_layers_arrange(output);
 }
 
 void
-bsi_layer_surface_toplevel_new_popup_notify(struct wl_listener* listener,
-                                            void* data)
+handle_layershell_toplvl_new_popup(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event new_popup from bsi_layer_surface_toplevel");
 
@@ -290,27 +286,27 @@ bsi_layer_surface_toplevel_new_popup_notify(struct wl_listener* listener,
 
     bsi_util_slot_connect(&xdg_popup->base->events.map,
                           &layer_popup->listen.map,
-                          bsi_layer_surface_popup_map_notify);
+                          handle_layershell_popup_map);
     bsi_util_slot_connect(&xdg_popup->base->events.unmap,
                           &layer_popup->listen.unmap,
-                          bsi_layer_surface_popup_unmap_notify);
+                          handle_layershell_popup_unmap);
     bsi_util_slot_connect(&xdg_popup->base->events.destroy,
                           &layer_popup->listen.destroy,
-                          bsi_layer_surface_popup_destroy_notify);
+                          handle_layershell_popup_destroy);
     bsi_util_slot_connect(&xdg_popup->base->events.new_popup,
                           &layer_popup->listen.new_popup,
-                          bsi_layer_surface_popup_new_popup_notify);
+                          handle_layershell_popup_new_popup);
     bsi_util_slot_connect(&xdg_popup->base->surface->events.commit,
-                          &layer_popup->listen.surface_commit,
-                          bsi_layer_surface_popup_wlr_surface_commit_notify);
+                          &layer_popup->listen.commit,
+                          handle_layershell_popup_commit);
 
     // TODO: Maybe add a function for this.
     /* Unconstrain popup to its largest parent box. */
     struct wlr_box toplevel_parent_box = {
         .x = -layer_toplevel->box.x,
         .y = -layer_toplevel->box.y,
-        .width = layer_toplevel->output->wlr_output->width,
-        .height = layer_toplevel->output->wlr_output->height,
+        .width = layer_toplevel->output->output->width,
+        .height = layer_toplevel->output->output->height,
     };
     wlr_xdg_popup_unconstrain_from_box(layer_popup->popup,
                                        &toplevel_parent_box);
@@ -319,14 +315,12 @@ bsi_layer_surface_toplevel_new_popup_notify(struct wl_listener* listener,
 /* wlr_surface -> layer_surface::surface */
 
 void
-bsi_layer_surface_toplevel_wlr_surface_commit_notify(
-    struct wl_listener* listener,
-    void* data)
+handle_layershell_toplvl_commit(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event commit from bsi_layer_surface_toplevel");
 
     struct bsi_layer_surface_toplevel* layer_toplevel =
-        wl_container_of(listener, layer_toplevel, listen.surface_commit);
+        wl_container_of(listener, layer_toplevel, listen.commit);
     struct bsi_output* output = layer_toplevel->output;
 
     bsi_debug("Toplevel namespace is '%s'",
@@ -357,15 +351,14 @@ bsi_layer_surface_toplevel_wlr_surface_commit_notify(
 }
 
 void
-bsi_layer_surface_toplevel_wlr_surface_new_subsurface_notify(
-    struct wl_listener* listener,
-    void* data)
+handle_layershell_toplvl_new_subsurface(struct wl_listener* listener,
+                                        void* data)
 {
     bsi_debug("Got event new_subsurface from bsi_layer_surface_toplevel");
 
     struct wlr_subsurface* wlr_subsurface = data;
-    struct bsi_layer_surface_toplevel* layer_toplevel = wl_container_of(
-        listener, layer_toplevel, listen.surface_new_subsurface);
+    struct bsi_layer_surface_toplevel* layer_toplevel =
+        wl_container_of(listener, layer_toplevel, listen.new_subsurface);
 
     struct bsi_layer_surface_subsurface* layer_subsurface =
         calloc(1, sizeof(struct bsi_layer_surface_subsurface));
@@ -375,17 +368,16 @@ bsi_layer_surface_toplevel_wlr_surface_new_subsurface_notify(
 
     bsi_util_slot_connect(&wlr_subsurface->events.map,
                           &layer_subsurface->listen.map,
-                          bsi_layer_surface_subsurface_map_notify);
+                          handle_layershell_subsurface_map);
     bsi_util_slot_connect(&wlr_subsurface->events.unmap,
                           &layer_subsurface->listen.unmap,
-                          bsi_layer_surface_subsurface_unmap_notify);
+                          handle_layershell_subsurface_unmap);
     bsi_util_slot_connect(&wlr_subsurface->events.destroy,
                           &layer_subsurface->listen.destroy,
-                          bsi_layer_surface_subsurface_destroy_notify);
-    bsi_util_slot_connect(
-        &wlr_subsurface->surface->events.commit,
-        &layer_subsurface->listen.surface_commit,
-        bsi_layer_surface_subsurface_wlr_surface_commit_notify);
+                          handle_layershell_subsurface_destroy);
+    bsi_util_slot_connect(&wlr_subsurface->surface->events.commit,
+                          &layer_subsurface->listen.commit,
+                          handle_layershell_subsurface_commit);
 }
 
 /*
@@ -394,7 +386,7 @@ bsi_layer_surface_toplevel_wlr_surface_new_subsurface_notify(
 /* wlr_xdg_surface -> popup::base */
 
 void
-bsi_layer_surface_popup_map_notify(struct wl_listener* listener, void* data)
+handle_layershell_popup_map(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event map from bsi_layer_surface_popup");
 
@@ -406,14 +398,13 @@ bsi_layer_surface_popup_map_notify(struct wl_listener* listener, void* data)
                                               BSI_LAYER_SURFACE_POPUP);
     struct bsi_output* output = toplevel_parent->output;
 
-    wlr_surface_send_enter(layer_popup->popup->base->surface,
-                           output->wlr_output);
+    wlr_surface_send_enter(layer_popup->popup->base->surface, output->output);
 
     bsi_output_surface_damage(output, layer_popup->popup->base->surface, true);
 }
 
 void
-bsi_layer_surface_popup_unmap_notify(struct wl_listener* listener, void* data)
+handle_layershell_popup_unmap(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event unmap from bsi_layer_surface_popup");
 
@@ -437,7 +428,7 @@ bsi_layer_surface_popup_unmap_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_layer_surface_popup_destroy_notify(struct wl_listener* listener, void* data)
+handle_layershell_popup_destroy(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event popup_destroy from bsi_layer_surface_popup");
 
@@ -452,13 +443,11 @@ bsi_layer_surface_popup_destroy_notify(struct wl_listener* listener, void* data)
     if (server->shutting_down)
         return;
 
-    bsi_layer_surface_finish(layer_surface, BSI_LAYER_SURFACE_POPUP);
     bsi_layer_surface_destroy(layer_surface, BSI_LAYER_SURFACE_POPUP);
 }
 
 void
-bsi_layer_surface_popup_new_popup_notify(struct wl_listener* listener,
-                                         void* data)
+handle_layershell_popup_new_popup(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event new_popup from bsi_layer_surface_popup");
 
@@ -474,19 +463,19 @@ bsi_layer_surface_popup_new_popup_notify(struct wl_listener* listener,
 
     bsi_util_slot_connect(&xdg_popup->base->events.map,
                           &layer_popup->listen.map,
-                          bsi_layer_surface_popup_map_notify);
+                          handle_layershell_popup_map);
     bsi_util_slot_connect(&xdg_popup->base->events.unmap,
                           &layer_popup->listen.unmap,
-                          bsi_layer_surface_popup_unmap_notify);
+                          handle_layershell_popup_unmap);
     bsi_util_slot_connect(&xdg_popup->base->events.destroy,
                           &layer_popup->listen.destroy,
-                          bsi_layer_surface_popup_destroy_notify);
+                          handle_layershell_popup_destroy);
     bsi_util_slot_connect(&xdg_popup->base->events.new_popup,
                           &layer_popup->listen.new_popup,
-                          bsi_layer_surface_popup_new_popup_notify);
+                          handle_layershell_popup_new_popup);
     bsi_util_slot_connect(&xdg_popup->base->surface->events.commit,
-                          &layer_popup->listen.surface_commit,
-                          bsi_layer_surface_popup_wlr_surface_commit_notify);
+                          &layer_popup->listen.commit,
+                          handle_layershell_popup_commit);
 
     /* Unconstrain popup to its largest parent box. */
     union bsi_layer_surface layer_surface = { .popup = layer_popup };
@@ -496,8 +485,8 @@ bsi_layer_surface_popup_new_popup_notify(struct wl_listener* listener,
     struct wlr_box toplevel_parent_box = {
         .x = -toplevel_parent->box.x,
         .y = -toplevel_parent->box.y,
-        .width = toplevel_parent->output->wlr_output->width,
-        .height = toplevel_parent->output->wlr_output->height,
+        .width = toplevel_parent->output->output->width,
+        .height = toplevel_parent->output->output->height,
     };
 
     wlr_xdg_popup_unconstrain_from_box(layer_popup->popup,
@@ -506,13 +495,12 @@ bsi_layer_surface_popup_new_popup_notify(struct wl_listener* listener,
 
 /* wlr_xdg_surface -> popup::base::surface */
 void
-bsi_layer_surface_popup_wlr_surface_commit_notify(struct wl_listener* listener,
-                                                  void* data)
+handle_layershell_popup_commit(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event commit from bsi_layer_surface_popup");
 
     struct bsi_layer_surface_popup* layer_popup =
-        wl_container_of(listener, layer_popup, listen.surface_commit);
+        wl_container_of(listener, layer_popup, listen.commit);
     union bsi_layer_surface layer_surface = { .popup = layer_popup };
     struct bsi_layer_surface_toplevel* toplevel_parent =
         bsi_layer_surface_get_toplevel_parent(layer_surface,
@@ -530,8 +518,7 @@ bsi_layer_surface_popup_wlr_surface_commit_notify(struct wl_listener* listener,
 /* wlr_subsurface -> subsurface */
 
 void
-bsi_layer_surface_subsurface_map_notify(struct wl_listener* listener,
-                                        void* data)
+handle_layershell_subsurface_map(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event map from bsi_layer_surface_subsurface");
 
@@ -540,14 +527,13 @@ bsi_layer_surface_subsurface_map_notify(struct wl_listener* listener,
     struct bsi_output* output = layer_subsurface->member_of->output;
 
     wlr_surface_send_enter(layer_subsurface->subsurface->surface,
-                           output->wlr_output);
+                           output->output);
     bsi_output_surface_damage(
         output, layer_subsurface->subsurface->surface, true);
 }
 
 void
-bsi_layer_surface_subsurface_unmap_notify(struct wl_listener* listener,
-                                          void* data)
+handle_layershell_subsurface_unmap(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event unmap from bsi_layer_surface_subsurface");
 
@@ -568,8 +554,7 @@ bsi_layer_surface_subsurface_unmap_notify(struct wl_listener* listener,
 }
 
 void
-bsi_layer_surface_subsurface_destroy_notify(struct wl_listener* listener,
-                                            void* data)
+handle_layershell_subsurface_destroy(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event destroy from bsi_layer_surface_subsurface");
 
@@ -584,21 +569,18 @@ bsi_layer_surface_subsurface_destroy_notify(struct wl_listener* listener,
     if (server->shutting_down)
         return;
 
-    bsi_layer_surface_finish(layer_surface, BSI_LAYER_SURFACE_SUBSURFACE);
     bsi_layer_surface_destroy(layer_surface, BSI_LAYER_SURFACE_SUBSURFACE);
 }
 
 /* wlr_surface -> subsurface::surface */
 
 void
-bsi_layer_surface_subsurface_wlr_surface_commit_notify(
-    struct wl_listener* listener,
-    void* data)
+handle_layershell_subsurface_commit(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event commit from bsi_layer_surface_subsurface");
 
     struct bsi_layer_surface_subsurface* layer_subsurface =
-        wl_container_of(listener, layer_subsurface, listen.surface_commit);
+        wl_container_of(listener, layer_subsurface, listen.commit);
     struct bsi_output* output = layer_subsurface->member_of->output;
 
     // TODO: We should only be damaging the specific surface area, not the

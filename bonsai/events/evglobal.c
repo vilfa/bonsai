@@ -5,7 +5,6 @@
  *
  */
 
-#include "bonsai/desktop/decoration.h"
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -33,6 +32,7 @@
 
 struct bsi_view;
 
+#include "bonsai/desktop/decoration.h"
 #include "bonsai/desktop/layer.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/desktop/workspace.h"
@@ -44,7 +44,7 @@ struct bsi_view;
 #include "bonsai/util.h"
 
 void
-bsi_backend_new_output_notify(struct wl_listener* listener, void* data)
+handle_new_output(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event new_output from wlr_backend");
 
@@ -78,27 +78,26 @@ bsi_backend_new_output_notify(struct wl_listener* listener, void* data)
     bsi_workspace_init(wspace, server, output, workspace_name);
     bsi_workspaces_add(output, wspace);
 
-    bsi_info(
-        "Attached %s to output %s", wspace->name, output->wlr_output->name);
+    bsi_info("Attached %s to output %s", wspace->name, output->output->name);
 
-    bsi_util_slot_connect(&output->wlr_output->events.frame,
+    bsi_util_slot_connect(&output->output->events.frame,
                           &output->listen.frame,
-                          bsi_output_frame_notify);
-    bsi_util_slot_connect(&output->wlr_output->events.destroy,
+                          handle_output_frame);
+    bsi_util_slot_connect(&output->output->events.destroy,
                           &output->listen.destroy,
-                          bsi_output_destroy_notify);
+                          handle_output_destroy);
 
     struct wlr_output_configuration_v1* config =
         wlr_output_configuration_v1_create();
     struct wlr_output_configuration_v1_head* config_head =
-        wlr_output_configuration_head_v1_create(config, output->wlr_output);
+        wlr_output_configuration_head_v1_create(config, output->output);
     wlr_output_manager_v1_set_configuration(server->wlr_output_manager, config);
 
     wlr_output_layout_add_auto(server->wlr_output_layout, wlr_output);
 }
 
 void
-bsi_backend_new_input_notify(struct wl_listener* listener, void* data)
+handle_new_input(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event new_input from wlr_backend");
 
@@ -114,51 +113,51 @@ bsi_backend_new_input_notify(struct wl_listener* listener, void* data)
             bsi_inputs_pointer_add(server, bsi_input_pointer);
             bsi_util_slot_connect(&bsi_input_pointer->cursor->events.motion,
                                   &bsi_input_pointer->listen.motion,
-                                  bsi_input_pointer_motion_notify);
+                                  handle_pointer_motion);
             bsi_util_slot_connect(
                 &bsi_input_pointer->cursor->events.motion_absolute,
                 &bsi_input_pointer->listen.motion_absolute,
-                bsi_input_pointer_motion_absolute_notify);
+                handle_pointer_motion_absolute);
             bsi_util_slot_connect(&bsi_input_pointer->cursor->events.button,
                                   &bsi_input_pointer->listen.button,
-                                  bsi_input_pointer_button_notify);
+                                  handle_pointer_button);
             bsi_util_slot_connect(&bsi_input_pointer->cursor->events.axis,
                                   &bsi_input_pointer->listen.axis,
-                                  bsi_input_pointer_axis_notify);
+                                  handle_pointer_axis);
             bsi_util_slot_connect(&bsi_input_pointer->cursor->events.frame,
                                   &bsi_input_pointer->listen.frame,
-                                  bsi_input_pointer_frame_notify);
+                                  handle_pointer_frame);
             bsi_util_slot_connect(
                 &bsi_input_pointer->cursor->events.swipe_begin,
                 &bsi_input_pointer->listen.swipe_begin,
-                bsi_input_pointer_swipe_begin_notify);
+                handle_pointer_swipe_begin);
             bsi_util_slot_connect(
                 &bsi_input_pointer->cursor->events.swipe_update,
                 &bsi_input_pointer->listen.swipe_update,
-                bsi_input_pointer_swipe_update_notify);
+                handle_pointer_swipe_update);
             bsi_util_slot_connect(&bsi_input_pointer->cursor->events.swipe_end,
                                   &bsi_input_pointer->listen.swipe_end,
-                                  bsi_input_pointer_swipe_end_notify);
+                                  handle_pointer_swipe_end);
             bsi_util_slot_connect(
                 &bsi_input_pointer->cursor->events.pinch_begin,
                 &bsi_input_pointer->listen.pinch_begin,
-                bsi_input_pointer_pinch_begin_notify);
+                handle_pointer_pinch_begin);
             bsi_util_slot_connect(
                 &bsi_input_pointer->cursor->events.pinch_update,
                 &bsi_input_pointer->listen.pinch_update,
-                bsi_input_pointer_pinch_update_notify);
+                handle_pointer_pinch_update);
             bsi_util_slot_connect(&bsi_input_pointer->cursor->events.pinch_end,
                                   &bsi_input_pointer->listen.pinch_end,
-                                  bsi_input_pointer_pinch_end_notify);
+                                  handle_pointer_pinch_end);
             bsi_util_slot_connect(&bsi_input_pointer->cursor->events.hold_begin,
                                   &bsi_input_pointer->listen.hold_begin,
-                                  bsi_input_pointer_hold_begin_notify);
+                                  handle_pointer_hold_begin);
             bsi_util_slot_connect(&bsi_input_pointer->cursor->events.hold_end,
                                   &bsi_input_pointer->listen.hold_end,
-                                  bsi_input_pointer_hold_end_notify);
+                                  handle_pointer_hold_end);
             bsi_util_slot_connect(&bsi_input_pointer->device->events.destroy,
                                   &bsi_input_pointer->listen.destroy,
-                                  bsi_input_device_destroy_notify);
+                                  handle_input_device_destroy);
 
             wlr_cursor_attach_input_device(bsi_input_pointer->cursor,
                                            bsi_input_pointer->device);
@@ -173,14 +172,14 @@ bsi_backend_new_input_notify(struct wl_listener* listener, void* data)
             bsi_util_slot_connect(
                 &bsi_input_keyboard->device->keyboard->events.key,
                 &bsi_input_keyboard->listen.key,
-                bsi_input_keyboard_key_notify);
+                handle_keyboard_key);
             bsi_util_slot_connect(
                 &bsi_input_keyboard->device->keyboard->events.modifiers,
                 &bsi_input_keyboard->listen.modifiers,
-                bsi_input_keyboard_modifiers_notify);
+                handle_keyboard_modifiers);
             bsi_util_slot_connect(&bsi_input_keyboard->device->events.destroy,
                                   &bsi_input_keyboard->listen.destroy,
-                                  bsi_input_device_destroy_notify);
+                                  handle_input_device_destroy);
 
             bsi_input_keyboard_keymap_set(bsi_input_keyboard,
                                           bsi_input_keyboard_rules,
@@ -217,7 +216,7 @@ bsi_backend_new_input_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_output_layout_change_notify(struct wl_listener* listener, void* data)
+handle_output_layout_change(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event change from wlr_output_layout");
 
@@ -234,11 +233,11 @@ bsi_output_layout_change_notify(struct wl_listener* listener, void* data)
     wl_list_for_each(output, &server->output.outputs, link)
     {
         struct wlr_output_configuration_head_v1* config_head =
-            wlr_output_configuration_head_v1_create(config, output->wlr_output);
+            wlr_output_configuration_head_v1_create(config, output->output);
         struct wlr_box output_box;
         wlr_output_layout_get_box(
-            server->wlr_output_layout, output->wlr_output, &output_box);
-        config_head->state.mode = output->wlr_output->current_mode;
+            server->wlr_output_layout, output->output, &output_box);
+        config_head->state.mode = output->output->current_mode;
         if (!wlr_box_empty(&output_box)) {
             config_head->state.x = output_box.x;
             config_head->state.y = output_box.y;
@@ -251,7 +250,7 @@ bsi_output_layout_change_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_output_manager_apply_notify(struct wl_listener* listener, void* data)
+handle_output_manager_apply(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event apply from wlr_output_manager");
     struct bsi_server* server =
@@ -267,7 +266,7 @@ bsi_output_manager_apply_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_output_manager_test_notify(struct wl_listener* listener, void* data)
+handle_output_manager_test(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event test from wlr_output_manager");
     struct bsi_server* server =
@@ -308,45 +307,45 @@ bsi_output_manager_test_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_seat_pointer_grab_begin_notify(struct wl_listener* listener, void* data)
+handle_pointer_grab_begin_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event pointer_grab_begin from wlr_seat");
 }
 
 void
-bsi_seat_pointer_grab_end_notify(struct wl_listener* listener, void* data)
+handle_pointer_grab_end_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event pointer_grab_end from wlr_seat");
 }
 
 void
-bsi_seat_keyboard_grab_begin_notify(struct wl_listener* listener, void* data)
+handle_keyboard_grab_begin_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event keyboard_grab_begin from wlr_seat");
 }
 
 void
-bsi_seat_keyboard_grab_end_notify(struct wl_listener* listener, void* data)
+handle_keyboard_grab_end_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event keyboard_grab_end from wlr_seat");
 }
 
 void
-bsi_seat_touch_grab_begin_notify(struct wl_listener* listener, void* data)
+handle_touch_grab_begin_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event touch_grab_begin from wlr_seat");
     bsi_debug("A touch device has grabbed focus, what the hell!?");
 }
 
 void
-bsi_seat_touch_grab_end_notify(struct wl_listener* listener, void* data)
+handle_touch_grab_end_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event touch_grab_end from wlr_seat");
     bsi_debug("A touch device has ended focus grab, what the hell!?");
 }
 
 void
-bsi_seat_request_set_cursor_notify(struct wl_listener* listener, void* data)
+handle_request_set_cursor_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event request_set_cursor from wlr_seat");
 
@@ -363,7 +362,7 @@ bsi_seat_request_set_cursor_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_seat_request_set_selection_notify(struct wl_listener* listener, void* data)
+handle_request_set_selection_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event request_set_selection from wlr_seat");
 
@@ -376,8 +375,8 @@ bsi_seat_request_set_selection_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_seat_request_set_primary_selection_notify(struct wl_listener* listener,
-                                              void* data)
+handle_request_set_primary_selection_notify(struct wl_listener* listener,
+                                            void* data)
 {
     bsi_debug("Got event request_set_primary_selection from wlr_seat");
 
@@ -391,13 +390,13 @@ bsi_seat_request_set_primary_selection_notify(struct wl_listener* listener,
 }
 
 void
-bsi_seat_request_start_drag_notify(struct wl_listener* listener, void* data)
+handle_request_start_drag_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event request_start_drag from wlr_seat");
 }
 
 void
-bsi_xdg_shell_new_surface_notify(struct wl_listener* listener, void* data)
+handle_xdgshell_new_surface(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event new_surface from wlr_xdg_shell");
 
@@ -426,32 +425,32 @@ bsi_xdg_shell_new_surface_notify(struct wl_listener* listener, void* data)
 
         bsi_util_slot_connect(&view->toplevel->base->events.destroy,
                               &view->listen.destroy,
-                              bsi_view_destroy_xdg_surface_notify);
+                              handle_xdg_surf_destroy);
         bsi_util_slot_connect(&view->toplevel->base->events.map,
                               &view->listen.map,
-                              bsi_view_map_notify);
+                              handle_xdg_surf_map);
         bsi_util_slot_connect(&view->toplevel->base->events.unmap,
                               &view->listen.unmap,
-                              bsi_view_unmap_notify);
+                              handle_xdg_surf_unmap);
 
         bsi_util_slot_connect(&view->toplevel->events.request_maximize,
                               &view->listen.request_maximize,
-                              bsi_view_request_maximize_notify);
+                              handle_toplvl_request_maximize);
         bsi_util_slot_connect(&view->toplevel->events.request_fullscreen,
                               &view->listen.request_fullscreen,
-                              bsi_view_request_fullscreen_notify);
+                              handle_toplvl_request_fullscreen);
         bsi_util_slot_connect(&view->toplevel->events.request_minimize,
                               &view->listen.request_minimize,
-                              bsi_view_request_minimize_notify);
+                              handle_toplvl_request_minimize);
         bsi_util_slot_connect(&view->toplevel->events.request_move,
                               &view->listen.request_move,
-                              bsi_view_request_move_notify);
+                              handle_toplvl_request_move);
         bsi_util_slot_connect(&view->toplevel->events.request_resize,
                               &view->listen.request_resize,
-                              bsi_view_request_resize_notify);
+                              handle_toplvl_request_resize);
         bsi_util_slot_connect(&view->toplevel->events.request_show_window_menu,
                               &view->listen.request_show_window_menu,
-                              bsi_view_request_show_window_menu_notify);
+                              handle_toplvl_request_show_window_menu);
 
         /* Add wired up view to workspace on the active output. */
         bsi_workspace_view_add(active_wspace, view);
@@ -463,7 +462,7 @@ bsi_xdg_shell_new_surface_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_layer_shell_new_surface_notify(struct wl_listener* listener, void* data)
+handle_layer_shell_new_surface(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event new_surface from wlr_layer_shell_v1");
 
@@ -476,7 +475,7 @@ bsi_layer_shell_new_surface_notify(struct wl_listener* listener, void* data)
         active_output = bsi_outputs_get_active(server);
         struct bsi_workspace* active_wspace =
             bsi_workspaces_get_active(active_output);
-        layer_surface->output = active_wspace->output->wlr_output;
+        layer_surface->output = active_wspace->output->output;
         layer_surface->output->data = active_output;
     } else {
         active_output = bsi_outputs_find(server, layer_surface->output);
@@ -488,23 +487,22 @@ bsi_layer_shell_new_surface_notify(struct wl_listener* listener, void* data)
     bsi_layer_surface_toplevel_init(bsi_layer, layer_surface, active_output);
     bsi_util_slot_connect(&layer_surface->events.map,
                           &bsi_layer->listen.map,
-                          bsi_layer_surface_toplevel_map_notify);
+                          handle_layershell_toplvl_map);
     bsi_util_slot_connect(&layer_surface->events.unmap,
                           &bsi_layer->listen.unmap,
-                          bsi_layer_surface_toplevel_unmap_notify);
+                          handle_layershell_toplvl_unmap);
     bsi_util_slot_connect(&layer_surface->events.destroy,
                           &bsi_layer->listen.destroy,
-                          bsi_layer_surface_toplevel_destroy_notify);
+                          handle_layershell_toplvl_destroy);
     bsi_util_slot_connect(&layer_surface->events.new_popup,
                           &bsi_layer->listen.new_popup,
-                          bsi_layer_surface_toplevel_new_popup_notify);
-    bsi_util_slot_connect(
-        &layer_surface->surface->events.new_subsurface,
-        &bsi_layer->listen.surface_new_subsurface,
-        bsi_layer_surface_toplevel_wlr_surface_new_subsurface_notify);
+                          handle_layershell_toplvl_new_popup);
+    bsi_util_slot_connect(&layer_surface->surface->events.new_subsurface,
+                          &bsi_layer->listen.new_subsurface,
+                          handle_layershell_toplvl_new_subsurface);
     bsi_util_slot_connect(&layer_surface->surface->events.commit,
-                          &bsi_layer->listen.surface_commit,
-                          bsi_layer_surface_toplevel_wlr_surface_commit_notify);
+                          &bsi_layer->listen.commit,
+                          handle_layershell_toplvl_commit);
     bsi_layers_add(active_output, bsi_layer, layer_surface->pending.layer);
 
     /* Overwrite the current state with pending, so we can look up the desired
@@ -516,8 +514,7 @@ bsi_layer_shell_new_surface_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_decoration_manager_new_decoration_notify(struct wl_listener* listener,
-                                             void* data)
+handle_deco_manager_new_decoration(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event new_decoration from wlr_decoration_manager");
 
@@ -531,10 +528,9 @@ bsi_decoration_manager_new_decoration_notify(struct wl_listener* listener,
 
     bsi_util_slot_connect(&deco->events.destroy,
                           &server_deco->listen.destroy,
-                          bsi_server_decoration_destroy_notify);
-    bsi_util_slot_connect(&deco->events.mode,
-                          &server_deco->listen.mode,
-                          bsi_server_decoration_mode_notify);
+                          handle_serverdeco_destroy);
+    bsi_util_slot_connect(
+        &deco->events.mode, &server_deco->listen.mode, handle_serverdeco_mode);
 
     bsi_scene_add_decoration(server, server_deco);
 }

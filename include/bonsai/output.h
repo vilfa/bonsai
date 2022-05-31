@@ -18,7 +18,7 @@ struct bsi_server;
 struct bsi_output
 {
     struct bsi_server* server;
-    struct wlr_output* wlr_output;
+    struct wlr_output* output;
     struct timespec last_frame;
 
     size_t id; /* Incremental id. */
@@ -101,9 +101,6 @@ void
 bsi_output_surface_damage(struct bsi_output* output,
                           struct wlr_surface* wlr_surface,
                           bool entire_output);
-
-void
-bsi_output_finish(struct bsi_output* output);
 
 void
 bsi_output_destroy(struct bsi_output* output);

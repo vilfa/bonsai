@@ -5,98 +5,115 @@
 typedef void
 bsi_notify_func_t(struct wl_listener*, void*);
 
-/* bsi_listeners_global */
+/*
+ * bsi_server
+ */
 /* wlr_backend */
-extern bsi_notify_func_t bsi_backend_new_output_notify;
-extern bsi_notify_func_t bsi_backend_new_input_notify;
+extern bsi_notify_func_t handle_new_output;
+extern bsi_notify_func_t handle_new_input;
 /* wlr_output_layout */
-extern bsi_notify_func_t bsi_output_layout_change_notify;
+extern bsi_notify_func_t handle_output_layout_change;
 /* wlr_output_manager_v1 */
-extern bsi_notify_func_t bsi_output_manager_apply_notify;
-extern bsi_notify_func_t bsi_output_manager_test_notify;
+extern bsi_notify_func_t handle_output_manager_apply;
+extern bsi_notify_func_t handle_output_manager_test;
 /* wlr_seat */
-extern bsi_notify_func_t bsi_seat_pointer_grab_begin_notify;
-extern bsi_notify_func_t bsi_seat_pointer_grab_end_notify;
-extern bsi_notify_func_t bsi_seat_keyboard_grab_begin_notify;
-extern bsi_notify_func_t bsi_seat_keyboard_grab_end_notify;
-extern bsi_notify_func_t bsi_seat_touch_grab_begin_notify; // Skipped.
-extern bsi_notify_func_t bsi_seat_touch_grab_end_notify;   // Skipped.
-extern bsi_notify_func_t bsi_seat_request_set_cursor_notify;
-extern bsi_notify_func_t bsi_seat_request_set_selection_notify;
-extern bsi_notify_func_t bsi_seat_request_set_primary_selection_notify;
-extern bsi_notify_func_t bsi_seat_request_start_drag_notify;
+extern bsi_notify_func_t handle_pointer_grab_begin_notify;
+extern bsi_notify_func_t handle_pointer_grab_end_notify;
+extern bsi_notify_func_t handle_keyboard_grab_begin_notify;
+extern bsi_notify_func_t handle_keyboard_grab_end_notify;
+extern bsi_notify_func_t handle_touch_grab_begin_notify;
+extern bsi_notify_func_t handle_touch_grab_end_notify;
+extern bsi_notify_func_t handle_request_set_cursor_notify;
+extern bsi_notify_func_t handle_request_set_selection_notify;
+extern bsi_notify_func_t handle_request_set_primary_selection_notify;
+extern bsi_notify_func_t handle_request_start_drag_notify;
 /* wlr_xdg_shell */
-extern bsi_notify_func_t bsi_xdg_shell_new_surface_notify;
+extern bsi_notify_func_t handle_xdgshell_new_surface;
 /* wlr_layer_shell_v1 */
-extern bsi_notify_func_t bsi_layer_shell_new_surface_notify;
+extern bsi_notify_func_t handle_layer_shell_new_surface;
 /* wlr_decoration_manager */
-extern bsi_notify_func_t bsi_decoration_manager_new_decoration_notify;
+extern bsi_notify_func_t handle_deco_manager_new_decoration;
 
-/* bsi_view */
-extern bsi_notify_func_t bsi_view_destroy_xdg_surface_notify;
-extern bsi_notify_func_t bsi_view_map_notify;
-extern bsi_notify_func_t bsi_view_unmap_notify;
-extern bsi_notify_func_t bsi_view_request_maximize_notify;
-extern bsi_notify_func_t bsi_view_request_fullscreen_notify;
-extern bsi_notify_func_t bsi_view_request_minimize_notify;
-extern bsi_notify_func_t bsi_view_request_move_notify;
-extern bsi_notify_func_t bsi_view_request_resize_notify;
-extern bsi_notify_func_t bsi_view_request_show_window_menu_notify;
+/*
+ * bsi_view
+ */
+extern bsi_notify_func_t handle_xdg_surf_destroy;
+extern bsi_notify_func_t handle_xdg_surf_map;
+extern bsi_notify_func_t handle_xdg_surf_unmap;
+extern bsi_notify_func_t handle_toplvl_request_maximize;
+extern bsi_notify_func_t handle_toplvl_request_fullscreen;
+extern bsi_notify_func_t handle_toplvl_request_minimize;
+extern bsi_notify_func_t handle_toplvl_request_move;
+extern bsi_notify_func_t handle_toplvl_request_resize;
+extern bsi_notify_func_t handle_toplvl_request_show_window_menu;
 
-/* bsi_output */
-extern bsi_notify_func_t bsi_output_frame_notify;
-extern bsi_notify_func_t bsi_output_destroy_notify;
+/*
+ * bsi_output
+ */
+extern bsi_notify_func_t handle_output_frame;
+extern bsi_notify_func_t handle_output_destroy;
 
-/* bsi_input_{pointer,keyboard} */
-extern bsi_notify_func_t bsi_input_pointer_motion_notify;
-extern bsi_notify_func_t bsi_input_pointer_motion_absolute_notify;
-extern bsi_notify_func_t bsi_input_pointer_button_notify;
-extern bsi_notify_func_t bsi_input_pointer_axis_notify;
-extern bsi_notify_func_t bsi_input_pointer_frame_notify;
-extern bsi_notify_func_t bsi_input_pointer_swipe_begin_notify;
-extern bsi_notify_func_t bsi_input_pointer_swipe_update_notify;
-extern bsi_notify_func_t bsi_input_pointer_swipe_end_notify;
-extern bsi_notify_func_t bsi_input_pointer_pinch_begin_notify;
-extern bsi_notify_func_t bsi_input_pointer_pinch_update_notify;
-extern bsi_notify_func_t bsi_input_pointer_pinch_end_notify;
-extern bsi_notify_func_t bsi_input_pointer_hold_begin_notify;
-extern bsi_notify_func_t bsi_input_pointer_hold_end_notify;
-extern bsi_notify_func_t bsi_input_keyboard_key_notify;
-extern bsi_notify_func_t bsi_input_keyboard_modifiers_notify;
+/*
+ * bsi_input_{pointer,keyboard}
+ */
+extern bsi_notify_func_t handle_pointer_motion;
+extern bsi_notify_func_t handle_pointer_motion_absolute;
+extern bsi_notify_func_t handle_pointer_button;
+extern bsi_notify_func_t handle_pointer_axis;
+extern bsi_notify_func_t handle_pointer_frame;
+extern bsi_notify_func_t handle_pointer_swipe_begin;
+extern bsi_notify_func_t handle_pointer_swipe_update;
+extern bsi_notify_func_t handle_pointer_swipe_end;
+extern bsi_notify_func_t handle_pointer_pinch_begin;
+extern bsi_notify_func_t handle_pointer_pinch_update;
+extern bsi_notify_func_t handle_pointer_pinch_end;
+extern bsi_notify_func_t handle_pointer_hold_begin;
+extern bsi_notify_func_t handle_pointer_hold_end;
+extern bsi_notify_func_t handle_keyboard_key;
+extern bsi_notify_func_t handle_keyboard_modifiers;
 /* bsi_input_{pointer,keyboard} -> wlr_input_device::events::destroy */
-extern bsi_notify_func_t bsi_input_device_destroy_notify;
+extern bsi_notify_func_t handle_input_device_destroy;
 
-/* bsi_workspace */
-extern bsi_notify_func_t bsi_server_workspace_active_notify;
-extern bsi_notify_func_t bsi_output_workspace_active_notify;
-extern bsi_notify_func_t bsi_view_workspace_active_notify;
+/*
+ * bsi_workspace
+ */
+extern bsi_notify_func_t handle_server_workspace_active;
+extern bsi_notify_func_t handle_output_workspace_active;
+extern bsi_notify_func_t handle_view_workspace_active;
 
-/* bsi_layer_surface_toplevel */
+/*
+ * bsi_layer_surface_toplevel
+ */
 /* wlr_layer_surface_v1 */
-extern bsi_notify_func_t bsi_layer_surface_toplevel_map_notify;
-extern bsi_notify_func_t bsi_layer_surface_toplevel_unmap_notify;
-extern bsi_notify_func_t bsi_layer_surface_toplevel_destroy_notify;
-extern bsi_notify_func_t bsi_layer_surface_toplevel_new_popup_notify;
+extern bsi_notify_func_t handle_layershell_toplvl_map;
+extern bsi_notify_func_t handle_layershell_toplvl_unmap;
+extern bsi_notify_func_t handle_layershell_toplvl_destroy;
+extern bsi_notify_func_t handle_layershell_toplvl_new_popup;
 /* wlr_surface -> wlr_layer_surface::surface */
-extern bsi_notify_func_t bsi_layer_surface_toplevel_wlr_surface_commit_notify;
-extern bsi_notify_func_t
-    bsi_layer_surface_toplevel_wlr_surface_new_subsurface_notify;
+extern bsi_notify_func_t handle_layershell_toplvl_commit;
+extern bsi_notify_func_t handle_layershell_toplvl_new_subsurface;
 
-/* bsi_layer_surface_popup */
+/*
+ * bsi_layer_surface_popup
+ */
 /* wlr_xdg_surface -> wlr_xdg_popup::base */
-extern bsi_notify_func_t bsi_layer_surface_popup_map_notify;
-extern bsi_notify_func_t bsi_layer_surface_popup_unmap_notify;
-extern bsi_notify_func_t bsi_layer_surface_popup_destroy_notify;
-extern bsi_notify_func_t bsi_layer_surface_popup_new_popup_notify;
-extern bsi_notify_func_t bsi_layer_surface_popup_wlr_surface_commit_notify;
+extern bsi_notify_func_t handle_layershell_popup_map;
+extern bsi_notify_func_t handle_layershell_popup_unmap;
+extern bsi_notify_func_t handle_layershell_popup_destroy;
+extern bsi_notify_func_t handle_layershell_popup_commit;
+extern bsi_notify_func_t handle_layershell_popup_new_popup;
 
-/* bsi_layer_surface_subsurface */
+/*
+ * bsi_layer_surface_subsurface
+ */
 /* wlr_subsurface */
-extern bsi_notify_func_t bsi_layer_surface_subsurface_map_notify;
-extern bsi_notify_func_t bsi_layer_surface_subsurface_unmap_notify;
-extern bsi_notify_func_t bsi_layer_surface_subsurface_destroy_notify;
-extern bsi_notify_func_t bsi_layer_surface_subsurface_wlr_surface_commit_notify;
+extern bsi_notify_func_t handle_layershell_subsurface_map;
+extern bsi_notify_func_t handle_layershell_subsurface_unmap;
+extern bsi_notify_func_t handle_layershell_subsurface_destroy;
+extern bsi_notify_func_t handle_layershell_subsurface_commit;
 
-/* bsi_server_decoration */
-extern bsi_notify_func_t bsi_server_decoration_destroy_notify;
-extern bsi_notify_func_t bsi_server_decoration_mode_notify;
+/*
+ * bsi_server_decoration
+ */
+extern bsi_notify_func_t handle_serverdeco_destroy;
+extern bsi_notify_func_t handle_serverdeco_mode;

@@ -34,10 +34,10 @@ bsi_server_init(struct bsi_server* server)
     server->wlr_backend = wlr_backend_autocreate(server->wl_display);
     bsi_util_slot_connect(&server->wlr_backend->events.new_output,
                           &server->listen.new_output,
-                          bsi_backend_new_output_notify);
+                          handle_new_output);
     bsi_util_slot_connect(&server->wlr_backend->events.new_input,
                           &server->listen.new_input,
-                          bsi_backend_new_input_notify);
+                          handle_new_input);
     bsi_debug("Autocreated backend & attached handlers");
 
     server->wlr_renderer = wlr_renderer_autocreate(server->wlr_backend);
@@ -63,17 +63,17 @@ bsi_server_init(struct bsi_server* server)
     server->wlr_output_layout = wlr_output_layout_create();
     bsi_util_slot_connect(&server->wlr_output_layout->events.change,
                           &server->listen.output_layout_change,
-                          bsi_output_layout_change_notify);
+                          handle_output_layout_change);
     bsi_debug("Created output layout");
 
     server->wlr_output_manager =
         wlr_output_manager_v1_create(server->wl_display);
     bsi_util_slot_connect(&server->wlr_output_manager->events.apply,
                           &server->listen.output_manager_apply,
-                          bsi_output_manager_apply_notify);
+                          handle_output_manager_apply);
     bsi_util_slot_connect(&server->wlr_output_manager->events.test,
                           &server->listen.output_manager_test,
-                          bsi_output_manager_test_notify);
+                          handle_output_manager_test);
     bsi_debug("Created wlr_output_manager_v1 & attached handlers");
 
     wlr_xdg_output_manager_v1_create(server->wl_display,
@@ -88,7 +88,7 @@ bsi_server_init(struct bsi_server* server)
     server->wlr_xdg_shell = wlr_xdg_shell_create(server->wl_display, 2);
     bsi_util_slot_connect(&server->wlr_xdg_shell->events.new_surface,
                           &server->listen.xdg_new_surface,
-                          bsi_xdg_shell_new_surface_notify);
+                          handle_xdgshell_new_surface);
     bsi_debug("Created wlr_xdg_shell & attached handlers");
 
     server->wlr_server_decoration_manager =
@@ -99,14 +99,14 @@ bsi_server_init(struct bsi_server* server)
     bsi_util_slot_connect(
         &server->wlr_server_decoration_manager->events.new_decoration,
         &server->listen.new_decoration,
-        bsi_decoration_manager_new_decoration_notify);
+        handle_deco_manager_new_decoration);
 
     bsi_debug("Created wlr_server_decoration_manager & attached handlers");
 
     server->wlr_layer_shell = wlr_layer_shell_v1_create(server->wl_display);
     bsi_util_slot_connect(&server->wlr_layer_shell->events.new_surface,
                           &server->listen.layer_new_surface,
-                          bsi_layer_shell_new_surface_notify);
+                          handle_layer_shell_new_surface);
     bsi_debug("Created wlr_layer_shell_v1 & attached handlers");
 
     server->wlr_cursor = wlr_cursor_create();
@@ -133,35 +133,35 @@ bsi_server_init(struct bsi_server* server)
 
     bsi_util_slot_connect(&server->wlr_seat->events.pointer_grab_begin,
                           &server->listen.pointer_grab_begin,
-                          bsi_seat_pointer_grab_begin_notify);
+                          handle_pointer_grab_begin_notify);
     bsi_util_slot_connect(&server->wlr_seat->events.pointer_grab_end,
                           &server->listen.pointer_grab_end,
-                          bsi_seat_pointer_grab_end_notify);
+                          handle_pointer_grab_end_notify);
     bsi_util_slot_connect(&server->wlr_seat->events.keyboard_grab_begin,
                           &server->listen.keyboard_grab_begin,
-                          bsi_seat_keyboard_grab_begin_notify);
+                          handle_keyboard_grab_begin_notify);
     bsi_util_slot_connect(&server->wlr_seat->events.keyboard_grab_end,
                           &server->listen.keyboard_grab_end,
-                          bsi_seat_keyboard_grab_end_notify);
+                          handle_keyboard_grab_end_notify);
     bsi_util_slot_connect(&server->wlr_seat->events.touch_grab_begin,
                           &server->listen.touch_grab_begin,
-                          bsi_seat_touch_grab_begin_notify);
+                          handle_touch_grab_begin_notify);
     bsi_util_slot_connect(&server->wlr_seat->events.touch_grab_end,
                           &server->listen.touch_grab_end,
-                          bsi_seat_touch_grab_end_notify);
+                          handle_touch_grab_end_notify);
     bsi_util_slot_connect(&server->wlr_seat->events.request_set_cursor,
                           &server->listen.request_set_cursor,
-                          bsi_seat_request_set_cursor_notify);
+                          handle_request_set_cursor_notify);
     bsi_util_slot_connect(&server->wlr_seat->events.request_set_selection,
                           &server->listen.request_set_selection,
-                          bsi_seat_request_set_selection_notify);
+                          handle_request_set_selection_notify);
     bsi_util_slot_connect(
         &server->wlr_seat->events.request_set_primary_selection,
         &server->listen.request_set_primary_selection,
-        bsi_seat_request_set_primary_selection_notify);
+        handle_request_set_primary_selection_notify);
     bsi_util_slot_connect(&server->wlr_seat->events.request_start_drag,
                           &server->listen.request_start_drag,
-                          bsi_seat_request_start_drag_notify);
+                          handle_request_start_drag_notify);
     bsi_debug("Attached handlers for seat '%s'", seat_name);
 
     bsi_server_scene_init(server);
@@ -214,7 +214,7 @@ bsi_server_cursor_init(struct bsi_server* server)
 }
 
 void
-bsi_server_finish(struct bsi_server* server)
+bsi_server_exit(struct bsi_server* server)
 {
     /* wlr_backend */
     wl_list_remove(&server->listen.new_output.link);
@@ -233,13 +233,7 @@ bsi_server_finish(struct bsi_server* server)
     /* wlr_xdg_shell */
     wl_list_remove(&server->listen.xdg_new_surface.link);
     /* bsi_workspace */
-    wl_list_remove(&server->listen.workspace_active.link);
-}
-
-void
-bsi_server_exit(struct bsi_server* server)
-{
-    bsi_server_finish(server);
+    // wl_list_remove(&server->listen.workspace_active.link);
 
     wl_display_terminate(server->wl_display);
 }

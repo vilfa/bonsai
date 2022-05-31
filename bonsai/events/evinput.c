@@ -28,7 +28,7 @@
 #define GIMME_ALL_KEYBOARD_EVENTS
 
 void
-bsi_input_pointer_motion_notify(struct wl_listener* listener, void* data)
+handle_pointer_motion(struct wl_listener* listener, void* data)
 {
     struct bsi_input_pointer* pointer =
         wl_container_of(listener, pointer, listen.motion);
@@ -45,8 +45,7 @@ bsi_input_pointer_motion_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_input_pointer_motion_absolute_notify(struct wl_listener* listener,
-                                         void* data)
+handle_pointer_motion_absolute(struct wl_listener* listener, void* data)
 {
     struct bsi_input_pointer* pointer =
         wl_container_of(listener, pointer, listen.motion_absolute);
@@ -63,7 +62,7 @@ bsi_input_pointer_motion_absolute_notify(struct wl_listener* listener,
 }
 
 void
-bsi_input_pointer_button_notify(struct wl_listener* listener, void* data)
+handle_pointer_button(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event button from wlr_input_device");
 
@@ -118,7 +117,7 @@ bsi_input_pointer_button_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_input_pointer_axis_notify(struct wl_listener* listener, void* data)
+handle_pointer_axis(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event axis from wlr_input_device");
 
@@ -137,7 +136,7 @@ bsi_input_pointer_axis_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_input_pointer_frame_notify(struct wl_listener* listener, void* data)
+handle_pointer_frame(struct wl_listener* listener, void* data)
 {
     struct bsi_input_pointer* pointer =
         wl_container_of(listener, pointer, listen.frame);
@@ -148,7 +147,7 @@ bsi_input_pointer_frame_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_input_pointer_swipe_begin_notify(struct wl_listener* listener, void* data)
+handle_pointer_swipe_begin(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event swipe_begin from wlr_input_device");
 
@@ -161,7 +160,7 @@ bsi_input_pointer_swipe_begin_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_input_pointer_swipe_update_notify(struct wl_listener* listener, void* data)
+handle_pointer_swipe_update(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event swipe_update from wlr_input_device");
 
@@ -174,7 +173,7 @@ bsi_input_pointer_swipe_update_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_input_pointer_swipe_end_notify(struct wl_listener* listener, void* data)
+handle_pointer_swipe_end(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event swipe_end from wlr_input_device");
 
@@ -187,7 +186,7 @@ bsi_input_pointer_swipe_end_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_input_pointer_pinch_begin_notify(struct wl_listener* listener, void* data)
+handle_pointer_pinch_begin(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event pinch_begin from wlr_input_device");
 
@@ -198,7 +197,7 @@ bsi_input_pointer_pinch_begin_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_input_pointer_pinch_update_notify(struct wl_listener* listener, void* data)
+handle_pointer_pinch_update(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event pinch_update from wlr_input_device");
 
@@ -209,7 +208,7 @@ bsi_input_pointer_pinch_update_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_input_pointer_pinch_end_notify(struct wl_listener* listener, void* data)
+handle_pointer_pinch_end(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event pinch_end from wlr_input_device");
 
@@ -220,7 +219,7 @@ bsi_input_pointer_pinch_end_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_input_pointer_hold_begin_notify(struct wl_listener* listener, void* data)
+handle_pointer_hold_begin(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event hold_begin from wlr_input_device");
 
@@ -231,7 +230,7 @@ bsi_input_pointer_hold_begin_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_input_pointer_hold_end_notify(struct wl_listener* listener, void* data)
+handle_pointer_hold_end(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event hold_end from wlr_input_device");
 
@@ -242,7 +241,7 @@ bsi_input_pointer_hold_end_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_input_keyboard_key_notify(struct wl_listener* listener, void* data)
+handle_keyboard_key(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event key from wlr_input_device");
 
@@ -264,7 +263,7 @@ bsi_input_keyboard_key_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_input_keyboard_modifiers_notify(struct wl_listener* listener, void* data)
+handle_keyboard_modifiers(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event modifiers from wlr_input_device");
 
@@ -282,7 +281,7 @@ bsi_input_keyboard_modifiers_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_input_device_destroy_notify(struct wl_listener* listener, void* data)
+handle_input_device_destroy(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event destroy from wlr_input_device");
 
@@ -296,7 +295,6 @@ bsi_input_device_destroy_notify(struct wl_listener* listener, void* data)
             bsi_debug("Destroying input device %s", keyboard->device->name);
 
             bsi_inputs_keyboard_remove(server, keyboard);
-            bsi_input_keyboard_finish(keyboard);
             bsi_input_keyboard_destroy(keyboard);
             break;
         }
@@ -308,7 +306,6 @@ bsi_input_device_destroy_notify(struct wl_listener* listener, void* data)
             bsi_debug("Destroying input device %s", pointer->device->name);
 
             bsi_inputs_pointer_remove(server, pointer);
-            bsi_input_pointer_finish(pointer);
             bsi_input_pointer_destroy(pointer);
             break;
         }

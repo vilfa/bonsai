@@ -51,12 +51,11 @@ bsi_input_pointer_init(struct bsi_input_pointer* pointer,
     pointer->server = server;
     pointer->cursor = server->wlr_cursor;
     pointer->device = device;
-
     return pointer;
 }
 
 void
-bsi_input_pointer_finish(struct bsi_input_pointer* pointer)
+bsi_input_pointer_destroy(struct bsi_input_pointer* pointer)
 {
     wl_list_remove(&pointer->listen.motion.link);
     wl_list_remove(&pointer->listen.motion_absolute.link);
@@ -71,11 +70,6 @@ bsi_input_pointer_finish(struct bsi_input_pointer* pointer)
     wl_list_remove(&pointer->listen.pinch_end.link);
     wl_list_remove(&pointer->listen.hold_begin.link);
     wl_list_remove(&pointer->listen.hold_end.link);
-}
-
-void
-bsi_input_pointer_destroy(struct bsi_input_pointer* pointer)
-{
     free(pointer);
 }
 
@@ -86,21 +80,15 @@ bsi_input_keyboard_init(struct bsi_input_keyboard* keyboard,
 {
     keyboard->server = server;
     keyboard->device = device;
-
     return keyboard;
-}
-
-void
-bsi_input_keyboard_finish(struct bsi_input_keyboard* keyboard)
-{
-    wl_list_remove(&keyboard->listen.key.link);
-    wl_list_remove(&keyboard->listen.modifiers.link);
-    wl_list_remove(&keyboard->listen.destroy.link);
 }
 
 void
 bsi_input_keyboard_destroy(struct bsi_input_keyboard* keyboard)
 {
+    wl_list_remove(&keyboard->listen.key.link);
+    wl_list_remove(&keyboard->listen.modifiers.link);
+    wl_list_remove(&keyboard->listen.destroy.link);
     free(keyboard);
 }
 

@@ -164,15 +164,7 @@ bsi_input_pointer_init(struct bsi_input_pointer* pointer,
                        struct wlr_input_device* device);
 
 /**
- * @brief Unlinks all active listeners for the specified `bsi_input_pointer`.
- *
- * @param pointer The input pointer.
- */
-void
-bsi_input_pointer_finish(struct bsi_input_pointer* pointer);
-
-/**
- * @brief Destroys (calls `free`) on the input pointer.
+ * @brief Unlinks all listeners and frees the pointer.
  *
  * @param pointer The input pointer to destroy.
  */
@@ -193,15 +185,7 @@ bsi_input_keyboard_init(struct bsi_input_keyboard* keyboard,
                         struct wlr_input_device* device);
 
 /**
- * @brief Unlinks all active listeners for the specified `bsi_input_keyboard`.
- *
- * @param keyboard The input keyboard.
- */
-void
-bsi_input_keyboard_finish(struct bsi_input_keyboard* keyboard);
-
-/**
- * @brief Destroys (calls `free`) on the keyboard.
+ * @brief Unlinks all listeners and frees the keyboard.
  *
  * @param keyboard The keyboard to destroy.
  */

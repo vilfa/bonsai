@@ -82,15 +82,7 @@ bsi_view_init(struct bsi_view* view,
               struct wlr_xdg_toplevel* toplevel);
 
 /**
- * @brief Unlinks all active listeners from a `bsi_view`.
- *
- * @param view The view.
- */
-void
-bsi_view_finish(struct bsi_view* view);
-
-/**
- * @brief Destroys (calls `free`) on the passed view.
+ * @brief Unlinks all listeners and frees the view.
  *
  * @param view The view to destroy.
  */

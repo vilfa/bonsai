@@ -28,10 +28,10 @@ bsi_workspaces_add(struct bsi_output* output, struct bsi_workspace* workspace)
     /* To whom it may concern... */
     bsi_util_slot_connect(&workspace->signal.active,
                           &output->server->listen.workspace_active,
-                          bsi_server_workspace_active_notify);
+                          handle_server_workspace_active);
     bsi_util_slot_connect(&workspace->signal.active,
                           &output->listen.workspace_active,
-                          bsi_output_workspace_active_notify);
+                          handle_output_workspace_active);
 
     bsi_workspace_set_active(workspace, true);
 }
@@ -103,15 +103,10 @@ bsi_workspace_init(struct bsi_workspace* workspace,
 }
 
 void
-bsi_workspace_finish(struct bsi_workspace* workspace)
+bsi_workspace_destroy(struct bsi_workspace* workspace)
 {
     wl_list_remove(&workspace->server->listen.workspace_active.link);
     wl_list_remove(&workspace->output->listen.workspace_active.link);
-}
-
-void
-bsi_workspace_destroy(struct bsi_workspace* workspace)
-{
     free(workspace->name);
     free(workspace);
 }
@@ -140,7 +135,7 @@ bsi_workspace_view_add(struct bsi_workspace* workspace, struct bsi_view* view)
     wl_list_insert(&workspace->views, &view->link_workspace);
     bsi_util_slot_connect(&workspace->signal.active,
                           &view->listen.workspace_active,
-                          bsi_view_workspace_active_notify);
+                          handle_view_workspace_active);
     view->parent_workspace = workspace;
 }
 

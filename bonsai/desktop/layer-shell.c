@@ -117,8 +117,8 @@ bsi_layer_surface_focus(struct bsi_layer_surface_toplevel* toplevel)
 }
 
 void
-bsi_layer_surface_finish(union bsi_layer_surface layer_surface,
-                         enum bsi_layer_surface_type type)
+bsi_layer_surface_destroy(union bsi_layer_surface layer_surface,
+                          enum bsi_layer_surface_type type)
 {
     switch (type) {
         case BSI_LAYER_SURFACE_TOPLEVEL: {
@@ -130,40 +130,8 @@ bsi_layer_surface_finish(union bsi_layer_surface layer_surface,
             wl_list_remove(&toplevel->listen.destroy.link);
             wl_list_remove(&toplevel->listen.new_popup.link);
             /* wlr_surface -> wlr_layer_surface::surface */
-            wl_list_remove(&toplevel->listen.surface_commit.link);
-            wl_list_remove(&toplevel->listen.surface_new_subsurface.link);
-            break;
-        }
-        case BSI_LAYER_SURFACE_POPUP: {
-            struct bsi_layer_surface_popup* layer_popup = layer_surface.popup;
-            /* wlr_xdg_surface -> wlr_xdg_popup::base */
-            wl_list_remove(&layer_popup->listen.destroy.link);
-            wl_list_remove(&layer_popup->listen.new_popup.link);
-            wl_list_remove(&layer_popup->listen.map.link);
-            wl_list_remove(&layer_popup->listen.unmap.link);
-            wl_list_remove(&layer_popup->listen.surface_commit.link);
-            break;
-        }
-        case BSI_LAYER_SURFACE_SUBSURFACE: {
-            struct bsi_layer_surface_subsurface* layer_subsurface =
-                layer_surface.subsurface;
-            /* wlr_subsurface */
-            wl_list_remove(&layer_subsurface->listen.destroy.link);
-            wl_list_remove(&layer_subsurface->listen.map.link);
-            wl_list_remove(&layer_subsurface->listen.unmap.link);
-            break;
-        }
-    }
-}
-
-void
-bsi_layer_surface_destroy(union bsi_layer_surface layer_surface,
-                          enum bsi_layer_surface_type type)
-{
-    switch (type) {
-        case BSI_LAYER_SURFACE_TOPLEVEL: {
-            struct bsi_layer_surface_toplevel* toplevel =
-                layer_surface.toplevel;
+            wl_list_remove(&toplevel->listen.commit.link);
+            wl_list_remove(&toplevel->listen.new_subsurface.link);
 
             --toplevel->output->layer.len[toplevel->member_of_type];
             wl_list_remove(&toplevel->link);
@@ -180,11 +148,26 @@ bsi_layer_surface_destroy(union bsi_layer_surface layer_surface,
             free(toplevel);
             break;
         }
-        case BSI_LAYER_SURFACE_POPUP:
-            free(layer_surface.popup);
+        case BSI_LAYER_SURFACE_POPUP: {
+            struct bsi_layer_surface_popup* popup = layer_surface.popup;
+            /* wlr_xdg_surface -> wlr_xdg_popup::base */
+            wl_list_remove(&popup->listen.destroy.link);
+            wl_list_remove(&popup->listen.new_popup.link);
+            wl_list_remove(&popup->listen.map.link);
+            wl_list_remove(&popup->listen.unmap.link);
+            wl_list_remove(&popup->listen.commit.link);
+            free(popup);
             break;
-        case BSI_LAYER_SURFACE_SUBSURFACE:
+        }
+        case BSI_LAYER_SURFACE_SUBSURFACE: {
+            struct bsi_layer_surface_subsurface* subsurface =
+                layer_surface.subsurface;
+            /* wlr_subsurface */
+            wl_list_remove(&subsurface->listen.destroy.link);
+            wl_list_remove(&subsurface->listen.map.link);
+            wl_list_remove(&subsurface->listen.unmap.link);
             free(layer_surface.subsurface);
             break;
+        }
     }
 }

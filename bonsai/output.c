@@ -31,7 +31,7 @@ bsi_outputs_find(struct bsi_server* server, struct wlr_output* wlr_output)
     struct bsi_output* output;
     wl_list_for_each(output, &server->output.outputs, link)
     {
-        if (output->wlr_output == wlr_output)
+        if (output->output == wlr_output)
             return output;
     }
 
@@ -63,7 +63,7 @@ bsi_output_init(struct bsi_output* output,
 {
     output->id = server->output.len;
     output->server = server;
-    output->wlr_output = wlr_output;
+    output->output = wlr_output;
     output->new = true;
     /* Initialize damage. Initialize output configuration. */
     output->damage = wlr_output_damage_create(wlr_output);
@@ -85,6 +85,8 @@ bsi_output_init(struct bsi_output* output,
 void
 bsi_output_setup_extern_progs(struct bsi_output* output)
 {
+    // TODO: Maybe depends on output.
+
     for (size_t i = 0; i < BSI_OUTPUT_EXTERN_PROG_MAX; ++i) {
         const char* exep = bsi_output_extern_progs[i];
         char* argsp = bsi_output_extern_progs_args[i];
@@ -137,16 +139,12 @@ bsi_output_surface_damage(struct bsi_output* output,
 }
 
 void
-bsi_output_finish(struct bsi_output* output)
+bsi_output_destroy(struct bsi_output* output)
 {
     wl_list_remove(&output->listen.frame.link);
     wl_list_remove(&output->listen.destroy.link);
-}
 
-void
-bsi_output_destroy(struct bsi_output* output)
-{
-    bsi_info("Destroying output %ld/%s", output->id, output->wlr_output->name);
+    bsi_info("Destroying output %ld/%s", output->id, output->output->name);
 
     struct bsi_server* server = output->server;
     if (server->output.len > 0) {
@@ -184,7 +182,7 @@ bsi_output_destroy(struct bsi_output* output)
             bsi_debug("Destroying %ld workspaces for output %ld/%s",
                       output->wspace.len,
                       output->id,
-                      output->wlr_output->name);
+                      output->output->name);
 
             /* The view take care of themselves -- they receive an xdg_surface
              * destroy event. Note that a workspace might be freed before the
@@ -198,7 +196,7 @@ bsi_output_destroy(struct bsi_output* output)
      * output_destroy listeners. */
     bsi_debug("Destroying layer surfaces for output %ld/%s",
               output->id,
-              output->wlr_output->name);
+              output->output->name);
     for (size_t i = 0; i < 4; i++) {
         if (!wl_list_empty(&output->layer.layers[i])) {
             struct bsi_layer_surface_toplevel *surf, *surf_tmp;
@@ -207,7 +205,6 @@ bsi_output_destroy(struct bsi_output* output)
             {
                 union bsi_layer_surface lsurf = { .toplevel = surf };
                 wlr_layer_surface_v1_destroy(surf->layer_surface);
-                bsi_layer_surface_finish(lsurf, BSI_LAYER_SURFACE_TOPLEVEL);
                 bsi_layer_surface_destroy(lsurf, BSI_LAYER_SURFACE_TOPLEVEL);
             }
         }
