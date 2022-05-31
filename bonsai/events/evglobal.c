@@ -10,12 +10,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <wayland-server-core.h>
+#include <wayland-server-protocol.h>
 #include <wayland-util.h>
+#include <wlr/backend/drm.h>
 #include <wlr/render/allocator.h>
 #include <wlr/types/wlr_compositor.h>
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_data_device.h>
+#include <wlr/types/wlr_drm.h>
 #include <wlr/types/wlr_output.h>
+#include <wlr/types/wlr_output_damage.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_output_management_v1.h>
 #include <wlr/types/wlr_primary_selection.h>
@@ -39,7 +43,7 @@ struct bsi_view;
 #include "bonsai/util.h"
 
 void
-bsi_global_backend_new_output_notify(struct wl_listener* listener, void* data)
+bsi_backend_new_output_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event new_output from wlr_backend");
 
@@ -83,15 +87,17 @@ bsi_global_backend_new_output_notify(struct wl_listener* listener, void* data)
                           &output->listen.destroy,
                           bsi_output_destroy_notify);
 
-    wlr_output_manager_v1_set_configuration(server->wlr_output_manager,
-                                            output->wlr_output_config);
-    wlr_output_configuration_v1_send_succeeded(output->wlr_output_config);
+    struct wlr_output_configuration_v1* config =
+        wlr_output_configuration_v1_create();
+    struct wlr_output_configuration_v1_head* config_head =
+        wlr_output_configuration_head_v1_create(config, output->wlr_output);
+    wlr_output_manager_v1_set_configuration(server->wlr_output_manager, config);
 
     wlr_output_layout_add_auto(server->wlr_output_layout, wlr_output);
 }
 
 void
-bsi_global_backend_new_input_notify(struct wl_listener* listener, void* data)
+bsi_backend_new_input_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event new_input from wlr_backend");
 
@@ -210,51 +216,136 @@ bsi_global_backend_new_input_notify(struct wl_listener* listener, void* data)
 }
 
 void
-bsi_global_seat_pointer_grab_begin_notify(struct wl_listener* listener,
-                                          void* data)
+bsi_output_layout_change_notify(struct wl_listener* listener, void* data)
+{
+    bsi_debug("Got event change from wlr_output_layout");
+
+    struct bsi_server* server =
+        wl_container_of(listener, server, listen.output_layout_change);
+
+    if (server->shutting_down)
+        return;
+
+    struct wlr_output_configuration_v1* config =
+        wlr_output_configuration_v1_create();
+
+    struct bsi_output* output;
+    wl_list_for_each(output, &server->output.outputs, link)
+    {
+        struct wlr_output_configuration_head_v1* config_head =
+            wlr_output_configuration_head_v1_create(config, output->wlr_output);
+        struct wlr_box output_box;
+        wlr_output_layout_get_box(
+            server->wlr_output_layout, output->wlr_output, &output_box);
+        config_head->state.mode = output->wlr_output->current_mode;
+        if (!wlr_box_empty(&output_box)) {
+            config_head->state.x = output_box.x;
+            config_head->state.y = output_box.y;
+        }
+
+        bsi_output_surface_damage(output, NULL, true);
+    }
+
+    wlr_output_manager_v1_set_configuration(server->wlr_output_manager, config);
+}
+
+void
+bsi_output_manager_apply_notify(struct wl_listener* listener, void* data)
+{
+    bsi_debug("Got event apply from wlr_output_manager");
+    struct bsi_server* server =
+        wl_container_of(listener, server, listen.output_manager_apply);
+    struct wlr_output_configuration_v1* config = data;
+
+    // TODO: Disable outputs that need disabling and enable outputs that need
+    // enabling.
+
+    wlr_output_manager_v1_set_configuration(server->wlr_output_manager, config);
+    wlr_output_configuration_v1_send_succeeded(config);
+    wlr_output_configuration_v1_destroy(config);
+}
+
+void
+bsi_output_manager_test_notify(struct wl_listener* listener, void* data)
+{
+    bsi_debug("Got event test from wlr_output_manager");
+    struct bsi_server* server =
+        wl_container_of(listener, server, listen.output_manager_test);
+    struct wlr_output_configuration_v1* config = data;
+
+    // TODO: Finish this.
+
+    bool ok = true;
+    struct wlr_output_configuration_head_v1* config_head;
+    wl_list_for_each(config_head, &config->heads, link)
+    {
+        struct wlr_output* output = config_head->state.output;
+        bsi_debug("Testing output %s", output->name);
+
+        if (!wl_list_empty(&output->modes)) {
+            struct wlr_output_mode* preffered_mode =
+                wlr_output_preferred_mode(output);
+            wlr_output_set_mode(output, preffered_mode);
+        }
+
+        if (wlr_output_is_drm(output)) {
+            enum wl_output_transform transf =
+                wlr_drm_connector_get_panel_orientation(output);
+            if (output->transform != transf)
+                wlr_output_set_transform(output, transf);
+        }
+
+        ok &= wlr_output_test(output);
+    }
+
+    if (ok)
+        wlr_output_configuration_v1_send_succeeded(config);
+    else
+        wlr_output_configuration_v1_send_failed(config);
+
+    wlr_output_configuration_v1_destroy(config);
+}
+
+void
+bsi_seat_pointer_grab_begin_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event pointer_grab_begin from wlr_seat");
 }
 
 void
-bsi_global_seat_pointer_grab_end_notify(struct wl_listener* listener,
-                                        void* data)
+bsi_seat_pointer_grab_end_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event pointer_grab_end from wlr_seat");
 }
 
 void
-bsi_global_seat_keyboard_grab_begin_notify(struct wl_listener* listener,
-                                           void* data)
+bsi_seat_keyboard_grab_begin_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event keyboard_grab_begin from wlr_seat");
 }
 
 void
-bsi_global_seat_keyboard_grab_end_notify(struct wl_listener* listener,
-                                         void* data)
+bsi_seat_keyboard_grab_end_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event keyboard_grab_end from wlr_seat");
 }
 
 void
-bsi_global_seat_touch_grab_begin_notify(struct wl_listener* listener,
-                                        void* data)
+bsi_seat_touch_grab_begin_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event touch_grab_begin from wlr_seat");
     bsi_debug("A touch device has grabbed focus, what the hell!?");
 }
 
 void
-bsi_global_seat_touch_grab_end_notify(struct wl_listener* listener, void* data)
+bsi_seat_touch_grab_end_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event touch_grab_end from wlr_seat");
     bsi_debug("A touch device has ended focus grab, what the hell!?");
 }
 
 void
-bsi_global_seat_request_set_cursor_notify(struct wl_listener* listener,
-                                          void* data)
+bsi_seat_request_set_cursor_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event request_set_cursor from wlr_seat");
 
@@ -271,8 +362,7 @@ bsi_global_seat_request_set_cursor_notify(struct wl_listener* listener,
 }
 
 void
-bsi_global_seat_request_set_selection_notify(struct wl_listener* listener,
-                                             void* data)
+bsi_seat_request_set_selection_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event request_set_selection from wlr_seat");
 
@@ -285,9 +375,8 @@ bsi_global_seat_request_set_selection_notify(struct wl_listener* listener,
 }
 
 void
-bsi_global_seat_request_set_primary_selection_notify(
-    struct wl_listener* listener,
-    void* data)
+bsi_seat_request_set_primary_selection_notify(struct wl_listener* listener,
+                                              void* data)
 {
     bsi_debug("Got event request_set_primary_selection from wlr_seat");
 
@@ -301,15 +390,13 @@ bsi_global_seat_request_set_primary_selection_notify(
 }
 
 void
-bsi_global_seat_request_start_drag_notify(struct wl_listener* listener,
-                                          void* data)
+bsi_seat_request_start_drag_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event request_start_drag from wlr_seat");
 }
 
 void
-bsi_global_xdg_shell_new_surface_notify(struct wl_listener* listener,
-                                        void* data)
+bsi_xdg_shell_new_surface_notify(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event new_surface from wlr_xdg_shell");
 

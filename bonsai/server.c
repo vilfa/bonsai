@@ -33,10 +33,10 @@ bsi_server_init(struct bsi_server* bsi_server)
     bsi_server->wlr_backend = wlr_backend_autocreate(bsi_server->wl_display);
     bsi_util_slot_connect(&bsi_server->wlr_backend->events.new_output,
                           &bsi_server->listen.backend_new_output,
-                          bsi_global_backend_new_output_notify);
+                          bsi_backend_new_output_notify);
     bsi_util_slot_connect(&bsi_server->wlr_backend->events.new_input,
                           &bsi_server->listen.backend_new_input,
-                          bsi_global_backend_new_input_notify);
+                          bsi_backend_new_input_notify);
     bsi_debug("Autocreated backend & attached handlers");
 
     bsi_server->wlr_renderer = wlr_renderer_autocreate(bsi_server->wlr_backend);
@@ -60,14 +60,23 @@ bsi_server_init(struct bsi_server* bsi_server)
         "Created wlr_compositor, wlr_subcompositor & wlr_data_device_manager");
 
     bsi_server->wlr_output_layout = wlr_output_layout_create();
+    bsi_util_slot_connect(&bsi_server->wlr_output_layout->events.change,
+                          &bsi_server->listen.output_layout_change,
+                          bsi_output_layout_change_notify);
     bsi_debug("Created output layout");
 
     bsi_server->wlr_output_manager =
         wlr_output_manager_v1_create(bsi_server->wl_display);
-    bsi_debug("Created wlr_output_manager_v1");
+    bsi_util_slot_connect(&bsi_server->wlr_output_manager->events.apply,
+                          &bsi_server->listen.output_manager_apply,
+                          bsi_output_manager_apply_notify);
+    bsi_util_slot_connect(&bsi_server->wlr_output_manager->events.test,
+                          &bsi_server->listen.output_manager_test,
+                          bsi_output_manager_test_notify);
+    bsi_debug("Created wlr_output_manager_v1 & attached handlers");
 
-    bsi_server->wlr_xdg_output_manager = wlr_xdg_output_manager_v1_create(
-        bsi_server->wl_display, bsi_server->wlr_output_layout);
+    wlr_xdg_output_manager_v1_create(bsi_server->wl_display,
+                                     bsi_server->wlr_output_layout);
     bsi_debug("Created xdg_output_manager_v1");
 
     bsi_server->wlr_scene = wlr_scene_create();
@@ -78,7 +87,7 @@ bsi_server_init(struct bsi_server* bsi_server)
     bsi_server->wlr_xdg_shell = wlr_xdg_shell_create(bsi_server->wl_display, 2);
     bsi_util_slot_connect(&bsi_server->wlr_xdg_shell->events.new_surface,
                           &bsi_server->listen.xdg_shell_new_surface,
-                          bsi_global_xdg_shell_new_surface_notify);
+                          bsi_xdg_shell_new_surface_notify);
     bsi_debug("Created wlr_xdg_shell & attached handlers");
 
     bsi_server->wlr_layer_shell =
@@ -112,35 +121,35 @@ bsi_server_init(struct bsi_server* bsi_server)
 
     bsi_util_slot_connect(&bsi_server->wlr_seat->events.pointer_grab_begin,
                           &bsi_server->listen.seat_pointer_grab_begin,
-                          bsi_global_seat_pointer_grab_begin_notify);
+                          bsi_seat_pointer_grab_begin_notify);
     bsi_util_slot_connect(&bsi_server->wlr_seat->events.pointer_grab_end,
                           &bsi_server->listen.seat_pointer_grab_end,
-                          bsi_global_seat_pointer_grab_end_notify);
+                          bsi_seat_pointer_grab_end_notify);
     bsi_util_slot_connect(&bsi_server->wlr_seat->events.keyboard_grab_begin,
                           &bsi_server->listen.seat_keyboard_grab_begin,
-                          bsi_global_seat_keyboard_grab_begin_notify);
+                          bsi_seat_keyboard_grab_begin_notify);
     bsi_util_slot_connect(&bsi_server->wlr_seat->events.keyboard_grab_end,
                           &bsi_server->listen.seat_keyboard_grab_end,
-                          bsi_global_seat_keyboard_grab_end_notify);
+                          bsi_seat_keyboard_grab_end_notify);
     bsi_util_slot_connect(&bsi_server->wlr_seat->events.touch_grab_begin,
                           &bsi_server->listen.seat_touch_grab_begin,
-                          bsi_global_seat_touch_grab_begin_notify);
+                          bsi_seat_touch_grab_begin_notify);
     bsi_util_slot_connect(&bsi_server->wlr_seat->events.touch_grab_end,
                           &bsi_server->listen.seat_touch_grab_end,
-                          bsi_global_seat_touch_grab_end_notify);
+                          bsi_seat_touch_grab_end_notify);
     bsi_util_slot_connect(&bsi_server->wlr_seat->events.request_set_cursor,
                           &bsi_server->listen.seat_request_set_cursor,
-                          bsi_global_seat_request_set_cursor_notify);
+                          bsi_seat_request_set_cursor_notify);
     bsi_util_slot_connect(&bsi_server->wlr_seat->events.request_set_selection,
                           &bsi_server->listen.seat_request_set_selection,
-                          bsi_global_seat_request_set_selection_notify);
+                          bsi_seat_request_set_selection_notify);
     bsi_util_slot_connect(
         &bsi_server->wlr_seat->events.request_set_primary_selection,
         &bsi_server->listen.wlr_seat_request_set_primary_selection,
-        bsi_global_seat_request_set_primary_selection_notify);
+        bsi_seat_request_set_primary_selection_notify);
     bsi_util_slot_connect(&bsi_server->wlr_seat->events.request_start_drag,
                           &bsi_server->listen.seat_request_start_drag,
-                          bsi_global_seat_request_start_drag_notify);
+                          bsi_seat_request_start_drag_notify);
     bsi_debug("Attached handlers for seat '%s'", seat_name);
 
     bsi_server_scene_init(bsi_server);

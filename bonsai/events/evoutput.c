@@ -26,7 +26,6 @@ bsi_output_frame_notify(struct wl_listener* listener,
 
     struct wlr_scene_output* wlr_scene_output =
         wlr_scene_get_scene_output(wlr_scene, output->wlr_output);
-
     wlr_scene_output_commit(wlr_scene_output);
 
     struct timespec now = bsi_util_timespec_get();

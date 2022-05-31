@@ -7,21 +7,26 @@ bsi_notify_func_t(struct wl_listener*, void*);
 
 /* bsi_listeners_global */
 /* wlr_backend */
-extern bsi_notify_func_t bsi_global_backend_new_output_notify;
-extern bsi_notify_func_t bsi_global_backend_new_input_notify;
+extern bsi_notify_func_t bsi_backend_new_output_notify;
+extern bsi_notify_func_t bsi_backend_new_input_notify;
+/* wlr_output_layout */
+extern bsi_notify_func_t bsi_output_layout_change_notify;
+/* wlr_output_manager_v1 */
+extern bsi_notify_func_t bsi_output_manager_apply_notify;
+extern bsi_notify_func_t bsi_output_manager_test_notify;
 /* wlr_seat */
-extern bsi_notify_func_t bsi_global_seat_pointer_grab_begin_notify;
-extern bsi_notify_func_t bsi_global_seat_pointer_grab_end_notify;
-extern bsi_notify_func_t bsi_global_seat_keyboard_grab_begin_notify;
-extern bsi_notify_func_t bsi_global_seat_keyboard_grab_end_notify;
-extern bsi_notify_func_t bsi_global_seat_touch_grab_begin_notify; // Skipped.
-extern bsi_notify_func_t bsi_global_seat_touch_grab_end_notify;   // Skipped.
-extern bsi_notify_func_t bsi_global_seat_request_set_cursor_notify;
-extern bsi_notify_func_t bsi_global_seat_request_set_selection_notify;
-extern bsi_notify_func_t bsi_global_seat_request_set_primary_selection_notify;
-extern bsi_notify_func_t bsi_global_seat_request_start_drag_notify;
+extern bsi_notify_func_t bsi_seat_pointer_grab_begin_notify;
+extern bsi_notify_func_t bsi_seat_pointer_grab_end_notify;
+extern bsi_notify_func_t bsi_seat_keyboard_grab_begin_notify;
+extern bsi_notify_func_t bsi_seat_keyboard_grab_end_notify;
+extern bsi_notify_func_t bsi_seat_touch_grab_begin_notify; // Skipped.
+extern bsi_notify_func_t bsi_seat_touch_grab_end_notify;   // Skipped.
+extern bsi_notify_func_t bsi_seat_request_set_cursor_notify;
+extern bsi_notify_func_t bsi_seat_request_set_selection_notify;
+extern bsi_notify_func_t bsi_seat_request_set_primary_selection_notify;
+extern bsi_notify_func_t bsi_seat_request_start_drag_notify;
 /* wlr_xdg_shell */
-extern bsi_notify_func_t bsi_global_xdg_shell_new_surface_notify;
+extern bsi_notify_func_t bsi_xdg_shell_new_surface_notify;
 /* wlr_layer_shell_v1 */
 extern bsi_notify_func_t bsi_layer_shell_new_surface_notify;
 

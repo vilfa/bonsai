@@ -83,10 +83,6 @@ bsi_output_init(struct bsi_output* bsi_output,
     bsi_output->new = true;
     /* Initialize damage. Initialize output configuration. */
     bsi_output->damage = wlr_output_damage_create(wlr_output);
-    bsi_output->wlr_output_config = wlr_output_configuration_v1_create();
-    bsi_output->wlr_output_config_head =
-        wlr_output_configuration_head_v1_create(bsi_output->wlr_output_config,
-                                                bsi_output->wlr_output);
     /* Initialize workspaces. */
     bsi_output->wspace.len = 0;
     wl_list_init(&bsi_output->wspace.workspaces);
@@ -114,6 +110,47 @@ bsi_output_setup_extern_progs(struct bsi_output* bsi_output)
         size_t len_argp = bsi_util_split_argsp((char*)exep, argsp, " ", &argp);
         bsi_util_forkexec(argp, len_argp);
         bsi_util_split_free(&argp);
+    }
+}
+
+void
+bsi_output_surface_damage(struct bsi_output* output,
+                          struct wlr_surface* surface,
+                          bool entire_output)
+{
+    // TODO: This probably isn't right.
+
+    if (entire_output) {
+        wlr_output_damage_add_whole(output->damage);
+    } else {
+        struct wlr_box box;
+        wlr_surface_get_extends(surface, &box);
+        wlr_output_damage_add_box(output->damage, &box);
+
+        // /* Get surface damage. */
+        // pixman_region32_t damage;
+        // pixman_region32_init(&damage);
+        // wlr_surface_get_effective_damage(surface, &damage);
+        // wlr_region_scale(&damage, &damage, output->wlr_output->scale);
+
+        // /* If scaling has changed, expand damage region. */
+        // if (ceil(output->wlr_output->scale) > surface->current.scale)
+        //     wlr_region_expand(&damage,
+        //                       &damage,
+        //                       ceil(output->wlr_output->scale) -
+        //                           surface->current.scale);
+
+        // /* Translate the damage box to the output. */
+        // pixman_region32_translate(&damage, box.x, box.y);
+        // wlr_output_damage_add(output->damage, &damage);
+        // pixman_region32_fini(&damage);
+
+        // if (entire_output) {
+        //     wlr_output_damage_add_box(output->damage, &box);
+        // }
+
+        // if (!wl_list_empty(&surface->current.frame_callback_list))
+        //     wlr_output_schedule_frame(output->wlr_output);
     }
 }
 

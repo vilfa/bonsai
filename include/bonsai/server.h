@@ -5,6 +5,7 @@
 #include "bonsai/input.h"
 #include "bonsai/input/cursor.h"
 #include "bonsai/output.h"
+#include <wayland-server-core.h>
 
 /**
  * @brief Represents the compositor and its internal state.
@@ -20,7 +21,6 @@ struct bsi_server
     struct wlr_allocator* wlr_allocator;
     struct wlr_output_layout* wlr_output_layout;
     struct wlr_output_manager_v1* wlr_output_manager;
-    struct wlr_xdg_output_manager_v1* wlr_xdg_output_manager;
     struct wlr_scene* wlr_scene;
     struct wlr_xdg_shell* wlr_xdg_shell;
     struct wlr_seat* wlr_seat;
@@ -37,6 +37,11 @@ struct bsi_server
         /* wlr_backend */
         struct wl_listener backend_new_output;
         struct wl_listener backend_new_input;
+        /* wlr_output_layout */
+        struct wl_listener output_layout_change;
+        /* wlr_output_manager_v1 */
+        struct wl_listener output_manager_apply;
+        struct wl_listener output_manager_test;
         /* wlr_seat */
         struct wl_listener seat_pointer_grab_begin;
         struct wl_listener seat_pointer_grab_end;

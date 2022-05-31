@@ -19,8 +19,6 @@ struct bsi_output
 {
     struct bsi_server* server;
     struct wlr_output* wlr_output;
-    struct wlr_output_configuration_v1* wlr_output_config;
-    struct wlr_output_configuration_head_v1* wlr_output_config_head;
     struct timespec last_frame;
 
     size_t id; /* Incremental id. */
@@ -120,6 +118,11 @@ bsi_output_init(struct bsi_output* bsi_output,
 
 void
 bsi_output_setup_extern_progs(struct bsi_output* bsi_output);
+
+void
+bsi_output_surface_damage(struct bsi_output* output,
+                          struct wlr_surface* surface,
+                          bool entire_output);
 
 /**
  * @brief Remove all active listeners from the specified `bsi_output`.

@@ -188,45 +188,28 @@ bsi_layers_arrange(struct bsi_output* output)
 
     /* Last, focus the topmost keyboard-interactive layer, if it exists. */
     // TODO: Focus topmost keyboard-interactive layer.
-}
-
-static void
-bsi_output_surface_damage(struct bsi_output* output,
-                          struct wlr_surface* surface,
-                          bool entire_output)
-{
-    // TODO: This probably isn't right.
-
-    wlr_output_damage_add_whole(output->damage);
-
-    // struct wlr_box box;
-    // wlr_output_layout_get_box(
-    // output->server->wlr_output_layout, output->wlr_output, &box);
-
-    // /* Get surface damage. */
-    // pixman_region32_t damage;
-    // pixman_region32_init(&damage);
-    // wlr_surface_get_effective_damage(surface, &damage);
-    // wlr_region_scale(&damage, &damage, output->wlr_output->scale);
-
-    // /* If scaling has changed, expand damage region. */
-    // if (ceil(output->wlr_output->scale) > surface->current.scale)
-    //     wlr_region_expand(&damage,
-    //                       &damage,
-    //                       ceil(output->wlr_output->scale) -
-    //                           surface->current.scale);
-
-    // /* Translate the damage box to the output. */
-    // pixman_region32_translate(&damage, box.x, box.y);
-    // wlr_output_damage_add(output->damage, &damage);
-    // pixman_region32_fini(&damage);
-
-    // if (entire_output) {
-    //     wlr_output_damage_add_box(output->damage, &box);
-    // }
-
-    // if (!wl_list_empty(&surface->current.frame_callback_list))
-    //     wlr_output_schedule_frame(output->wlr_output);
+    struct bsi_server* server = output->server;
+    struct wlr_keyboard* keyboard = wlr_seat_get_keyboard(server->wlr_seat);
+    bool focused = false;
+    for (size_t i = 3; i >= 0; --i) {
+        if (focused)
+            break;
+        if (!wl_list_empty(&output->layer.layers[i])) {
+            struct bsi_layer_surface_toplevel* toplevel;
+            wl_list_for_each(toplevel, &output->layer.layers[i], link)
+            {
+                // if (toplevel->layer_surface->current.keyboard_interactive !=
+                // ZWLR_LAYER_SURFACE_V1_KEYBOARD_INTERACTIVITY_NONE) {
+                wlr_seat_keyboard_notify_enter(server->wlr_seat,
+                                               toplevel->layer_surface->surface,
+                                               keyboard->keycodes,
+                                               keyboard->num_keycodes,
+                                               &keyboard->modifiers);
+                focused = true;
+                // }
+            }
+        }
+    }
 }
 
 /*
@@ -348,6 +331,9 @@ bsi_layer_surface_toplevel_wlr_surface_commit_notify(
     struct bsi_layer_surface_toplevel* layer_toplevel =
         wl_container_of(listener, layer_toplevel, listen.surface_commit);
     struct bsi_output* output = layer_toplevel->output;
+
+    bsi_debug("Toplevel namespace is '%s'",
+              layer_toplevel->layer_surface->namespace);
 
     bool to_another_layer = false;
     if (layer_toplevel->layer_surface->current.committed != 0 ||
