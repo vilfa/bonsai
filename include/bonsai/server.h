@@ -86,6 +86,8 @@ struct bsi_server
     struct
     {
         struct wl_list views;
+        struct wl_list views_minimized;
+        struct wl_list views_recent;
         struct wl_list decorations;
     } scene;
 

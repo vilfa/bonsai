@@ -1,5 +1,4 @@
 #define _POSIX_C_SOURCE 200809L
-#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -41,9 +40,15 @@
 
 // TODO: Fix Waybar not working.
 
-// TODO: Fix focusing on move
+// TODO: Fix focusing on move.
 
-// TODO: Maybe refactor some more with regards to useless short funcitons
+// TODO: Fix layer shell layers overlapping.
+
+// TODO: Focus next on minimize.
+
+// TODO: Add to most recent on focus.
+
+// TODO: Fix crashing on exit key combo.
 
 int
 main(void)
@@ -65,7 +70,6 @@ main(void)
     }
 
     if (setenv("WLR_NO_HARDWARE_CURSORS", "1", true) != 0) {
-        // TODO: Idk man these cursors are weird.
         /* Workaround for https://github.com/swaywm/wlroots/issues/3189
          * Note: Make sure the default cursor theme is set correctly in
          * `/usr/share/icons/default/index.theme` or

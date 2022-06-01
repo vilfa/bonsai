@@ -2,9 +2,18 @@
 
 #include <wayland-server-core.h>
 #include <wayland-util.h>
+#include <wlr/types/wlr_xdg_shell.h>
 
 #include "bonsai/desktop/workspace.h"
 #include "bonsai/input/cursor.h"
+
+enum bsi_view_state
+{
+    BSI_VIEW_STATE_NORMAL = 1 << 0,
+    BSI_VIEW_STATE_MINIMIZED = 1 << 1,
+    BSI_VIEW_STATE_MAXIMIZED = 1 << 2,
+    BSI_VIEW_STATE_FULLSCREEN = 1 << 3,
+};
 
 struct bsi_view
 {
@@ -14,7 +23,7 @@ struct bsi_view
     struct bsi_workspace* parent_workspace;
 
     bool mapped;
-    bool maximized, minimized, fullscreen;
+    enum bsi_view_state state;
 
     /* Note, that when the window goes fullscreen, minimized or maximized,
      * this will hold the last state of the window that should be restored when
@@ -39,8 +48,16 @@ struct bsi_view
         struct wl_listener workspace_active;
     } listen;
 
-    struct wl_list link_server;    // bsi_server
-    struct wl_list link_workspace; // bsi_workspace
+    struct wl_list link_server;    // bsi_server::scene::{views,views_minimized}
+    struct wl_list link_workspace; // bsi_workspace::views
+    struct wl_list link_recent;    // bsi_server::scene::views_recent
+};
+
+union bsi_view_toplevel_event
+{
+    struct wlr_xdg_toplevel_move_event* move;
+    struct wlr_xdg_toplevel_resize_event* resize;
+    struct wlr_xdg_toplevel_show_window_menu_event* show_window_menu;
 };
 
 /**
@@ -53,7 +70,16 @@ void
 bsi_views_add(struct bsi_server* server, struct bsi_view* view);
 
 /**
- * @brief Removes a view from the server views.
+ * @brief Adds a view to the minimized views.
+ *
+ * @param server The server.
+ * @param view The minimized view.
+ */
+void
+bsi_views_add_minimized(struct bsi_server* server, struct bsi_view* view);
+
+/**
+ * @brief Removes a view from any of the server views.
  *
  * @param server The server.
  * @param view The view to remove.
@@ -95,12 +121,12 @@ bsi_view_focus(struct bsi_view* view);
  *
  * @param view The view.
  * @param cursor_mode The cursor mode.
- * @param edges If this is a resize event, the edges from the resize event.
+ * @param toplevel_event The xdg toplevel event.
  */
 void
 bsi_view_interactive_begin(struct bsi_view* view,
                            enum bsi_cursor_mode cursor_mode,
-                           uint32_t edges);
+                           union bsi_view_toplevel_event toplevel_event);
 
 void
 bsi_view_set_maximized(struct bsi_view* view, bool maximized);

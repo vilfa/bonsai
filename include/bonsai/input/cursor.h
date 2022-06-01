@@ -101,7 +101,7 @@ bsi_cursor_scene_data_at(struct bsi_server* server,
  */
 void
 bsi_cursor_process_motion(struct bsi_server* server,
-                          union bsi_cursor_event event);
+                          union bsi_cursor_event cursor_event);
 
 /**
  * @brief Process view movement with cursor.
@@ -111,7 +111,7 @@ bsi_cursor_process_motion(struct bsi_server* server,
  */
 void
 bsi_cursor_process_view_move(struct bsi_server* server,
-                             union bsi_cursor_event event);
+                             union bsi_cursor_event cursor_event);
 
 /**
  * @brief
@@ -121,4 +121,4 @@ bsi_cursor_process_view_move(struct bsi_server* server,
  */
 void
 bsi_cursor_process_view_resize(struct bsi_server* server,
-                               union bsi_cursor_event event);
+                               union bsi_cursor_event cursor_event);

@@ -9,18 +9,18 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <wayland-server-protocol.h>
+#include <wayland-util.h>
 #include <wlr/types/wlr_keyboard.h>
 #include <wlr/util/log.h>
 #include <xkbcommon/xkbcommon-keysyms.h>
 #include <xkbcommon/xkbcommon.h>
 
+#include "bonsai/desktop/view.h"
 #include "bonsai/input.h"
 #include "bonsai/input/keyboard.h"
 #include "bonsai/log.h"
 #include "bonsai/server.h"
 #include "bonsai/util.h"
-
-#define GIMME_ALL_KEYBINDINGS
 
 bool
 bsi_keyboard_keybinds_process(struct bsi_input_keyboard* keyboard,
@@ -109,27 +109,32 @@ bsi_keyboard_keybinds_handle(struct bsi_server* server,
 bool
 bsi_keyboard_mod_ctrl_handle(struct bsi_server* server, xkb_keysym_t sym)
 {
-#ifdef GIMME_ALL_KEYBINDINGS
     bsi_debug("Got Ctrl mod");
-#endif
     return false;
 }
 
 bool
 bsi_keyboard_mod_alt_handle(struct bsi_server* server, xkb_keysym_t sym)
 {
-#ifdef GIMME_ALL_KEYBINDINGS
     bsi_debug("Got Alt mod");
-#endif
+    switch (sym) {
+        case XKB_KEY_Tab: {
+            if (!wl_list_empty(&server->scene.views_recent)) {
+                struct bsi_view* view_mru = wl_container_of(
+                    server->scene.views_recent.next, view_mru, link_recent);
+                bsi_views_remove(server, view_mru);
+                bsi_views_add(server, view_mru);
+                return true;
+            }
+        }
+    }
     return false;
 }
 
 bool
 bsi_keyboard_mod_super_handle(struct bsi_server* server, xkb_keysym_t sym)
 {
-#ifdef GIMME_ALL_KEYBINDINGS
     bsi_debug("Got Super mod");
-#endif
     switch (sym) {
         case XKB_KEY_d: {
             bsi_debug("Got Super+d -> bemenu");
@@ -153,18 +158,14 @@ bsi_keyboard_mod_super_handle(struct bsi_server* server, xkb_keysym_t sym)
 bool
 bsi_keyboard_mod_ctrl_alt_handle(struct bsi_server* server, xkb_keysym_t sym)
 {
-#ifdef GIMME_ALL_KEYBINDINGS
     bsi_debug("Got Ctrl+Alt mod");
-#endif
     return false;
 }
 
 bool
 bsi_keyboard_mod_ctrl_shift_handle(struct bsi_server* server, xkb_keysym_t sym)
 {
-#ifdef GIMME_ALL_KEYBINDINGS
     bsi_debug("Got Ctrl+Shift mod");
-#endif
     return false;
 }
 
@@ -172,18 +173,14 @@ bool
 bsi_keyboard_mod_ctrl_alt_shift_handle(struct bsi_server* server,
                                        xkb_keysym_t sym)
 {
-#ifdef GIMME_ALL_KEYBINDINGS
     bsi_debug("Got Ctrl+Alt+Shift mod");
-#endif
     return false;
 }
 
 bool
 bsi_keyboard_mod_super_shift_handle(struct bsi_server* server, xkb_keysym_t sym)
 {
-#ifdef GIMME_ALL_KEYBINDINGS
     bsi_debug("Got Super+Shift mod");
-#endif
     switch (sym) {
         case XKB_KEY_Q:
             bsi_info("Got Super+Shift+Q -> exit");

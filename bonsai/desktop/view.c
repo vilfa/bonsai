@@ -27,17 +27,29 @@ bsi_views_add(struct bsi_server* server, struct bsi_view* view)
     /* Initialize geometry state. */
     wlr_xdg_surface_get_geometry(view->toplevel->base, &view->box);
     wlr_scene_node_coords(view->scene_node, &view->box.x, &view->box.y);
+    /* Add as most recent. */
+    if (view->link_recent.prev != view->link_recent.next)
+        wl_list_remove(&view->link_recent);
+    wl_list_insert(&server->scene.views_recent, &view->link_recent);
+}
+
+void
+bsi_views_add_minimized(struct bsi_server* server, struct bsi_view* view)
+{
+    wl_list_insert(&server->scene.views_minimized, &view->link_server);
+    wlr_scene_node_set_enabled(view->scene_node, false);
+    /* Save the geometry. */
+    wlr_xdg_surface_get_geometry(view->toplevel->base, &view->box);
+    wlr_scene_node_coords(view->scene_node, &view->box.x, &view->box.y);
+    /* Add as most recent. */
+    if (view->link_recent.prev != view->link_recent.next)
+        wl_list_remove(&view->link_recent);
+    wl_list_insert(&server->scene.views_recent, &view->link_recent);
 }
 
 void
 bsi_views_remove(struct bsi_server* server, struct bsi_view* view)
 {
-    // TODO: Add minimized, maximized, etc states to view. Also check
-    // wlr_xdg_surface,...
-
-    if (view->link_server.prev == NULL || view->link_server.next == NULL)
-        return;
-
     wl_list_remove(&view->link_server);
     wlr_scene_node_set_enabled(view->scene_node, false);
 }
@@ -54,9 +66,7 @@ bsi_view_init(struct bsi_view* view,
     view->box.width = 0;
     view->box.height = 0;
     view->mapped = false;
-    view->maximized = false;
-    view->minimized = false;
-    view->fullscreen = false;
+    view->state = BSI_VIEW_STATE_NORMAL;
 
     /* Create a new node from the root server node. */
     view->scene_node = wlr_scene_xdg_surface_create(
@@ -125,7 +135,7 @@ bsi_view_focus(struct bsi_view* view)
 void
 bsi_view_interactive_begin(struct bsi_view* view,
                            enum bsi_cursor_mode cursor_mode,
-                           uint32_t edges)
+                           union bsi_view_toplevel_event toplevel_event)
 {
     /* Sets up an interactive move or resize operation. The compositor consumes
      * these events. */
@@ -150,118 +160,132 @@ bsi_view_interactive_begin(struct bsi_view* view,
         wlr_scene_node_coords(view->scene_node, &lx, &ly);
         server->cursor.grab_sx = server->wlr_cursor->x - lx;
         server->cursor.grab_sy = server->wlr_cursor->y - ly;
-
         bsi_debug("Surface local move coords are (%.2f, %.2f)",
                   server->cursor.grab_sx,
                   server->cursor.grab_sy);
     } else {
+        struct wlr_xdg_toplevel_resize_event* event = toplevel_event.resize;
         struct wlr_box box;
         wlr_xdg_surface_get_geometry(view->toplevel->base, &box);
 
         // TODO: Not sure what is happening here
-        double border_x =
-            (view->box.x + box.x) + ((edges & WLR_EDGE_RIGHT) ? box.width : 0);
+        double border_x = (view->box.x + box.x) +
+                          ((event->edges & WLR_EDGE_RIGHT) ? box.width : 0);
         double border_y = (view->box.y + box.y) +
-                          ((edges & WLR_EDGE_BOTTOM) ? box.height : 0);
+                          ((event->edges & WLR_EDGE_BOTTOM) ? box.height : 0);
+
         server->cursor.grab_sx = server->wlr_cursor->x - border_x;
         server->cursor.grab_sy = server->wlr_cursor->y - border_y;
-
         server->cursor.grab_box = box;
         server->cursor.grab_box.x += view->box.x;
         server->cursor.grab_box.y += view->box.y;
-
-        server->cursor.resize_edges = edges;
+        server->cursor.resize_edges = event->edges;
     }
 }
 
 void
 bsi_view_set_maximized(struct bsi_view* view, bool maximized)
 {
-    assert(view);
+    view->state =
+        (maximized) ? BSI_VIEW_STATE_MAXIMIZED : BSI_VIEW_STATE_NORMAL;
 
-    view->maximized = maximized;
-
-    if (!maximized) {
-        bsi_debug("Set not maximized for view %s, restore prev",
-                  view->toplevel->app_id);
+    if (view->state == BSI_VIEW_STATE_NORMAL) {
+        bsi_debug("Unmaximize view '%s', restore prev", view->toplevel->app_id);
         bsi_view_restore_prev(view);
     } else {
-        bsi_debug("Set maximized for view %s", view->toplevel->app_id);
+        bsi_debug("Maximize view '%s'", view->toplevel->app_id);
 
         /* Save the geometry. */
         wlr_xdg_surface_get_geometry(view->toplevel->base, &view->box);
         wlr_scene_node_coords(view->scene_node, &view->box.x, &view->box.y);
 
-        struct bsi_server* server = view->server;
-        struct bsi_output* output = view->parent_workspace->output;
+        /* Maximize. */
         struct wlr_box output_box;
-        wlr_output_layout_get_box(
-            server->wlr_output_layout, output->output, &output_box);
+        wlr_output_layout_get_box(view->server->wlr_output_layout,
+                                  view->parent_workspace->output->output,
+                                  &output_box);
         wlr_scene_node_set_position(view->scene_node, 0, 0);
+        wlr_xdg_toplevel_set_resizing(view->toplevel, true);
         wlr_xdg_toplevel_set_size(
             view->toplevel, output_box.width, output_box.height);
+        wlr_xdg_toplevel_set_resizing(view->toplevel, false);
+        wlr_xdg_toplevel_set_maximized(view->toplevel, true);
     }
 }
 
 void
 bsi_view_set_minimized(struct bsi_view* view, bool minimized)
 {
-    assert(view);
+    view->state =
+        (minimized) ? BSI_VIEW_STATE_MINIMIZED : BSI_VIEW_STATE_NORMAL;
 
-    view->minimized = minimized;
-
-    if (!minimized) {
-        bsi_debug("Set not minimized for view %s, restore prev",
-                  view->toplevel->app_id);
+    if (view->state == BSI_VIEW_STATE_NORMAL) {
+        bsi_debug("Unimimize view '%s', restore prev", view->toplevel->app_id);
         bsi_view_restore_prev(view);
-        wlr_scene_node_set_enabled(view->scene_node, !minimized);
+        bsi_views_remove(view->server, view);
+        bsi_views_add(view->server, view);
     } else {
-        bsi_debug("Set minimized for view %s", view->toplevel->app_id);
-        /* Save the geometry. */
-        wlr_xdg_surface_get_geometry(view->toplevel->base, &view->box);
-        wlr_scene_node_coords(view->scene_node, &view->box.x, &view->box.y);
-
-        wlr_scene_node_set_enabled(view->scene_node, false);
+        bsi_debug("Minimize view '%s'", view->toplevel->app_id);
+        bsi_views_remove(view->server, view);
+        bsi_views_add_minimized(view->server, view);
     }
 }
 
 void
 bsi_view_set_fullscreen(struct bsi_view* view, bool fullscreen)
 {
-    assert(view);
+    view->state =
+        (fullscreen) ? BSI_VIEW_STATE_FULLSCREEN : BSI_VIEW_STATE_NORMAL;
 
-    view->fullscreen = fullscreen;
-
-    if (!fullscreen) {
+    if (view->state == BSI_VIEW_STATE_NORMAL) {
+        bsi_debug("Unfullscreen view '%s'", view->toplevel->app_id);
         bsi_view_restore_prev(view);
     } else {
+        bsi_debug("Fullscreen view '%s'", view->toplevel->app_id);
+
         /* Save the geometry. */
         wlr_xdg_surface_get_geometry(view->toplevel->base, &view->box);
         wlr_scene_node_coords(view->scene_node, &view->box.x, &view->box.y);
 
-        // TODO: This should probably get rid of decorations to put the entire
-        // app fullscreen
-        struct bsi_server* server = view->server;
-        struct bsi_output* output = view->parent_workspace->output;
+        // TODO: Get rid of decorations to put the entire app fullscreen
+        /* Fullscreen. */
         struct wlr_box output_box;
-        wlr_output_layout_get_box(
-            server->wlr_output_layout, output->output, &output_box);
+        wlr_output_layout_get_box(view->server->wlr_output_layout,
+                                  view->parent_workspace->output->output,
+                                  &output_box);
         wlr_scene_node_set_position(view->scene_node, 0, 0);
+        wlr_xdg_toplevel_set_resizing(view->toplevel, true);
         wlr_xdg_toplevel_set_size(
             view->toplevel, output_box.width, output_box.height);
+        wlr_xdg_toplevel_set_resizing(view->toplevel, false);
+        wlr_xdg_toplevel_set_fullscreen(view->toplevel, true);
     }
 }
 
 void
 bsi_view_restore_prev(struct bsi_view* view)
 {
+    switch (view->state) {
+        case BSI_VIEW_STATE_NORMAL:
+        case BSI_VIEW_STATE_MINIMIZED:
+            wlr_xdg_toplevel_set_maximized(view->toplevel, false);
+            wlr_xdg_toplevel_set_fullscreen(view->toplevel, false);
+            break;
+        case BSI_VIEW_STATE_MAXIMIZED:
+            wlr_xdg_toplevel_set_fullscreen(view->toplevel, false);
+            break;
+        case BSI_VIEW_STATE_FULLSCREEN:
+            wlr_xdg_toplevel_set_maximized(view->toplevel, false);
+    }
+
+    bsi_debug("Restoring view position to (%d, %d)", view->box.x, view->box.y);
+    bsi_debug(
+        "Restoring view size to (%d, %d)", view->box.width, view->box.height);
+    wlr_scene_node_set_position(view->scene_node, view->box.x, view->box.y);
     wlr_xdg_toplevel_set_resizing(view->toplevel, true);
     wlr_xdg_toplevel_set_size(
         view->toplevel, view->box.width, view->box.height);
     wlr_xdg_toplevel_set_resizing(view->toplevel, false);
-
-    bsi_debug("Restoring view position to (%d, %d)", view->box.x, view->box.y);
-    wlr_scene_node_set_position(view->scene_node, view->box.x, view->box.y);
 }
 
 /**
@@ -277,7 +301,8 @@ handle_xdg_surf_destroy(struct wl_listener* listener, void* data)
     struct bsi_server* server = view->server;
     struct bsi_workspace* workspace = view->parent_workspace;
 
-    bsi_views_remove(server, view);
+    /* The view will already have been unmapped by the time it gets here, no
+     * need to call remove. */
     bsi_workspace_view_remove(workspace, view);
     bsi_view_destroy(view);
 
@@ -294,7 +319,6 @@ handle_xdg_surf_map(struct wl_listener* listener, void* data)
     struct bsi_view* view = wl_container_of(listener, view, listen.map);
     struct bsi_server* server = view->server;
     struct wlr_xdg_toplevel* toplevel = view->toplevel;
-
     struct wlr_xdg_toplevel_requested* requested = &toplevel->requested;
 
     if (toplevel->base->added) {
@@ -320,19 +344,14 @@ handle_xdg_surf_map(struct wl_listener* listener, void* data)
 
     /* Only honor one request of this type. A surface can't request to be
      * maximized and minimized at the same time. */
-    if (requested->fullscreen) {
+    if (requested->fullscreen)
         // TODO: Should there be code handling fullscreen_output_destroy, we
         // already handle moving views in workspace code
         bsi_view_set_fullscreen(view, requested->fullscreen);
-        wlr_xdg_toplevel_set_fullscreen(view->toplevel, requested->fullscreen);
-        wlr_xdg_surface_schedule_configure(view->toplevel->base);
-    } else if (requested->maximized) {
+    else if (requested->maximized)
         bsi_view_set_maximized(view, requested->maximized);
-        wlr_xdg_toplevel_set_maximized(view->toplevel, requested->maximized);
-        wlr_xdg_surface_schedule_configure(view->toplevel->base);
-    } else if (requested->minimized) {
+    else if (requested->minimized)
         bsi_view_set_minimized(view, requested->minimized);
-    }
 
     view->mapped = true;
     bsi_views_add(server, view);
@@ -366,9 +385,6 @@ handle_toplvl_request_maximize(struct wl_listener* listener, void* data)
     struct wlr_xdg_toplevel_requested* requested = &toplevel->requested;
 
     bsi_view_set_maximized(view, requested->maximized);
-    /* This surface should now consider itself (un-)maximized */
-    wlr_xdg_toplevel_set_maximized(toplevel, requested->maximized);
-    wlr_xdg_surface_schedule_configure(toplevel->base);
 }
 
 void
@@ -382,9 +398,6 @@ handle_toplvl_request_fullscreen(struct wl_listener* listener, void* data)
     struct wlr_xdg_toplevel_requested* requested = &toplevel->requested;
 
     bsi_view_set_fullscreen(view, requested->fullscreen);
-    /* This surface should now consider itself (un-)fullscreen. */
-    wlr_xdg_toplevel_set_fullscreen(toplevel, requested->fullscreen);
-    wlr_xdg_surface_schedule_configure(toplevel->base);
 }
 
 void
@@ -394,8 +407,7 @@ handle_toplvl_request_minimize(struct wl_listener* listener, void* data)
 
     struct bsi_view* view =
         wl_container_of(listener, view, listen.request_minimize);
-    struct bsi_server* server = view->server;
-    struct wlr_xdg_surface* surface = data;
+    struct wlr_xdg_surface* surface = view->toplevel->base;
 
     /* Again, not sure if this is necessary, only a toplevel surface should be
      * able to request minimize anyway. */
@@ -405,9 +417,7 @@ handle_toplvl_request_minimize(struct wl_listener* listener, void* data)
     struct wlr_xdg_toplevel_requested* requested =
         &surface->toplevel->requested;
 
-    /* Remove surface from views. */
     bsi_view_set_minimized(view, requested->minimized);
-    bsi_views_remove(server, view);
 }
 
 void
@@ -420,9 +430,10 @@ handle_toplvl_request_move(struct wl_listener* listener, void* data)
     struct bsi_view* view =
         wl_container_of(listener, view, listen.request_move);
     struct wlr_xdg_toplevel_move_event* event = data;
+    union bsi_view_toplevel_event toplevel_event = { .move = event };
 
     if (wlr_seat_client_validate_event_serial(event->seat, event->serial))
-        bsi_view_interactive_begin(view, BSI_CURSOR_MOVE, 0);
+        bsi_view_interactive_begin(view, BSI_CURSOR_MOVE, toplevel_event);
 }
 
 void
@@ -435,9 +446,10 @@ handle_toplvl_request_resize(struct wl_listener* listener, void* data)
     struct bsi_view* view =
         wl_container_of(listener, view, listen.request_resize);
     struct wlr_xdg_toplevel_resize_event* event = data;
+    union bsi_view_toplevel_event toplevel_event = { .resize = event };
 
     if (wlr_seat_client_validate_event_serial(event->seat, event->serial))
-        bsi_view_interactive_begin(view, BSI_CURSOR_RESIZE, event->edges);
+        bsi_view_interactive_begin(view, BSI_CURSOR_RESIZE, toplevel_event);
 }
 
 void

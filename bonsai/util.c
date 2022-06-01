@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -35,7 +34,6 @@ bsi_util_slot_connect(struct wl_signal* signal_memb,
 void
 bsi_util_slot_disconnect(struct wl_listener* listener_memb)
 {
-    assert(listener_memb);
     wl_list_remove(&listener_memb->link);
 }
 

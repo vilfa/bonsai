@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <string.h>
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_pointer.h>
@@ -53,7 +52,6 @@ bsi_cursor_scene_data_at(struct bsi_server* server,
         return NULL;
 
     /* Get the `wlr_surface` of the scene node of the right type. */
-    // *surface_at = wlr_scene_surface_from_node(node)->surface;
     *scene_surface_at = scene_surface;
     *surface_at = scene_surface->surface;
     *surface_role = scene_surface->surface->role->name;
@@ -67,12 +65,12 @@ bsi_cursor_scene_data_at(struct bsi_server* server,
 
 void
 bsi_cursor_process_motion(struct bsi_server* server,
-                          union bsi_cursor_event event)
+                          union bsi_cursor_event cursor_event)
 {
     if (server->cursor.cursor_mode == BSI_CURSOR_MOVE) {
-        bsi_cursor_process_view_move(server, event);
+        bsi_cursor_process_view_move(server, cursor_event);
     } else if (server->cursor.cursor_mode == BSI_CURSOR_RESIZE) {
-        bsi_cursor_process_view_resize(server, event);
+        bsi_cursor_process_view_resize(server, cursor_event);
     } else {
         /* The cursor is in normal mode, so find the view under the cursor, and
          * send the event to the client that owns it. */
@@ -97,7 +95,7 @@ bsi_cursor_process_motion(struct bsi_server* server,
              * the surface pointer focus, which is different from keyboard
              * focus (e.g. think of scrolling a view in one window, when another
              * window is focused). */
-            struct wlr_pointer_motion_event* e = event.motion;
+            struct wlr_pointer_motion_event* e = cursor_event.motion;
             wlr_seat_pointer_notify_enter(server->wlr_seat, surface_at, sx, sy);
             wlr_seat_pointer_notify_motion(
                 server->wlr_seat, e->time_msec, sx, sy);
@@ -109,27 +107,25 @@ bsi_cursor_process_motion(struct bsi_server* server,
 
 void
 bsi_cursor_process_view_move(struct bsi_server* server,
-                             union bsi_cursor_event event)
+                             union bsi_cursor_event cursor_event)
 {
     struct bsi_view* view = server->cursor.grabbed_view;
-    struct wlr_pointer_motion_event* e = event.motion;
+    struct wlr_pointer_motion_event* event = cursor_event.motion;
 
-    /* A view in these states cannot be moved. Although, a minimized view
-     * getting here is altogether impossible. */
-    if (view->fullscreen || view->minimized)
+    /* A view that is minimized or fullscreen cannot be moved. Although, a
+     * minimized view getting here is altogether impossible. */
+    if (view->state & BSI_VIEW_STATE_MINIMIZED ||
+        view->state & BSI_VIEW_STATE_FULLSCREEN)
         return;
 
     bsi_cursor_image_set(server, BSI_CURSOR_IMAGE_MOVE);
 
-    if (view->maximized) {
+    if (view->state == BSI_VIEW_STATE_MAXIMIZED) {
         bsi_view_set_maximized(view, false);
-        view->box.x = server->wlr_cursor->x - (float)view->box.width / 2;
+        view->box.x = server->wlr_cursor->x - (double)view->box.width / 2;
         view->box.y = server->wlr_cursor->y - server->cursor.grab_sy;
-        wlr_xdg_toplevel_set_maximized(view->toplevel, false);
-        wlr_xdg_surface_schedule_configure(view->toplevel->base);
-
-        // TODO: Scene node position simply does not want to be set.
-
+        server->cursor.grab_sx = (double)view->box.width / 2;
+        server->cursor.grab_sy = 0;
         bsi_debug("Unmaximize by move, surface coords are (%d, %d)",
                   view->box.x,
                   view->box.y);
@@ -138,16 +134,14 @@ bsi_cursor_process_view_move(struct bsi_server* server,
         view->box.y = server->wlr_cursor->y - server->cursor.grab_sy;
     }
 
+    bsi_debug("Moving view to coords (%d, %d)", view->box.x, view->box.y);
     wlr_scene_node_set_position(view->scene_node, view->box.x, view->box.y);
 }
 
 void
 bsi_cursor_process_view_resize(struct bsi_server* server,
-                               union bsi_cursor_event event)
+                               union bsi_cursor_event cursor_event)
 {
-    assert(server);
-    assert(event.motion);
-
     // TODO: Make this less shit. Resizing shouldn't be able to move a window.
     // Maybe somewhere between lines 206-212?
 
@@ -156,11 +150,11 @@ bsi_cursor_process_view_resize(struct bsi_server* server,
     // prepared.
 
     struct bsi_view* view = server->cursor.grabbed_view;
-    struct wlr_pointer_motion_event* e = event.motion;
+    struct wlr_pointer_motion_event* event = cursor_event.motion;
 
     /* The view cannot be resized when in these states. Although, a minimized
      * view getting here is altogether impossible. */
-    if (view->maximized || view->minimized || view->fullscreen)
+    if (view->state != BSI_VIEW_STATE_NORMAL)
         return;
 
     wlr_xdg_toplevel_set_resizing(view->toplevel, true);

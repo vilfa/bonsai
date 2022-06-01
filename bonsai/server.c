@@ -40,8 +40,6 @@
 struct bsi_server*
 bsi_server_init(struct bsi_server* server)
 {
-    assert(server);
-
     wl_list_init(&server->output.outputs);
     bsi_debug("Initialized bsi_outputs");
 
@@ -192,6 +190,8 @@ bsi_server_init(struct bsi_server* server)
     bsi_debug("Attached handlers for seat '%s'", seat_name);
 
     wl_list_init(&server->scene.views);
+    wl_list_init(&server->scene.views_minimized);
+    wl_list_init(&server->scene.views_recent);
     wl_list_init(&server->scene.decorations);
     bsi_debug("Initialized views and decorations");
 
