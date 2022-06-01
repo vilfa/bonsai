@@ -6,10 +6,6 @@
 #include "bonsai/desktop/workspace.h"
 #include "bonsai/input/cursor.h"
 
-/**
- * @brief Represents all surfaces of a single application.
- *
- */
 struct bsi_view
 {
     struct bsi_server* server;
@@ -24,11 +20,8 @@ struct bsi_view
      * this will hold the last state of the window that should be restored when
      * restoring the window mode to normal. The helper function
      * bsi_view_restore_prev() does just that. */
-    double x, y;
-    uint32_t width, height;
+    struct wlr_box box;
 
-    /* Either we listen for all or none, doesn't make sense to keep track of
-     * number of listeners. */
     struct
     {
         /* wlr_xdg_surface */
@@ -46,8 +39,8 @@ struct bsi_view
         struct wl_listener workspace_active;
     } listen;
 
-    struct wl_list link;
-    struct wl_list link_workspace;
+    struct wl_list link_server;    // bsi_server
+    struct wl_list link_workspace; // bsi_workspace
 };
 
 /**
@@ -57,7 +50,7 @@ struct bsi_view
  * @param view The view to add.
  */
 void
-bsi_scene_add_view(struct bsi_server* server, struct bsi_view* view);
+bsi_views_add(struct bsi_server* server, struct bsi_view* view);
 
 /**
  * @brief Removes a view from the server views.
@@ -66,7 +59,7 @@ bsi_scene_add_view(struct bsi_server* server, struct bsi_view* view);
  * @param view The view to remove.
  */
 void
-bsi_scene_remove_view(struct bsi_server* server, struct bsi_view* view);
+bsi_views_remove(struct bsi_server* server, struct bsi_view* view);
 
 /**
  * @brief Initializes a preallocated `bsi_view` representing a scene node.

@@ -6,10 +6,6 @@
 
 struct bsi_server;
 
-/**
- * @brief Holds all possible modes for a cursor.
- *
- */
 enum bsi_cursor_mode
 {
     BSI_CURSOR_NORMAL,
@@ -17,10 +13,6 @@ enum bsi_cursor_mode
     BSI_CURSOR_RESIZE,
 };
 
-/**
- * @brief Holds all possible cursor images.
- *
- */
 enum bsi_cursor_image
 {
     BSI_CURSOR_IMAGE_NORMAL,
@@ -71,12 +63,6 @@ union bsi_cursor_event
     struct wlr_pointer_hold_end_event* hold_end;
 };
 
-/**
- * @brief Sets the specified cursor image.
- *
- * @param server The server.
- * @param cursor_image The image.
- */
 void
 bsi_cursor_image_set(struct bsi_server* server,
                      enum bsi_cursor_image cursor_image);

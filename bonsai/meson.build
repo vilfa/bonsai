@@ -10,16 +10,8 @@ bonsai_src = files(
     
     'desktop/view.c',
     'desktop/workspace.c',
-    'desktop/layer-shell.c',
+    'desktop/layers.c',
     'desktop/decoration.c',
-
-    'events/evglobal.c',
-    'events/evoutput.c',
-    'events/evinput.c',
-    'events/evview.c',
-    'events/evworkspace.c',
-    'events/evlayershell.c',
-    'events/evdeco.c',
 )
 
 bonsai_dep = [

@@ -9,10 +9,6 @@
 #include "bonsai/input/cursor.h"
 #include "bonsai/output.h"
 
-/**
- * @brief Represents the compositor and its internal state.
- *
- */
 struct bsi_server
 {
     /* Globals */
@@ -31,10 +27,11 @@ struct bsi_server
     struct wlr_layer_shell_v1* wlr_layer_shell;
     struct wlr_server_decoration_manager* wlr_server_decoration_manager;
 
-    /* Global state. */
+    /*
+     * Global state
+     */
     bool shutting_down;
 
-    /* Global server listeners. */
     struct
     {
         /* wlr_backend */
@@ -66,20 +63,14 @@ struct bsi_server
         struct wl_listener workspace_active;
     } listen;
 
-    /* Keeps track of all server outputs. */
     struct
     {
-        size_t len;
         struct wl_list outputs;
     } output;
 
-    /* Keeps track of all inputs. */
     struct
     {
-        size_t len_pointers;
         struct wl_list pointers;
-
-        size_t len_keyboards;
         struct wl_list keyboards;
     } input;
 
@@ -89,17 +80,15 @@ struct bsi_server
      * Each output will also have the four layers defined by
      * zwlr_layer_shell_v1, so the layers are not dependent on the workspace,
      * but on the output. */
+
     /* Keeps track of the scene and all views. */
     struct bsi_workspace* active_workspace;
     struct
     {
-        size_t len_views;
         struct wl_list views;
-        size_t len_decorations;
         struct wl_list decorations;
     } scene;
 
-    /* Keeps track of the cursor state. */
     struct
     {
         uint32_t cursor_mode;
@@ -113,21 +102,6 @@ struct bsi_server
 
 struct bsi_server*
 bsi_server_init(struct bsi_server* server);
-
-void
-bsi_server_listen_init(struct bsi_server* server);
-
-void
-bsi_server_output_init(struct bsi_server* server);
-
-void
-bsi_server_input_init(struct bsi_server* server);
-
-void
-bsi_server_scene_init(struct bsi_server* server);
-
-void
-bsi_server_cursor_init(struct bsi_server* server);
 
 void
 bsi_server_exit(struct bsi_server* server);

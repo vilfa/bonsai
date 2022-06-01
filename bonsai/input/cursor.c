@@ -123,22 +123,22 @@ bsi_cursor_process_view_move(struct bsi_server* server,
 
     if (view->maximized) {
         bsi_view_set_maximized(view, false);
-        view->x = server->wlr_cursor->x - (float)view->width / 2;
-        view->y = server->wlr_cursor->y - server->cursor.grab_sy;
+        view->box.x = server->wlr_cursor->x - (float)view->box.width / 2;
+        view->box.y = server->wlr_cursor->y - server->cursor.grab_sy;
         wlr_xdg_toplevel_set_maximized(view->toplevel, false);
         wlr_xdg_surface_schedule_configure(view->toplevel->base);
 
         // TODO: Scene node position simply does not want to be set.
 
-        bsi_debug("Unmaximize by move, surface coords are (%.2lf, %.2lf)",
-                  view->x,
-                  view->y);
+        bsi_debug("Unmaximize by move, surface coords are (%d, %d)",
+                  view->box.x,
+                  view->box.y);
     } else {
-        view->x = server->wlr_cursor->x - server->cursor.grab_sx;
-        view->y = server->wlr_cursor->y - server->cursor.grab_sy;
+        view->box.x = server->wlr_cursor->x - server->cursor.grab_sx;
+        view->box.y = server->wlr_cursor->y - server->cursor.grab_sy;
     }
 
-    wlr_scene_node_set_position(view->scene_node, view->x, view->y);
+    wlr_scene_node_set_position(view->scene_node, view->box.x, view->box.y);
 }
 
 void
@@ -200,11 +200,11 @@ bsi_cursor_process_view_resize(struct bsi_server* server,
 
     struct wlr_box box;
     wlr_xdg_surface_get_geometry(view->toplevel->base, &box);
-    view->x = new_left - box.x;
-    view->y = new_top - box.y;
-    view->width = box.width;
-    view->height = box.height;
-    wlr_scene_node_set_position(view->scene_node, view->x, view->y);
+    view->box.x = new_left - box.x;
+    view->box.y = new_top - box.y;
+    view->box.width = box.width;
+    view->box.height = box.height;
+    wlr_scene_node_set_position(view->scene_node, view->box.x, view->box.y);
 
     int32_t new_width = new_right - new_left;
     int32_t new_height = new_bottom - new_top;

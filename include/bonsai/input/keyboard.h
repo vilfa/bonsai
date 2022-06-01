@@ -5,7 +5,7 @@
 #include "bonsai/input.h"
 
 /**
- * @brief Holds all possible modifier combos, that the server might handle.
+ * @brief Holds all possible modifier combos that the server might handle.
  *
  */
 enum bsi_keyboard_modifier

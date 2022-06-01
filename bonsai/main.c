@@ -35,6 +35,16 @@
 // TODO: Take a look at
 // https://gitlab.freedesktop.org/wlroots/wlroots/-/tree/master/examples
 
+// TODO: Fix resize.
+
+// TODO: Finish server decoration implementation.
+
+// TODO: Fix Waybar not working.
+
+// TODO: Fix focusing on move
+
+// TODO: Maybe refactor some more with regards to useless short funcitons
+
 int
 main(void)
 {

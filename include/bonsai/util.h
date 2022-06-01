@@ -9,24 +9,11 @@ struct bsi_server;
 struct timespec
 bsi_util_timespec_get();
 
-/**
- * @brief Connects a signal to its listener and adds a handler.
- *
- * @param signal_memb The signal.
- * @param listener_memb The listener.
- * @param func Handler func.
- */
 void
 bsi_util_slot_connect(struct wl_signal* signal_memb,
                       struct wl_listener* listener_memb,
                       wl_notify_func_t func);
 
-/**
- * @brief Disconnects a listener. Is just a nice wrapper around
- * `wl_list_remove`.
- *
- * @param listener_memb The listener.
- */
 void
 bsi_util_slot_disconnect(struct wl_listener* listener_memb);
 

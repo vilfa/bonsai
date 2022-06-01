@@ -21,11 +21,6 @@ struct bsi_layer_surface_toplevel;
 struct bsi_layer_surface_popup;
 struct bsi_layer_surface_subsurface;
 
-/**
- * @brief Just a helpful union so we don't have to have functions for all
- * types of layers.
- *
- */
 union bsi_layer_surface
 {
     struct bsi_layer_surface_toplevel* toplevel;
@@ -46,7 +41,7 @@ struct bsi_layer_surface_toplevel
     /* Am member of this type of layer. This will be passed in
      * wlr_layer_surface::pending when a client is configuring. This is the type
      * of `wlr_layer_surface`. */
-    enum zwlr_layer_shell_v1_layer member_of_type;
+    enum zwlr_layer_shell_v1_layer at_layer;
 
     struct
     {
@@ -60,7 +55,7 @@ struct bsi_layer_surface_toplevel
         struct wl_listener new_subsurface;
     } listen;
 
-    struct wl_list link;
+    struct wl_list link_output; // bsi_output
 };
 
 struct bsi_layer_surface_popup
@@ -101,11 +96,6 @@ struct bsi_layer_surface_subsurface
 
     struct wl_list link;
 };
-
-void
-bsi_layers_add(struct bsi_output* output,
-               struct bsi_layer_surface_toplevel* surface_toplevel,
-               enum zwlr_layer_shell_v1_layer at_layer);
 
 void
 bsi_layers_arrange(struct bsi_output* output);

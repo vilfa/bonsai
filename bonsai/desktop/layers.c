@@ -14,7 +14,7 @@
 #include <wlr/util/log.h>
 #include <wlr/util/region.h>
 
-#include "bonsai/desktop/layer.h"
+#include "bonsai/desktop/layers.h"
 #include "bonsai/events.h"
 #include "bonsai/log.h"
 #include "bonsai/output.h"
@@ -22,6 +22,162 @@
 #include "bonsai/util.h"
 #include "pixman.h"
 #include "wlr-layer-shell-unstable-v1-protocol.h"
+
+struct bsi_layer_surface_toplevel*
+bsi_layer_surface_toplevel_init(struct bsi_layer_surface_toplevel* toplevel,
+                                struct wlr_layer_surface_v1* layer_surface,
+                                struct bsi_output* output)
+{
+    toplevel->layer_surface = layer_surface;
+    toplevel->output = output;
+    toplevel->mapped = false;
+    layer_surface->data = toplevel;
+    wl_list_init(&toplevel->subsurfaces);
+
+    toplevel->scene_node = wlr_scene_layer_surface_v1_create(
+        &output->server->wlr_scene->node, toplevel->layer_surface);
+    toplevel->scene_node->node->data = toplevel;
+
+    return toplevel;
+}
+
+struct bsi_layer_surface_popup*
+bsi_layer_surface_popup_init(struct bsi_layer_surface_popup* popup,
+                             struct wlr_xdg_popup* xdg_popup,
+                             enum bsi_layer_surface_type parent_type,
+                             union bsi_layer_surface parent)
+{
+    popup->popup = xdg_popup;
+    popup->parent_type = parent_type;
+    popup->parent = parent;
+    return popup;
+}
+
+struct bsi_layer_surface_subsurface*
+bsi_layer_surface_subsurface_init(
+    struct bsi_layer_surface_subsurface* subsurface,
+    struct wlr_subsurface* wlr_subsurface,
+    struct bsi_layer_surface_toplevel* member_of)
+{
+    subsurface->subsurface = wlr_subsurface;
+    subsurface->member_of = member_of;
+    return subsurface;
+}
+
+struct bsi_layer_surface_toplevel*
+bsi_layer_surface_get_toplevel_parent(union bsi_layer_surface layer_surface,
+                                      enum bsi_layer_surface_type type)
+{
+    switch (type) {
+        case BSI_LAYER_SURFACE_TOPLEVEL: {
+            struct bsi_layer_surface_toplevel* toplevel =
+                layer_surface.toplevel;
+            return toplevel;
+            break;
+        }
+        case BSI_LAYER_SURFACE_POPUP: {
+            struct bsi_layer_surface_popup* popup = layer_surface.popup;
+            while (popup->parent_type == BSI_LAYER_SURFACE_POPUP) {
+                popup = popup->parent.popup;
+            }
+            return popup->parent.toplevel;
+            break;
+        }
+        case BSI_LAYER_SURFACE_SUBSURFACE: {
+            struct bsi_layer_surface_subsurface* subsurface =
+                layer_surface.subsurface;
+            return subsurface->member_of;
+            break;
+        }
+    }
+    return NULL;
+}
+
+void
+bsi_layer_surface_focus(struct bsi_layer_surface_toplevel* toplevel)
+{
+    /* The `bsi_cursor_scene_data_at()` function always returns the topmost
+     * scene node that any one surface belongs to, so we will always get a
+     * toplevel layer shell surface as an argument for focus. */
+    struct bsi_server* server = toplevel->output->server;
+    struct wlr_seat* seat = server->wlr_seat;
+    struct wlr_keyboard* keyboard = wlr_seat_get_keyboard(seat);
+    struct wlr_surface* prev_focused = seat->keyboard_state.focused_surface;
+
+    /* The surface is already focused. */
+    if (prev_focused == toplevel->layer_surface->surface)
+        return;
+
+    if (prev_focused && strcmp(prev_focused->role->name, "xdg_toplevel") == 0) {
+        /* Deactivate the previously focused surface and notify the client. */
+        struct wlr_xdg_surface* prev_focused_xdg =
+            wlr_xdg_surface_from_wlr_surface(prev_focused);
+        assert(prev_focused_xdg->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL);
+        wlr_xdg_toplevel_set_activated(prev_focused_xdg->toplevel, false);
+    }
+
+    wlr_seat_keyboard_notify_enter(seat,
+                                   toplevel->layer_surface->surface,
+                                   keyboard->keycodes,
+                                   keyboard->num_keycodes,
+                                   &keyboard->modifiers);
+}
+
+void
+bsi_layer_surface_destroy(union bsi_layer_surface layer_surface,
+                          enum bsi_layer_surface_type type)
+{
+    switch (type) {
+        case BSI_LAYER_SURFACE_TOPLEVEL: {
+            struct bsi_layer_surface_toplevel* toplevel =
+                layer_surface.toplevel;
+            /* wlr_layer_surface_v1 */
+            wl_list_remove(&toplevel->listen.map.link);
+            wl_list_remove(&toplevel->listen.unmap.link);
+            wl_list_remove(&toplevel->listen.destroy.link);
+            wl_list_remove(&toplevel->listen.new_popup.link);
+            /* wlr_surface -> wlr_layer_surface::surface */
+            wl_list_remove(&toplevel->listen.commit.link);
+            wl_list_remove(&toplevel->listen.new_subsurface.link);
+            if (!wl_list_empty(&toplevel->subsurfaces)) {
+                struct bsi_layer_surface_subsurface *subsurf, *subsurf_tmp;
+                wl_list_for_each_safe(
+                    subsurf, subsurf_tmp, &toplevel->subsurfaces, link)
+                {
+                    wl_list_remove(&subsurf->link);
+                    free(subsurf);
+                }
+            }
+            free(toplevel);
+            break;
+        }
+        case BSI_LAYER_SURFACE_POPUP: {
+            struct bsi_layer_surface_popup* popup = layer_surface.popup;
+            /* wlr_xdg_surface -> wlr_xdg_popup::base */
+            wl_list_remove(&popup->listen.destroy.link);
+            wl_list_remove(&popup->listen.new_popup.link);
+            wl_list_remove(&popup->listen.map.link);
+            wl_list_remove(&popup->listen.unmap.link);
+            wl_list_remove(&popup->listen.commit.link);
+            free(popup);
+            break;
+        }
+        case BSI_LAYER_SURFACE_SUBSURFACE: {
+            struct bsi_layer_surface_subsurface* subsurface =
+                layer_surface.subsurface;
+            /* wlr_subsurface */
+            wl_list_remove(&subsurface->listen.destroy.link);
+            wl_list_remove(&subsurface->listen.map.link);
+            wl_list_remove(&subsurface->listen.unmap.link);
+            free(subsurface);
+            break;
+        }
+    }
+}
+
+/**
+ * Handlers
+ */
 
 /**
  * On map and unmap events, the entire output surface should always be damaged.
@@ -39,17 +195,16 @@ bsi_output_views_arrange(struct bsi_output* output, struct wl_list* layers)
     struct bsi_server* server = output->server;
 
     struct bsi_layer_surface_toplevel* toplevel;
-    wl_list_for_each(toplevel, layers, link)
+    wl_list_for_each(toplevel, layers, link_output)
     {
-        if (toplevel->member_of_type < ZWLR_LAYER_SHELL_V1_LAYER_TOP) {
+        if (toplevel->at_layer < ZWLR_LAYER_SHELL_V1_LAYER_TOP) {
             /* These are background layers, arrange the views appropriately.*/
             struct bsi_view* view;
-            wl_list_for_each_reverse(view, &server->scene.views, link)
+            wl_list_for_each_reverse(view, &server->scene.views, link_server)
             {
                 wlr_scene_node_raise_to_top(view->scene_node);
             }
-        } else if (toplevel->member_of_type >
-                   ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM) {
+        } else if (toplevel->at_layer > ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM) {
             /* These are foreground layers, arrange the views appropriately. */
             wlr_scene_node_raise_to_top(toplevel->scene_node->node);
         }
@@ -67,7 +222,7 @@ bsi_output_layer_arrange(struct bsi_output* output,
         output->output, &full_box.width, &full_box.height);
 
     struct bsi_layer_surface_toplevel* layer_toplevel;
-    wl_list_for_each(layer_toplevel, shell_layer, link)
+    wl_list_for_each(layer_toplevel, shell_layer, link_output)
     {
         struct wlr_layer_surface_v1* layer_surf = layer_toplevel->layer_surface;
         struct wlr_layer_surface_v1_state* state = &layer_surf->current;
@@ -165,25 +320,22 @@ bsi_layers_arrange(struct bsi_output* output)
 
     /* Firstly, arrange exclusive layers. */
     for (size_t i = 0; i < 4; ++i) {
-        if (output->layer.len[i] > 0) {
+        if (!wl_list_empty(&output->layers[i]))
             bsi_output_layer_arrange(
-                output, &output->layer.layers[i], &usable_box, true);
-        }
+                output, &output->layers[i], &usable_box, true);
     }
 
     /* Secondly, arrange non-exclusive layers. */
     for (size_t i = 0; i < 4; ++i) {
-        if (output->layer.len[i] > 0) {
+        if (!wl_list_empty(&output->layers[i]))
             bsi_output_layer_arrange(
-                output, &output->layer.layers[i], &usable_box, false);
-        }
+                output, &output->layers[i], &usable_box, false);
     }
 
     /* Arrange layers under windows. */
     for (size_t i = 0; i < 4; ++i) {
-        if (output->layer.len[i] > 0) {
-            bsi_output_views_arrange(output, &output->layer.layers[i]);
-        }
+        if (!wl_list_empty(&output->layers[i]))
+            bsi_output_views_arrange(output, &output->layers[i]);
     }
 
     /* Last, focus the topmost keyboard-interactive layer, if it exists. */
@@ -194,9 +346,9 @@ bsi_layers_arrange(struct bsi_output* output)
     for (size_t i = 3; i >= 0; --i) {
         if (focused)
             break;
-        if (!wl_list_empty(&output->layer.layers[i])) {
+        if (!wl_list_empty(&output->layers[i])) {
             struct bsi_layer_surface_toplevel* toplevel;
-            wl_list_for_each(toplevel, &output->layer.layers[i], link)
+            wl_list_for_each(toplevel, &output->layers[i], link_output)
             {
                 wlr_seat_keyboard_notify_enter(server->wlr_seat,
                                                toplevel->layer_surface->surface,
@@ -263,9 +415,10 @@ handle_layershell_toplvl_destroy(struct wl_listener* listener, void* data)
     if (server->shutting_down)
         return;
 
+    /* Destroy the layer and rearrange this output. */
     union bsi_layer_surface layer_surface = { .toplevel = layer_toplevel };
+    wl_list_remove(&layer_surface.toplevel->link_output);
     bsi_layer_surface_destroy(layer_surface, BSI_LAYER_SURFACE_TOPLEVEL);
-    /* Rearrange this output. */
     bsi_layers_arrange(output);
 }
 
@@ -300,7 +453,6 @@ handle_layershell_toplvl_new_popup(struct wl_listener* listener, void* data)
                           &layer_popup->listen.commit,
                           handle_layershell_popup_commit);
 
-    // TODO: Maybe add a function for this.
     /* Unconstrain popup to its largest parent box. */
     struct wlr_box toplevel_parent_box = {
         .x = -layer_toplevel->box.x,
@@ -330,16 +482,15 @@ handle_layershell_toplvl_commit(struct wl_listener* listener, void* data)
     if (layer_toplevel->layer_surface->current.committed != 0 ||
         layer_toplevel->mapped != layer_toplevel->layer_surface->mapped) {
         layer_toplevel->mapped = layer_toplevel->layer_surface->mapped;
-        to_another_layer = layer_toplevel->member_of_type !=
+        to_another_layer = layer_toplevel->at_layer !=
                            layer_toplevel->layer_surface->current.layer;
         if (to_another_layer) {
             // TODO: Maybe add a util function for moving a surface between
             // layers.
-            wl_list_remove(&layer_toplevel->link);
+            wl_list_remove(&layer_toplevel->link_output);
             wl_list_insert(
-                &output->layer
-                     .layers[layer_toplevel->layer_surface->current.layer],
-                &layer_toplevel->link);
+                &output->layers[layer_toplevel->layer_surface->current.layer],
+                &layer_toplevel->link_output);
         }
         bsi_layers_arrange(output);
     }
@@ -569,6 +720,7 @@ handle_layershell_subsurface_destroy(struct wl_listener* listener, void* data)
     if (server->shutting_down)
         return;
 
+    wl_list_remove(&layer_subsurface->link);
     bsi_layer_surface_destroy(layer_surface, BSI_LAYER_SURFACE_SUBSURFACE);
 }
 

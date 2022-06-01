@@ -22,15 +22,14 @@ struct bsi_workspace
     char* name;  /* User given name. */
     bool active; /* A single workspace can be active at one time per output. */
 
-    size_t len_views;
-    struct wl_list views;
+    struct wl_list views; /* All views that belong to this workspace. */
 
     struct
     {
         struct wl_signal active;
     } signal;
 
-    struct wl_list link;
+    struct wl_list link_output; // bsi_output
 };
 
 /**

@@ -15,28 +15,8 @@ struct bsi_server_decoration
         struct wl_listener mode;
     } listen;
 
-    struct wl_list link;
+    struct wl_list link_server; // bsi_server
 };
-
-/**
- * @brief Adds a server decoration to the server scene.
- *
- * @param server The server.
- * @param deco The decoration to add.
- */
-void
-bsi_scene_add_decoration(struct bsi_server* server,
-                         struct bsi_server_decoration* deco);
-
-/**
- * @brief Removes a server decoration from the server scene.
- *
- * @param server The server.
- * @param deco The decoration to remove.
- */
-void
-bsi_scene_remove_decoration(struct bsi_server* server,
-                            struct bsi_server_decoration* deco);
 
 struct bsi_server_decoration*
 bsi_server_decoration_init(struct bsi_server_decoration* deco,

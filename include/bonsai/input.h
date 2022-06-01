@@ -7,18 +7,12 @@
 #include <wayland-util.h>
 #include <xkbcommon/xkbcommon.h>
 
-/**
- * @brief Holds a single input pointer and its event listeners.
- *
- */
 struct bsi_input_pointer
 {
     struct bsi_server* server;
     struct wlr_cursor* cursor;
     struct wlr_input_device* device;
 
-    /* Either we listen for all or none, doesn't make sense to keep track of
-     * number of listeners. */
     struct
     {
         /* wlr_cursor */
@@ -39,20 +33,14 @@ struct bsi_input_pointer
         struct wl_listener destroy;
     } listen;
 
-    struct wl_list link;
+    struct wl_list link_server; // bsi_server
 };
 
-/**
- * @brief Holds a single input keyboard and its event listeners.
- *
- */
 struct bsi_input_keyboard
 {
     struct bsi_server* server;
     struct wlr_input_device* device;
 
-    /* Either we listen for all or none, doesn't make sense to keep track of
-     * number of listeners. */
     struct
     {
         /* wlr_input_device::keyboard */
@@ -62,7 +50,7 @@ struct bsi_input_keyboard
         struct wl_listener destroy;
     } listen;
 
-    struct wl_list link;
+    struct wl_list link_server; // bsi_server
 };
 
 /**
@@ -108,97 +96,22 @@ static const struct xkb_rule_names bsi_input_keyboard_rules[] = {
     },
 };
 
-/**
- * @brief Adds a pointer to the server inputs.
- *
- * @param server The server.
- * @param pointer Pointer to pointer to add.
- */
-void
-bsi_inputs_pointer_add(struct bsi_server* server,
-                       struct bsi_input_pointer* pointer);
-
-/**
- * @brief Remove a pointer from the server inputs. Make sure to destroy the
- * pointer.
- *
- * @param server The server.
- * @param pointer Pointer to pointer to remove.
- */
-void
-bsi_inputs_pointer_remove(struct bsi_server* server,
-                          struct bsi_input_pointer* pointer);
-
-/**
- * @brief Add a keyboard to the server inputs.
- *
- * @param server The server.
- * @param keyboard Pointer to keyboard to add.
- */
-void
-bsi_inputs_keyboard_add(struct bsi_server* server,
-                        struct bsi_input_keyboard* keyboard);
-
-/**
- * @brief Remove a keyboard from the server struct. Make sure to destroy the
- * keyboard.
- *
- * @param server The server.
- * @param keyboard Pointer to keyboard to remove.
- */
-void
-bsi_inputs_keyboard_remove(struct bsi_server* server,
-                           struct bsi_input_keyboard* keyboard);
-
-/**
- * @brief Initializes a preallocated `bsi_input_pointer`.
- *
- * @param pointer Input pointer to initialize.
- * @param server The server.
- * @param device Input device data.
- * @return struct bsi_input_pointer* Pointer to initialized struct.
- */
 struct bsi_input_pointer*
 bsi_input_pointer_init(struct bsi_input_pointer* pointer,
                        struct bsi_server* server,
                        struct wlr_input_device* device);
 
-/**
- * @brief Unlinks all listeners and frees the pointer.
- *
- * @param pointer The input pointer to destroy.
- */
 void
 bsi_input_pointer_destroy(struct bsi_input_pointer* pointer);
 
-/**
- * @brief Initializes a preallocated `bsi_input_keyboard`.
- *
- * @param keyboard The input keyboard.
- * @param server The server.
- * @param device Input device data.
- * @return struct bsi_input_keyboard*
- */
 struct bsi_input_keyboard*
 bsi_input_keyboard_init(struct bsi_input_keyboard* keyboard,
                         struct bsi_server* server,
                         struct wlr_input_device* device);
 
-/**
- * @brief Unlinks all listeners and frees the keyboard.
- *
- * @param keyboard The keyboard to destroy.
- */
 void
 bsi_input_keyboard_destroy(struct bsi_input_keyboard* keyboard);
 
-/**
- * @brief Gets a keymap from the xkb context and sets it for the specified
- * keyboard.
- *
- * @param keyboard The keyboard.
- * @param xkb_rule_names The xkb keymap rules.
- */
 void
 bsi_input_keyboard_keymap_set(struct bsi_input_keyboard* keyboard,
                               const struct xkb_rule_names* xkb_rule_names,
