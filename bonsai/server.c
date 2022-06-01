@@ -152,8 +152,7 @@ bsi_server_init(struct bsi_server* server)
     server->wlr_seat = wlr_seat_create(server->wl_display, seat_name);
     bsi_debug("Created seat '%s'", seat_name);
 
-    wl_list_init(&server->input.pointers);
-    wl_list_init(&server->input.keyboards);
+    wl_list_init(&server->input.inputs);
     bsi_debug("Initialized bsi_inputs");
 
     bsi_util_slot_connect(&server->wlr_seat->events.pointer_grab_begin,
@@ -204,6 +203,8 @@ bsi_server_init(struct bsi_server* server)
 void
 bsi_server_exit(struct bsi_server* server)
 {
+    server->shutting_down = true;
+
     /* wlr_backend */
     wl_list_remove(&server->listen.new_output.link);
     wl_list_remove(&server->listen.new_input.link);
@@ -255,8 +256,7 @@ handle_new_output(struct wl_listener* listener, void* data)
 
     struct bsi_output* output = calloc(1, sizeof(struct bsi_output));
     bsi_output_init(output, server, wlr_output);
-    wlr_output->data = output;
-    wl_list_insert(&server->output.outputs, &output->link_server);
+    bsi_outputs_add(server, output);
 
     /* Attach a workspace to the output. */
     char workspace_name[25];
@@ -292,100 +292,111 @@ handle_new_input(struct wl_listener* listener, void* data)
 
     struct bsi_server* server =
         wl_container_of(listener, server, listen.new_input);
-    struct wlr_input_device* device = data;
+    struct wlr_input_device* wlr_device = data;
 
-    switch (device->type) {
+    switch (wlr_device->type) {
         case WLR_INPUT_DEVICE_POINTER: {
-            struct bsi_input_pointer* pointer =
-                calloc(1, sizeof(struct bsi_input_pointer));
-            bsi_input_pointer_init(pointer, server, device);
-            wl_list_insert(&server->input.pointers, &pointer->link_server);
+            struct bsi_input_device* device =
+                calloc(1, sizeof(struct bsi_input_device));
+            bsi_input_device_init(
+                device, BSI_INPUT_DEVICE_POINTER, server, wlr_device);
+            bsi_inputs_add(server, device);
 
-            bsi_util_slot_connect(&pointer->cursor->events.motion,
-                                  &pointer->listen.motion,
+            bsi_util_slot_connect(&device->cursor->events.motion,
+                                  &device->listen.motion,
                                   handle_pointer_motion);
-            bsi_util_slot_connect(&pointer->cursor->events.motion_absolute,
-                                  &pointer->listen.motion_absolute,
+            bsi_util_slot_connect(&device->cursor->events.motion_absolute,
+                                  &device->listen.motion_absolute,
                                   handle_pointer_motion_absolute);
-            bsi_util_slot_connect(&pointer->cursor->events.button,
-                                  &pointer->listen.button,
+            bsi_util_slot_connect(&device->cursor->events.button,
+                                  &device->listen.button,
                                   handle_pointer_button);
-            bsi_util_slot_connect(&pointer->cursor->events.axis,
-                                  &pointer->listen.axis,
+            bsi_util_slot_connect(&device->cursor->events.axis,
+                                  &device->listen.axis,
                                   handle_pointer_axis);
-            bsi_util_slot_connect(&pointer->cursor->events.frame,
-                                  &pointer->listen.frame,
+            bsi_util_slot_connect(&device->cursor->events.frame,
+                                  &device->listen.frame,
                                   handle_pointer_frame);
-            bsi_util_slot_connect(&pointer->cursor->events.swipe_begin,
-                                  &pointer->listen.swipe_begin,
+            bsi_util_slot_connect(&device->cursor->events.swipe_begin,
+                                  &device->listen.swipe_begin,
                                   handle_pointer_swipe_begin);
-            bsi_util_slot_connect(&pointer->cursor->events.swipe_update,
-                                  &pointer->listen.swipe_update,
+            bsi_util_slot_connect(&device->cursor->events.swipe_update,
+                                  &device->listen.swipe_update,
                                   handle_pointer_swipe_update);
-            bsi_util_slot_connect(&pointer->cursor->events.swipe_end,
-                                  &pointer->listen.swipe_end,
+            bsi_util_slot_connect(&device->cursor->events.swipe_end,
+                                  &device->listen.swipe_end,
                                   handle_pointer_swipe_end);
-            bsi_util_slot_connect(&pointer->cursor->events.pinch_begin,
-                                  &pointer->listen.pinch_begin,
+            bsi_util_slot_connect(&device->cursor->events.pinch_begin,
+                                  &device->listen.pinch_begin,
                                   handle_pointer_pinch_begin);
-            bsi_util_slot_connect(&pointer->cursor->events.pinch_update,
-                                  &pointer->listen.pinch_update,
+            bsi_util_slot_connect(&device->cursor->events.pinch_update,
+                                  &device->listen.pinch_update,
                                   handle_pointer_pinch_update);
-            bsi_util_slot_connect(&pointer->cursor->events.pinch_end,
-                                  &pointer->listen.pinch_end,
+            bsi_util_slot_connect(&device->cursor->events.pinch_end,
+                                  &device->listen.pinch_end,
                                   handle_pointer_pinch_end);
-            bsi_util_slot_connect(&pointer->cursor->events.hold_begin,
-                                  &pointer->listen.hold_begin,
+            bsi_util_slot_connect(&device->cursor->events.hold_begin,
+                                  &device->listen.hold_begin,
                                   handle_pointer_hold_begin);
-            bsi_util_slot_connect(&pointer->cursor->events.hold_end,
-                                  &pointer->listen.hold_end,
+            bsi_util_slot_connect(&device->cursor->events.hold_end,
+                                  &device->listen.hold_end,
                                   handle_pointer_hold_end);
-            bsi_util_slot_connect(&pointer->device->events.destroy,
-                                  &pointer->listen.destroy,
+            bsi_util_slot_connect(&device->device->events.destroy,
+                                  &device->listen.destroy,
                                   handle_input_device_destroy);
 
-            wlr_cursor_attach_input_device(pointer->cursor, pointer->device);
+            wlr_cursor_attach_input_device(device->cursor, device->device);
+
             bsi_info("Added new pointer input device");
             break;
         }
         case WLR_INPUT_DEVICE_KEYBOARD: {
-            struct bsi_input_keyboard* keyboard =
-                calloc(1, sizeof(struct bsi_input_keyboard));
-            bsi_input_keyboard_init(keyboard, server, device);
-            wl_list_insert(&server->input.keyboards, &keyboard->link_server);
+            struct bsi_input_device* device =
+                calloc(1, sizeof(struct bsi_input_device));
+            bsi_input_device_init(
+                device, BSI_INPUT_DEVICE_KEYBOARD, server, wlr_device);
+            bsi_inputs_add(server, device);
 
-            bsi_util_slot_connect(&keyboard->device->keyboard->events.key,
-                                  &keyboard->listen.key,
+            bsi_util_slot_connect(&device->device->keyboard->events.key,
+                                  &device->listen.key,
                                   handle_keyboard_key);
-            bsi_util_slot_connect(&keyboard->device->keyboard->events.modifiers,
-                                  &keyboard->listen.modifiers,
+            bsi_util_slot_connect(&device->device->keyboard->events.modifiers,
+                                  &device->listen.modifiers,
                                   handle_keyboard_modifiers);
-            bsi_util_slot_connect(&keyboard->device->events.destroy,
-                                  &keyboard->listen.destroy,
+            bsi_util_slot_connect(&device->device->events.destroy,
+                                  &device->listen.destroy,
                                   handle_input_device_destroy);
 
-            bsi_input_keyboard_keymap_set(keyboard,
-                                          bsi_input_keyboard_rules,
-                                          bsi_input_keyboard_rules_len);
-            wlr_keyboard_set_repeat_info(keyboard->device->keyboard, 25, 600);
-            wlr_seat_set_keyboard(server->wlr_seat, keyboard->device->keyboard);
+            bsi_input_device_keymap_set(
+                device, bsi_input_keyboard_rules, bsi_input_keyboard_rules_len);
+            wlr_keyboard_set_repeat_info(device->device->keyboard, 25, 600);
+            wlr_seat_set_keyboard(server->wlr_seat, device->device->keyboard);
+
             bsi_info("Added new keyboard input device");
             break;
         }
         default:
-            bsi_info("Unsupported new input device: type %d", device->type);
+            bsi_info("Unsupported new input device: type %d", wlr_device->type);
             break;
     }
 
     uint32_t capabilities = 0;
     size_t len_keyboards = 0, len_pointers = 0;
-    if ((len_pointers = wl_list_length(&server->input.pointers)) > 0) {
-        capabilities |= WL_SEAT_CAPABILITY_POINTER;
-        bsi_debug("Seat has capability: WL_SEAT_CAPABILITY_POINTER");
-    }
-    if ((len_keyboards = wl_list_length(&server->input.keyboards)) > 0) {
-        capabilities |= WL_SEAT_CAPABILITY_KEYBOARD;
-        bsi_debug("Seat has capability: WL_SEAT_CAPABILITY_KEYBOARD");
+    struct bsi_input_device* device;
+    wl_list_for_each(device, &server->input.inputs, link_server)
+    {
+        switch (device->type) {
+            case BSI_INPUT_DEVICE_POINTER:
+                ++len_pointers;
+                capabilities |= WL_SEAT_CAPABILITY_POINTER;
+                bsi_debug("Seat has capability: WL_SEAT_CAPABILITY_POINTER");
+                break;
+            case BSI_INPUT_DEVICE_KEYBOARD:
+                ++len_keyboards;
+                capabilities |= WL_SEAT_CAPABILITY_KEYBOARD;
+                bsi_debug("Seat has capability: WL_SEAT_CAPABILITY_KEYBOARD");
+                break;
+        }
     }
 
     bsi_debug("Server now has %ld input pointer devices", len_pointers);
@@ -668,33 +679,33 @@ handle_layer_shell_new_surface(struct wl_listener* listener, void* data)
         layer_surface->output->data = active_output;
     }
 
-    struct bsi_layer_surface_toplevel* bsi_layer =
+    struct bsi_layer_surface_toplevel* layer =
         calloc(1, sizeof(struct bsi_layer_surface_toplevel));
-    bsi_layer_surface_toplevel_init(bsi_layer, layer_surface, active_output);
+    bsi_layer_surface_toplevel_init(layer, layer_surface, active_output);
     bsi_util_slot_connect(&layer_surface->events.map,
-                          &bsi_layer->listen.map,
+                          &layer->listen.map,
                           handle_layershell_toplvl_map);
     bsi_util_slot_connect(&layer_surface->events.unmap,
-                          &bsi_layer->listen.unmap,
+                          &layer->listen.unmap,
                           handle_layershell_toplvl_unmap);
     bsi_util_slot_connect(&layer_surface->events.destroy,
-                          &bsi_layer->listen.destroy,
+                          &layer->listen.destroy,
                           handle_layershell_toplvl_destroy);
     bsi_util_slot_connect(&layer_surface->events.new_popup,
-                          &bsi_layer->listen.new_popup,
+                          &layer->listen.new_popup,
                           handle_layershell_toplvl_new_popup);
     bsi_util_slot_connect(&layer_surface->surface->events.new_subsurface,
-                          &bsi_layer->listen.new_subsurface,
+                          &layer->listen.new_subsurface,
                           handle_layershell_toplvl_new_subsurface);
     bsi_util_slot_connect(&layer_surface->surface->events.commit,
-                          &bsi_layer->listen.commit,
+                          &layer->listen.commit,
                           handle_layershell_toplvl_commit);
 
-    wl_list_insert(&active_output->layers[layer_surface->pending.layer],
-                   &bsi_layer->link_output);
+    bsi_layers_add(active_output, layer);
 
-    /* Overwrite the current state with pending, so we can look up the desired
-     * state when arrangeing the surfaces. Then restore state for wlr.*/
+    /* Overwrite the current state with pending, so we can look up the
+     * desired state when arrangeing the surfaces. Then restore state for
+     * wlr.*/
     struct wlr_layer_surface_v1_state old = layer_surface->current;
     layer_surface->current = layer_surface->pending;
     bsi_layers_arrange(active_output);
@@ -720,5 +731,5 @@ handle_deco_manager_new_decoration(struct wl_listener* listener, void* data)
     bsi_util_slot_connect(
         &deco->events.mode, &server_deco->listen.mode, handle_serverdeco_mode);
 
-    wl_list_insert(&server->scene.decorations, &server_deco->link_server);
+    bsi_decorations_add(server, server_deco);
 }

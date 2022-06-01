@@ -28,7 +28,7 @@ enum bsi_keyboard_modifier
  * @return false If server doesn't know this keybind, so wasn't handled.
  */
 bool
-bsi_keyboard_keybinds_process(struct bsi_input_keyboard* keyboard,
+bsi_keyboard_keybinds_process(struct bsi_input_device* device,
                               struct wlr_keyboard_key_event* event);
 
 /**

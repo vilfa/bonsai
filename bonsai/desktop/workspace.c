@@ -63,7 +63,7 @@ bsi_workspaces_remove(struct bsi_output* output,
     }
 
     /* Take care of the workspaces state. */
-    wl_list_remove(&workspace->link_output);
+    bsi_workspaces_remove(output, workspace);
     bsi_workspace_set_active(workspace, false);
     bsi_workspace_set_active(workspace_adj, true);
 }

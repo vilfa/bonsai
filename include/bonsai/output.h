@@ -60,6 +60,12 @@ static char* bsi_output_extern_progs_args[] = {
 };
 #pragma GCC diagnostic pop
 
+void
+bsi_outputs_add(struct bsi_server* server, struct bsi_output* output);
+
+void
+bsi_outputs_remove(struct bsi_output* output);
+
 /**
  * @brief Gets the bsi_output that contains the wlr_output
  *

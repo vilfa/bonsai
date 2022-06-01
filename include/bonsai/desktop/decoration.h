@@ -18,6 +18,13 @@ struct bsi_server_decoration
     struct wl_list link_server; // bsi_server
 };
 
+void
+bsi_decorations_add(struct bsi_server* server,
+                    struct bsi_server_decoration* deco);
+
+void
+bsi_decorations_remove(struct bsi_server_decoration* deco);
+
 struct bsi_server_decoration*
 bsi_server_decoration_init(struct bsi_server_decoration* deco,
                            struct bsi_server* server,

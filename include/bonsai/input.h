@@ -7,11 +7,19 @@
 #include <wayland-util.h>
 #include <xkbcommon/xkbcommon.h>
 
-struct bsi_input_pointer
+enum bsi_input_device_type
+{
+    BSI_INPUT_DEVICE_POINTER,
+    BSI_INPUT_DEVICE_KEYBOARD,
+};
+
+struct bsi_input_device
 {
     struct bsi_server* server;
     struct wlr_cursor* cursor;
     struct wlr_input_device* device;
+
+    enum bsi_input_device_type type;
 
     struct
     {
@@ -29,6 +37,9 @@ struct bsi_input_pointer
         struct wl_listener pinch_end;
         struct wl_listener hold_begin;
         struct wl_listener hold_end;
+        /* wlr_input_device::keyboard */
+        struct wl_listener key;
+        struct wl_listener modifiers;
         /* wlr_input_device::destroy */
         struct wl_listener destroy;
     } listen;
@@ -96,23 +107,22 @@ static const struct xkb_rule_names bsi_input_keyboard_rules[] = {
     },
 };
 
-struct bsi_input_pointer*
-bsi_input_pointer_init(struct bsi_input_pointer* pointer,
-                       struct bsi_server* server,
-                       struct wlr_input_device* device);
+void
+bsi_inputs_add(struct bsi_server* server, struct bsi_input_device* device);
 
 void
-bsi_input_pointer_destroy(struct bsi_input_pointer* pointer);
+bsi_inputs_remove(struct bsi_input_device* device);
 
-struct bsi_input_keyboard*
-bsi_input_keyboard_init(struct bsi_input_keyboard* keyboard,
-                        struct bsi_server* server,
-                        struct wlr_input_device* device);
-
-void
-bsi_input_keyboard_destroy(struct bsi_input_keyboard* keyboard);
+struct bsi_input_device*
+bsi_input_device_init(struct bsi_input_device* input_device,
+                      enum bsi_input_device_type type,
+                      struct bsi_server* server,
+                      struct wlr_input_device* device);
 
 void
-bsi_input_keyboard_keymap_set(struct bsi_input_keyboard* keyboard,
-                              const struct xkb_rule_names* xkb_rule_names,
-                              const size_t xkb_rule_names_len);
+bsi_input_device_destroy(struct bsi_input_device* input_device);
+
+void
+bsi_input_device_keymap_set(struct bsi_input_device* input_device,
+                            const struct xkb_rule_names* xkb_rule_names,
+                            const size_t xkb_rule_names_len);

@@ -70,8 +70,7 @@ struct bsi_server
 
     struct
     {
-        struct wl_list pointers;
-        struct wl_list keyboards;
+        struct wl_list inputs;
     } input;
 
     /* So, the way I imagine it, a workspace can be attached to a single output

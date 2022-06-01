@@ -79,13 +79,21 @@ void
 bsi_views_add_minimized(struct bsi_server* server, struct bsi_view* view);
 
 /**
+ * @brief Focuses the most recently used view, if any exists.
+ *
+ * @param server The server.
+ */
+void
+bsi_views_mru_focus(struct bsi_server* server);
+
+/**
  * @brief Removes a view from any of the server views.
  *
  * @param server The server.
  * @param view The view to remove.
  */
 void
-bsi_views_remove(struct bsi_server* server, struct bsi_view* view);
+bsi_views_remove(struct bsi_view* view);
 
 /**
  * @brief Initializes a preallocated `bsi_view` representing a scene node.

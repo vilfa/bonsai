@@ -18,6 +18,18 @@
 #include "bonsai/server.h"
 #include "bonsai/util.h"
 
+void
+bsi_outputs_add(struct bsi_server* server, struct bsi_output* output)
+{
+    wl_list_insert(&server->output.outputs, &output->link_server);
+}
+
+void
+bsi_outputs_remove(struct bsi_output* output)
+{
+    wl_list_remove(&output->link_server);
+}
+
 struct bsi_output*
 bsi_outputs_find(struct bsi_server* server, struct wlr_output* wlr_output)
 {
@@ -42,6 +54,7 @@ bsi_output_init(struct bsi_output* output,
     output->server = server;
     output->output = wlr_output;
     output->new = true;
+    wlr_output->data = output;
     /* Initialize damage. Initialize output configuration. */
     output->damage = wlr_output_damage_create(wlr_output);
     /* Initialize workspaces. */
@@ -116,10 +129,10 @@ bsi_output_surface_damage(struct bsi_output* output,
 void
 bsi_output_destroy(struct bsi_output* output)
 {
+    bsi_info("Destroying output %ld/%s", output->id, output->output->name);
+
     wl_list_remove(&output->listen.frame.link);
     wl_list_remove(&output->listen.destroy.link);
-
-    bsi_info("Destroying output %ld/%s", output->id, output->output->name);
 
     struct bsi_server* server = output->server;
     if (wl_list_length(&server->output.outputs) > 0) {
@@ -227,7 +240,7 @@ handle_output_destroy(struct wl_listener* listener, void* data)
     }
 
     wlr_output_layout_remove(server->wlr_output_layout, output->output);
-    wl_list_remove(&output->link_server);
+    bsi_outputs_remove(output);
     bsi_output_destroy(output);
 
     if (wl_list_length(&server->output.outputs) == 0) {

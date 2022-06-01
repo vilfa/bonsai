@@ -2,6 +2,7 @@
  * configuring a new keyboard if it is attached. This file specifically holds
  * helpers for events that happen at server runtime, related to a keyboard. */
 
+#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,11 +24,13 @@
 #include "bonsai/util.h"
 
 bool
-bsi_keyboard_keybinds_process(struct bsi_input_keyboard* keyboard,
+bsi_keyboard_keybinds_process(struct bsi_input_device* device,
                               struct wlr_keyboard_key_event* event)
 {
-    struct bsi_server* server = keyboard->server;
-    struct wlr_keyboard* wlr_keyboard = keyboard->device->keyboard;
+    assert(device->type == BSI_INPUT_DEVICE_KEYBOARD);
+
+    struct bsi_server* server = device->server;
+    struct wlr_keyboard* wlr_keyboard = device->device->keyboard;
 
     /* Translate libinput -> xkbcommon keycode. */
     uint32_t keycode = event->keycode + 8;
@@ -119,13 +122,9 @@ bsi_keyboard_mod_alt_handle(struct bsi_server* server, xkb_keysym_t sym)
     bsi_debug("Got Alt mod");
     switch (sym) {
         case XKB_KEY_Tab: {
-            if (!wl_list_empty(&server->scene.views_recent)) {
-                struct bsi_view* view_mru = wl_container_of(
-                    server->scene.views_recent.next, view_mru, link_recent);
-                bsi_views_remove(server, view_mru);
-                bsi_views_add(server, view_mru);
-                return true;
-            }
+            bsi_debug("Got Alt+Tab -> cycle mru views");
+            bsi_views_mru_focus(server);
+            return true;
         }
     }
     return false;

@@ -98,6 +98,13 @@ struct bsi_layer_surface_subsurface
 };
 
 void
+bsi_layers_add(struct bsi_output* output,
+               struct bsi_layer_surface_toplevel* layer);
+
+void
+bsi_layers_remove(struct bsi_layer_surface_toplevel* layer);
+
+void
 bsi_layers_arrange(struct bsi_output* output);
 
 struct bsi_layer_surface_toplevel*

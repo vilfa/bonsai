@@ -40,15 +40,9 @@
 
 // TODO: Fix Waybar not working.
 
-// TODO: Fix focusing on move.
-
 // TODO: Fix layer shell layers overlapping.
 
-// TODO: Focus next on minimize.
-
-// TODO: Add to most recent on focus.
-
-// TODO: Fix crashing on exit key combo.
+// TODO: Fix mru out of order.
 
 int
 main(void)

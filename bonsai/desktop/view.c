@@ -48,9 +48,22 @@ bsi_views_add_minimized(struct bsi_server* server, struct bsi_view* view)
 }
 
 void
-bsi_views_remove(struct bsi_server* server, struct bsi_view* view)
+bsi_views_mru_focus(struct bsi_server* server)
+{
+    if (!wl_list_empty(&server->scene.views_recent)) {
+        struct bsi_view* view_mru = wl_container_of(
+            server->scene.views_recent.prev, view_mru, link_recent);
+        bsi_views_remove(view_mru);
+        bsi_views_add(server, view_mru);
+        bsi_view_focus(view_mru);
+    }
+}
+
+void
+bsi_views_remove(struct bsi_view* view)
 {
     wl_list_remove(&view->link_server);
+    wl_list_remove(&view->link_recent);
     wlr_scene_node_set_enabled(view->scene_node, false);
 }
 
@@ -104,26 +117,24 @@ bsi_view_focus(struct bsi_view* view)
     struct wlr_surface* prev_focused = seat->keyboard_state.focused_surface;
 
     /* The surface is already focused. */
-    if (prev_focused == view->toplevel->base->surface)
+    if (prev_focused && prev_focused == view->toplevel->base->surface)
         return;
 
+    /* The surface is not a toplevel surface. */
     if (prev_focused && strcmp(prev_focused->role->name, "xdg_toplevel") == 0) {
         /* Deactivate the previously focused surface and notify the client. */
         struct wlr_xdg_surface* prev_focused_xdg =
             wlr_xdg_surface_from_wlr_surface(prev_focused);
-        assert(prev_focused_xdg->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL);
         wlr_xdg_toplevel_set_activated(prev_focused_xdg->toplevel, false);
     }
 
-    /* Move view to top. */
-    wlr_scene_node_raise_to_top(view->scene_node);
-    /* Add the view to the front of the list. */
-    bsi_views_remove(server, view);
+    /* Move to front of server views. */
+    bsi_views_remove(view);
     bsi_views_add(server, view);
-    /* Activate the view surface. */
+    /* Node to top & activate. */
+    wlr_scene_node_raise_to_top(view->scene_node);
     wlr_xdg_toplevel_set_activated(view->toplevel, true);
-    /* Tell seat to enter this surface with the keyboard. Don't touch the
-     * pointer. */
+    /* Seat, enter this surface with the keyboard. Leave the pointer. */
     struct wlr_keyboard* keyboard = wlr_seat_get_keyboard(seat);
     wlr_seat_keyboard_notify_enter(seat,
                                    view->toplevel->base->surface,
@@ -222,12 +233,14 @@ bsi_view_set_minimized(struct bsi_view* view, bool minimized)
     if (view->state == BSI_VIEW_STATE_NORMAL) {
         bsi_debug("Unimimize view '%s', restore prev", view->toplevel->app_id);
         bsi_view_restore_prev(view);
-        bsi_views_remove(view->server, view);
+        bsi_views_remove(view);
         bsi_views_add(view->server, view);
     } else {
         bsi_debug("Minimize view '%s'", view->toplevel->app_id);
-        bsi_views_remove(view->server, view);
+        bsi_views_remove(view);
         bsi_views_add_minimized(view->server, view);
+
+        bsi_views_mru_focus(view->server);
     }
 }
 
@@ -298,7 +311,6 @@ handle_xdg_surf_destroy(struct wl_listener* listener, void* data)
     bsi_debug("Got event destroy from wlr_xdg_surface");
 
     struct bsi_view* view = wl_container_of(listener, view, listen.destroy);
-    struct bsi_server* server = view->server;
     struct bsi_workspace* workspace = view->parent_workspace;
 
     /* The view will already have been unmapped by the time it gets here, no
@@ -364,10 +376,10 @@ handle_xdg_surf_unmap(struct wl_listener* listener, void* data)
     bsi_debug("Got event unmap from wlr_xdg_surface");
 
     struct bsi_view* view = wl_container_of(listener, view, listen.unmap);
-    struct bsi_server* server = view->server;
 
     view->mapped = false;
-    bsi_views_remove(server, view);
+    bsi_views_remove(view);
+    bsi_views_mru_focus(view->server);
 }
 
 void
@@ -461,7 +473,7 @@ handle_toplvl_request_show_window_menu(struct wl_listener* listener, void* data)
         wl_container_of(listener, view, listen.request_show_window_menu);
     struct wlr_xdg_toplevel_show_window_menu_event* event = data;
 
+    // TODO: Handle show window menu
     if (wlr_seat_client_validate_event_serial(event->seat, event->serial))
         bsi_debug("Should show window menu");
-    // TODO: Handle show window menu
 }

@@ -23,6 +23,19 @@
 #include "pixman.h"
 #include "wlr-layer-shell-unstable-v1-protocol.h"
 
+void
+bsi_layers_add(struct bsi_output* output,
+               struct bsi_layer_surface_toplevel* layer)
+{
+    wl_list_insert(&output->layers[layer->at_layer], &layer->link_output);
+}
+
+void
+bsi_layers_remove(struct bsi_layer_surface_toplevel* layer)
+{
+    wl_list_remove(&layer->link_output);
+}
+
 struct bsi_layer_surface_toplevel*
 bsi_layer_surface_toplevel_init(struct bsi_layer_surface_toplevel* toplevel,
                                 struct wlr_layer_surface_v1* layer_surface,
@@ -376,8 +389,7 @@ handle_layershell_toplvl_map(struct wl_listener* listener, void* data)
 
     wlr_surface_send_enter(layer_toplevel->layer_surface->surface,
                            output->output);
-    bsi_output_surface_damage(
-        output, layer_toplevel->layer_surface->surface, true);
+    bsi_output_surface_damage(output, NULL, true);
 }
 
 void
@@ -398,8 +410,7 @@ handle_layershell_toplvl_unmap(struct wl_listener* listener, void* data)
         wlr_seat_pointer_notify_clear_focus(
             layer_toplevel->output->server->wlr_seat);
 
-    bsi_output_surface_damage(
-        output, layer_toplevel->layer_surface->surface, true);
+    bsi_output_surface_damage(output, NULL, true);
 }
 
 void
@@ -417,9 +428,10 @@ handle_layershell_toplvl_destroy(struct wl_listener* listener, void* data)
 
     /* Destroy the layer and rearrange this output. */
     union bsi_layer_surface layer_surface = { .toplevel = layer_toplevel };
-    wl_list_remove(&layer_surface.toplevel->link_output);
+    bsi_layers_remove(layer_toplevel);
     bsi_layer_surface_destroy(layer_surface, BSI_LAYER_SURFACE_TOPLEVEL);
     bsi_layers_arrange(output);
+    bsi_output_surface_damage(output, NULL, true);
 }
 
 void
@@ -495,10 +507,8 @@ handle_layershell_toplvl_commit(struct wl_listener* listener, void* data)
         bsi_layers_arrange(output);
     }
 
-    // TODO: We should only be damaging the specific surface area, not the
-    // entire output area here.
     bsi_output_surface_damage(
-        layer_toplevel->output, layer_toplevel->layer_surface->surface, true);
+        layer_toplevel->output, layer_toplevel->layer_surface->surface, false);
 }
 
 void
@@ -551,7 +561,7 @@ handle_layershell_popup_map(struct wl_listener* listener, void* data)
 
     wlr_surface_send_enter(layer_popup->popup->base->surface, output->output);
 
-    bsi_output_surface_damage(output, layer_popup->popup->base->surface, true);
+    bsi_output_surface_damage(output, NULL, true);
 }
 
 void
@@ -575,7 +585,7 @@ handle_layershell_popup_unmap(struct wl_listener* listener, void* data)
                                            layer_popup->popup->base->surface))
         wlr_seat_pointer_notify_clear_focus(output->server->wlr_seat);
 
-    bsi_output_surface_damage(output, layer_popup->popup->base->surface, true);
+    bsi_output_surface_damage(output, NULL, true);
 }
 
 void
@@ -595,6 +605,7 @@ handle_layershell_popup_destroy(struct wl_listener* listener, void* data)
         return;
 
     bsi_layer_surface_destroy(layer_surface, BSI_LAYER_SURFACE_POPUP);
+    bsi_output_surface_damage(toplevel_parent->output, NULL, true);
 }
 
 void
@@ -658,9 +669,7 @@ handle_layershell_popup_commit(struct wl_listener* listener, void* data)
                                               BSI_LAYER_SURFACE_POPUP);
     struct bsi_output* output = toplevel_parent->output;
 
-    // TODO: We should only be damaging the specific surface area, not the
-    // entire output area here.
-    bsi_output_surface_damage(output, layer_popup->popup->base->surface, true);
+    bsi_output_surface_damage(output, layer_popup->popup->base->surface, false);
 }
 
 /*
@@ -679,8 +688,7 @@ handle_layershell_subsurface_map(struct wl_listener* listener, void* data)
 
     wlr_surface_send_enter(layer_subsurface->subsurface->surface,
                            output->output);
-    bsi_output_surface_damage(
-        output, layer_subsurface->subsurface->surface, true);
+    bsi_output_surface_damage(output, NULL, true);
 }
 
 void
@@ -700,8 +708,7 @@ handle_layershell_subsurface_unmap(struct wl_listener* listener, void* data)
             output->server->wlr_seat, layer_subsurface->subsurface->surface))
         wlr_seat_pointer_notify_clear_focus(output->server->wlr_seat);
 
-    bsi_output_surface_damage(
-        output, layer_subsurface->subsurface->surface, true);
+    bsi_output_surface_damage(output, NULL, true);
 }
 
 void
@@ -722,6 +729,7 @@ handle_layershell_subsurface_destroy(struct wl_listener* listener, void* data)
 
     wl_list_remove(&layer_subsurface->link);
     bsi_layer_surface_destroy(layer_surface, BSI_LAYER_SURFACE_SUBSURFACE);
+    bsi_output_surface_damage(toplevel_parent->output, NULL, true);
 }
 
 /* wlr_surface -> subsurface::surface */
@@ -735,8 +743,6 @@ handle_layershell_subsurface_commit(struct wl_listener* listener, void* data)
         wl_container_of(listener, layer_subsurface, listen.commit);
     struct bsi_output* output = layer_subsurface->member_of->output;
 
-    // TODO: We should only be damaging the specific surface area, not the
-    // entire output area here.
     bsi_output_surface_damage(
-        output, layer_subsurface->subsurface->surface, true);
+        output, layer_subsurface->subsurface->surface, false);
 }
