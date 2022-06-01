@@ -76,11 +76,11 @@ source "$PREFS"
 
 copy_source() {
     print_info "Copy source from $CWD to ${VM_1[share]}"
-    rsync -avh --no-compress --progress --info=progress -r \
+    rsync -vh --no-compress --progress --info=progress -r \
         "$CWD" "${VM_1[share]}" \
         --exclude=".*" --exclude="builddir"
     print_info "Copy source from $CWD to ${VM_2[share]}"
-    rsync -avh --no-compress --progress --info=progress -r \
+    rsync -vh --no-compress --progress --info=progress -r \
         "$CWD" "${VM_2[share]}" \
         --exclude=".*" --exclude="builddir"
 }

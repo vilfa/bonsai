@@ -34,13 +34,11 @@
 // TODO: Take a look at
 // https://gitlab.freedesktop.org/wlroots/wlroots/-/tree/master/examples
 
-// TODO: Fix resize.
-
 // TODO: Finish server decoration implementation.
 
-// TODO: Fix Waybar not working.
+// TODO: Fix layer shell ordering.
 
-// TODO: Fix layer shell layers overlapping.
+// TODO: Take into account usable area of an output when maximizing.
 
 // TODO: Fix mru out of order.
 
@@ -69,6 +67,14 @@ main(void)
          * `/usr/share/icons/default/index.theme` or
          * `$XDG_CONFIG_HOME/.icons/default/index.theme` */
         bsi_errno("Failed to set WLR_NO_HARDWARE_CURSORS env var");
+        wlr_backend_destroy(server.wlr_backend);
+        wl_display_destroy(server.wl_display);
+        exit(EXIT_FAILURE);
+    }
+
+    if (setenv("GDK_BACKEND", "wayland", true) != 0) {
+        /*  If this is not set, waybar thinks it's running under X. */
+        bsi_errno("Failed to set GDK_BACKEND env var");
         wlr_backend_destroy(server.wlr_backend);
         wl_display_destroy(server.wl_display);
         exit(EXIT_FAILURE);

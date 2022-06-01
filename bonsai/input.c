@@ -8,6 +8,7 @@
 #include <wlr/types/wlr_keyboard.h>
 #include <wlr/types/wlr_pointer.h>
 #include <wlr/types/wlr_seat.h>
+#include <wlr/types/wlr_subcompositor.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/util/log.h>
 #include <xkbcommon/xkbcommon.h>
@@ -235,11 +236,11 @@ handle_pointer_button(struct wl_listener* listener, void* data)
             }
 
             /* Focus a client that was clicked. */
-            if (strcmp(surface_role, "zwlr_layer_surface_v1") == 0) {
+            if (wlr_surface_is_layer_surface(surface_at)) {
                 bsi_layer_surface_focus(scene_data);
-            } else if (strcmp(surface_role, "xdg_toplevel") == 0) {
+            } else if (wlr_surface_is_xdg_surface(surface_at)) {
                 bsi_view_focus(scene_data);
-            } else if (strcmp(surface_role, "wl_subsurface") == 0) {
+            } else if (wlr_surface_is_subsurface(surface_at)) {
                 /* Client side decorations are wl_subsurfaces. */
                 struct bsi_view* view = scene_data;
                 struct wlr_cursor* cursor = view->server->wlr_cursor;

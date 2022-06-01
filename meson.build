@@ -32,6 +32,7 @@ dep_math = cc.find_library('m', required : true)
 ### Dependencies (Optional)
 dep_swaybg = dependency('swaybg', required : false)
 dep_bemenu = dependency('bemenu', required : false)
+dep_waybar = dependency('waybar', required : false)
 
 ### Include dirs
 inc_default = include_directories('include')

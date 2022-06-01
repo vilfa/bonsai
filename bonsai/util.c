@@ -49,7 +49,7 @@ bsi_util_forkexec(char* const* argp, const size_t len_argp)
 
             execve(argp[0], argp, environ);
 
-            bsi_errno("Exec failed");
+            bsi_errno("Exec '%s' failed", argp[0]);
             _exit(EXIT_FAILURE);
             break;
         }

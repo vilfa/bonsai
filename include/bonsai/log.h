@@ -2,6 +2,10 @@
 
 #include <wlr/util/log.h>
 
+#ifndef __FILE_NAME__
+#define __FILE_NAME__ __FILE__
+#endif
+
 #define bsi_debug(fmt, ...)                                                    \
     _wlr_log(3,                                                                \
              "\x1B[38;5;121m[bonsai]\x1B[1;90m"                                \

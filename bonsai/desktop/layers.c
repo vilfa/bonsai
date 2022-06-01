@@ -44,6 +44,7 @@ bsi_layer_surface_toplevel_init(struct bsi_layer_surface_toplevel* toplevel,
     toplevel->layer_surface = layer_surface;
     toplevel->output = output;
     toplevel->mapped = false;
+    toplevel->at_layer = layer_surface->pending.layer;
     layer_surface->data = toplevel;
     wl_list_init(&toplevel->subsurfaces);
 
@@ -121,7 +122,7 @@ bsi_layer_surface_focus(struct bsi_layer_surface_toplevel* toplevel)
     if (prev_focused == toplevel->layer_surface->surface)
         return;
 
-    if (prev_focused && strcmp(prev_focused->role->name, "xdg_toplevel") == 0) {
+    if (prev_focused && wlr_surface_is_xdg_surface(prev_focused)) {
         /* Deactivate the previously focused surface and notify the client. */
         struct wlr_xdg_surface* prev_focused_xdg =
             wlr_xdg_surface_from_wlr_surface(prev_focused);
@@ -188,47 +189,11 @@ bsi_layer_surface_destroy(union bsi_layer_surface layer_surface,
     }
 }
 
-/**
- * Handlers
- */
-
-/**
- * On map and unmap events, the entire output surface should always be damaged.
- * On commit events, only the surface of the layer should be damaged.
- *
- * Kinda makes sense, we don't want to waste CPU time updating the surface of
- * the entire output, if a surface is already mapped, so only update that
- * surface area.
- *
- */
-
 static void
-bsi_output_views_arrange(struct bsi_output* output, struct wl_list* layers)
-{
-    struct bsi_server* server = output->server;
-
-    struct bsi_layer_surface_toplevel* toplevel;
-    wl_list_for_each(toplevel, layers, link_output)
-    {
-        if (toplevel->at_layer < ZWLR_LAYER_SHELL_V1_LAYER_TOP) {
-            /* These are background layers, arrange the views appropriately.*/
-            struct bsi_view* view;
-            wl_list_for_each_reverse(view, &server->scene.views, link_server)
-            {
-                wlr_scene_node_raise_to_top(view->scene_node);
-            }
-        } else if (toplevel->at_layer > ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM) {
-            /* These are foreground layers, arrange the views appropriately. */
-            wlr_scene_node_raise_to_top(toplevel->scene_node->node);
-        }
-    }
-}
-
-static void
-bsi_output_layer_arrange(struct bsi_output* output,
-                         struct wl_list* shell_layer,
-                         struct wlr_box* usable_box,
-                         bool exclusive)
+bsi_layer_arrange(struct bsi_output* output,
+                  struct wl_list* shell_layer,
+                  struct wlr_box* usable_box,
+                  bool exclusive)
 {
     struct wlr_box full_box = { 0 }; /* Full output area. */
     wlr_output_effective_resolution(
@@ -325,7 +290,7 @@ bsi_output_layer_arrange(struct bsi_output* output,
 }
 
 void
-bsi_layers_arrange(struct bsi_output* output)
+bsi_layers_output_arrange(struct bsi_output* output)
 {
     struct wlr_box usable_box = { 0 }; /* Output usable area. */
     wlr_output_effective_resolution(
@@ -334,46 +299,75 @@ bsi_layers_arrange(struct bsi_output* output)
     /* Firstly, arrange exclusive layers. */
     for (size_t i = 0; i < 4; ++i) {
         if (!wl_list_empty(&output->layers[i]))
-            bsi_output_layer_arrange(
-                output, &output->layers[i], &usable_box, true);
+            bsi_layer_arrange(output, &output->layers[i], &usable_box, true);
     }
 
     /* Secondly, arrange non-exclusive layers. */
     for (size_t i = 0; i < 4; ++i) {
         if (!wl_list_empty(&output->layers[i]))
-            bsi_output_layer_arrange(
-                output, &output->layers[i], &usable_box, false);
+            bsi_layer_arrange(output, &output->layers[i], &usable_box, false);
     }
 
-    /* Arrange layers under windows. */
+    /* Arrange layers under & above windows. */
     for (size_t i = 0; i < 4; ++i) {
-        if (!wl_list_empty(&output->layers[i]))
-            bsi_output_views_arrange(output, &output->layers[i]);
+        struct bsi_layer_surface_toplevel* toplevel;
+        if (!wl_list_empty(&output->layers[i])) {
+            wl_list_for_each(toplevel, &output->layers[i], link_output)
+            {
+                if (toplevel->at_layer < ZWLR_LAYER_SHELL_V1_LAYER_TOP) {
+                    /* These are background layers, arrange the views
+                     * appropriately.*/
+                    bsi_debug("Lower layer with namespace '%s' to bottom",
+                              toplevel->layer_surface->namespace);
+                    wlr_scene_node_lower_to_bottom(toplevel->scene_node->node);
+                } else if (toplevel->at_layer >
+                           ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM) {
+                    /* These are foreground layers, arrange the views
+                     * appropriately. */
+                    bsi_debug("Raise layer with namespace '%s' to top",
+                              toplevel->layer_surface->namespace);
+                    wlr_scene_node_raise_to_top(toplevel->scene_node->node);
+                }
+            }
+        }
     }
 
     /* Last, focus the topmost keyboard-interactive layer, if it exists. */
-    // TODO: Focus topmost keyboard-interactive layer.
     struct bsi_server* server = output->server;
     struct wlr_keyboard* keyboard = wlr_seat_get_keyboard(server->wlr_seat);
-    bool focused = false;
-    for (size_t i = 3; i >= 0; --i) {
-        if (focused)
-            break;
-        if (!wl_list_empty(&output->layers[i])) {
-            struct bsi_layer_surface_toplevel* toplevel;
-            wl_list_for_each(toplevel, &output->layers[i], link_output)
-            {
+    static enum zwlr_layer_shell_v1_layer focusable_layers[] = {
+        ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY,
+        ZWLR_LAYER_SHELL_V1_LAYER_TOP,
+    };
+    for (size_t i = 0; i < 2; ++i) {
+        struct bsi_layer_surface_toplevel* toplevel;
+        wl_list_for_each(
+            toplevel, &output->layers[focusable_layers[i]], link_output)
+        {
+            if (toplevel->layer_surface->current.keyboard_interactive) {
                 wlr_seat_keyboard_notify_enter(server->wlr_seat,
                                                toplevel->layer_surface->surface,
                                                keyboard->keycodes,
                                                keyboard->num_keycodes,
                                                &keyboard->modifiers);
-                focused = true;
+                return;
             }
         }
     }
 }
 
+/**
+ * Handlers
+ */
+/**
+ * On map and unmap events, the entire output surface should always be damaged.
+ * On commit events, only the surface of the layer should be damaged.
+ *
+ * Kinda makes sense, we don't want to waste CPU time updating the surface of
+ * the entire output, if a surface is already mapped, so only update that
+ * surface area.
+ *
+ */
 /*
  * bsi_layer_surface_toplevel
  */
@@ -430,7 +424,7 @@ handle_layershell_toplvl_destroy(struct wl_listener* listener, void* data)
     union bsi_layer_surface layer_surface = { .toplevel = layer_toplevel };
     bsi_layers_remove(layer_toplevel);
     bsi_layer_surface_destroy(layer_surface, BSI_LAYER_SURFACE_TOPLEVEL);
-    bsi_layers_arrange(output);
+    bsi_layers_output_arrange(output);
     bsi_output_surface_damage(output, NULL, true);
 }
 
@@ -504,7 +498,7 @@ handle_layershell_toplvl_commit(struct wl_listener* listener, void* data)
                 &output->layers[layer_toplevel->layer_surface->current.layer],
                 &layer_toplevel->link_output);
         }
-        bsi_layers_arrange(output);
+        bsi_layers_output_arrange(output);
     }
 
     bsi_output_surface_damage(

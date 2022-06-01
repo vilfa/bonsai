@@ -142,13 +142,6 @@ void
 bsi_cursor_process_view_resize(struct bsi_server* server,
                                union bsi_cursor_event cursor_event)
 {
-    // TODO: Make this less shit. Resizing shouldn't be able to move a window.
-    // Maybe somewhere between lines 206-212?
-
-    // TODO: In a more fleshed-out compositor, you'd wait for the client to
-    // prepare a buffer at the new size, then commit any movement that was
-    // prepared.
-
     struct bsi_view* view = server->cursor.grabbed_view;
     struct wlr_pointer_motion_event* event = cursor_event.motion;
 
@@ -158,52 +151,51 @@ bsi_cursor_process_view_resize(struct bsi_server* server,
         return;
 
     wlr_xdg_toplevel_set_resizing(view->toplevel, true);
-    wlr_xdg_surface_schedule_configure(view->toplevel->base);
 
-    // TODO: Not sure what is happening here.
-    double border_x = server->wlr_cursor->x - server->cursor.grab_sx;
-    double border_y = server->wlr_cursor->y - server->cursor.grab_sy;
-    int32_t new_left = server->cursor.grab_box.x;
-    int32_t new_right =
-        server->cursor.grab_box.x + server->cursor.grab_box.width;
-    int32_t new_top = server->cursor.grab_box.y;
-    int32_t new_bottom =
-        server->cursor.grab_box.y + server->cursor.grab_box.height;
+    double rsiz_lx, rsiz_ly;
+    int32_t new_left, new_right, new_top, new_bottom;
+    /* The layout local coordinates of the cursor resizing. */
+    rsiz_lx = server->wlr_cursor->x - server->cursor.grab_sx;
+    rsiz_ly = server->wlr_cursor->y - server->cursor.grab_sy;
+    /* New positions of view edges. */
+    new_left = server->cursor.grab_box.x;
+    new_right = server->cursor.grab_box.x + server->cursor.grab_box.width;
+    new_top = server->cursor.grab_box.y;
+    new_bottom = server->cursor.grab_box.y + server->cursor.grab_box.height;
 
-    /* We are constraining the size of the surface to at least 1px width and
-     * height? Coordinates start from the top left corner. */
+    /* Constrain the opposite edges to each other. */
     if (server->cursor.resize_edges & WLR_EDGE_TOP) {
-        new_top = border_y;
+        new_top = rsiz_ly;
         if (new_top >= new_bottom)
             new_top = new_bottom - 1;
     } else if (server->cursor.resize_edges & WLR_EDGE_BOTTOM) {
-        new_bottom = border_y;
+        new_bottom = rsiz_ly;
         if (new_bottom <= new_top)
             new_bottom = new_top + 1;
     }
-
     if (server->cursor.resize_edges & WLR_EDGE_LEFT) {
-        new_left = border_x;
+        new_left = rsiz_lx;
         if (new_left >= new_right)
             new_left = new_right - 1;
     } else if (server->cursor.resize_edges & WLR_EDGE_RIGHT) {
-        new_right = border_x;
+        new_right = rsiz_lx;
         if (new_right <= new_left)
             new_right = new_left + 1;
     }
 
     struct wlr_box box;
     wlr_xdg_surface_get_geometry(view->toplevel->base, &box);
+
+    /* Set new view position. Account for possible titlebars, etc. */
     view->box.x = new_left - box.x;
     view->box.y = new_top - box.y;
     view->box.width = box.width;
     view->box.height = box.height;
     wlr_scene_node_set_position(view->scene_node, view->box.x, view->box.y);
 
-    int32_t new_width = new_right - new_left;
-    int32_t new_height = new_bottom - new_top;
-    wlr_xdg_toplevel_set_size(view->toplevel, new_width, new_height);
+    /* Set new view size. */
+    wlr_xdg_toplevel_set_size(
+        view->toplevel, new_right - new_left, new_bottom - new_top);
 
     wlr_xdg_toplevel_set_resizing(view->toplevel, false);
-    wlr_xdg_surface_schedule_configure(view->toplevel->base);
 }

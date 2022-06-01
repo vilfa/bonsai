@@ -13,6 +13,8 @@ enum bsi_view_state
     BSI_VIEW_STATE_MINIMIZED = 1 << 1,
     BSI_VIEW_STATE_MAXIMIZED = 1 << 2,
     BSI_VIEW_STATE_FULLSCREEN = 1 << 3,
+    BSI_VIEW_STATE_TILED_LEFT = 1 << 4,
+    BSI_VIEW_STATE_TILED_RIGHT = 1 << 5,
 };
 
 struct bsi_view
@@ -86,6 +88,9 @@ bsi_views_add_minimized(struct bsi_server* server, struct bsi_view* view);
 void
 bsi_views_mru_focus(struct bsi_server* server);
 
+struct bsi_view*
+bsi_views_get_focused(struct bsi_server* server);
+
 /**
  * @brief Removes a view from any of the server views.
  *
@@ -144,6 +149,12 @@ bsi_view_set_minimized(struct bsi_view* view, bool minimized);
 
 void
 bsi_view_set_fullscreen(struct bsi_view* view, bool fullscreen);
+
+void
+bsi_view_set_tiled_left(struct bsi_view* view, bool tiled);
+
+void
+bsi_view_set_tiled_right(struct bsi_view* view, bool tiled);
 
 void
 bsi_view_restore_prev(struct bsi_view* view);

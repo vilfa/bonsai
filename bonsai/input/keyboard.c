@@ -140,15 +140,58 @@ bsi_keyboard_mod_super_handle(struct bsi_server* server, xkb_keysym_t sym)
             char* const argp[] = { "/usr/bin/bemenu-run", "-c", "-i", NULL };
             return bsi_util_forkexec(argp, 4);
         }
-        case XKB_KEY_b: {
-            bsi_debug("Got Super+b -> waybar");
-            char* const argp[] = { "/usr/bin/waybar", NULL };
-            return bsi_util_forkexec(argp, 2);
-        }
         case XKB_KEY_Return: {
             bsi_debug("Got Super+Return -> term");
             char* const argp[] = { "/usr/bin/foot", NULL };
             return bsi_util_forkexec(argp, 2);
+        }
+        case XKB_KEY_Up: {
+            bsi_debug("Got Super+Up -> maximize active");
+            struct bsi_view* focused = bsi_views_get_focused(server);
+            if (focused)
+                bsi_view_set_maximized(focused, true);
+            return true;
+        }
+        case XKB_KEY_Down: {
+            bsi_debug("Got Super+Down -> unmaximize active");
+            struct bsi_view* focused = bsi_views_get_focused(server);
+            if (focused)
+                bsi_view_set_maximized(focused, false);
+            return true;
+        }
+        case XKB_KEY_Left: {
+            bsi_debug("Got Super+Left -> tile left/untile");
+            struct bsi_view* focused = bsi_views_get_focused(server);
+            if (focused) {
+                switch (focused->state) {
+                    case BSI_VIEW_STATE_TILED_RIGHT:
+                        bsi_view_set_tiled_right(focused, false);
+                        break;
+                    case BSI_VIEW_STATE_NORMAL:
+                        bsi_view_set_tiled_left(focused, true);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            return true;
+        }
+        case XKB_KEY_Right: {
+            bsi_debug("Got Super+Right -> tile right/untile");
+            struct bsi_view* focused = bsi_views_get_focused(server);
+            if (focused) {
+                switch (focused->state) {
+                    case BSI_VIEW_STATE_TILED_LEFT:
+                        bsi_view_set_tiled_left(focused, false);
+                        break;
+                    case BSI_VIEW_STATE_NORMAL:
+                        bsi_view_set_tiled_right(focused, true);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            return true;
         }
     }
     return false;

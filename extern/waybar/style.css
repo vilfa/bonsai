@@ -1,0 +1,47 @@
+* {
+    border: none;
+    border-radius: 0;
+    font-family: "sans";
+    font-size: 13px;
+    min-height: 0;
+}
+
+window#waybar {
+    background: transparent;
+    color: #ffffff;
+}
+
+#window {
+    font-weight: bold;
+    font-family: "sans";
+}
+
+#workspaces button {
+    padding: 0 5px;
+    background: transparent;
+    color: #ffffff;
+    border-top: 2px solid transparent;
+}
+
+#workspaces button.focused {
+    color: #1b70d8;
+    border-top: 2px solid #1b70d8;
+}
+
+#mode {
+    background: #64727D;
+    border-bottom: 3px solid #ffffff;
+}
+
+#idle_inhibitor, #clock, #backlight, #battery, #pulseaudio, #memory, #cpu, #network, #language, #tray {
+    padding: 2px 0;
+    margin: 0 5px;
+}
+
+#mode {
+    margin: 0 5px;
+}
+
+#clock {
+    font-weight: bold;
+}

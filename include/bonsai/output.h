@@ -47,16 +47,20 @@ struct bsi_output
 enum bsi_output_extern_prog
 {
     BSI_OUTPUT_EXTERN_PROG_WALLPAPER,
+    BSI_OUTPUT_EXTERN_PROG_BAR,
     BSI_OUTPUT_EXTERN_PROG_MAX,
 };
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-variable"
 static char* bsi_output_extern_progs[] = { [BSI_OUTPUT_EXTERN_PROG_WALLPAPER] =
-                                               "/usr/bin/swaybg" };
+                                               "/usr/bin/swaybg",
+                                           [BSI_OUTPUT_EXTERN_PROG_BAR] =
+                                               "/usr/bin/waybar" };
 
 static char* bsi_output_extern_progs_args[] = {
     [BSI_OUTPUT_EXTERN_PROG_WALLPAPER] = "--image=assets/Wallpaper-Default.jpg",
+    [BSI_OUTPUT_EXTERN_PROG_BAR] = "",
 };
 #pragma GCC diagnostic pop
 

@@ -602,11 +602,22 @@ handle_xdgshell_new_surface(struct wl_listener* listener, void* data)
      * always set the user data field of xdg_surfaces to the corresponding scene
      * node. */
     if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_POPUP) {
-        struct wlr_xdg_surface* parent_surface =
-            wlr_xdg_surface_from_wlr_surface(xdg_surface->popup->parent);
-        struct wlr_scene_node* parent_node = parent_surface->data;
-        xdg_surface->data =
-            wlr_scene_xdg_surface_create(parent_node, xdg_surface);
+        if (wlr_surface_is_xdg_surface(xdg_surface->popup->parent)) {
+            struct wlr_xdg_surface* parent_surface =
+                wlr_xdg_surface_from_wlr_surface(xdg_surface->popup->parent);
+            struct wlr_scene_node* parent_node = parent_surface->data;
+            xdg_surface->data =
+                wlr_scene_xdg_surface_create(parent_node, xdg_surface);
+        } else if (wlr_surface_is_layer_surface(xdg_surface->popup->parent)) {
+            struct wlr_layer_surface_v1* parent_surface =
+                wlr_layer_surface_v1_from_wlr_surface(
+                    xdg_surface->popup->parent);
+            struct bsi_layer_surface_toplevel* parent_layer =
+                parent_surface->data;
+            struct wlr_scene_node* parent_node = parent_layer->scene_node->node;
+            xdg_surface->data =
+                wlr_scene_xdg_surface_create(parent_node, xdg_surface);
+        }
     } else {
         struct bsi_view* view = calloc(1, sizeof(struct bsi_view));
         struct bsi_output* output =
@@ -708,7 +719,7 @@ handle_layer_shell_new_surface(struct wl_listener* listener, void* data)
      * wlr.*/
     struct wlr_layer_surface_v1_state old = layer_surface->current;
     layer_surface->current = layer_surface->pending;
-    bsi_layers_arrange(active_output);
+    bsi_layers_output_arrange(active_output);
     layer_surface->current = old;
 }
 
