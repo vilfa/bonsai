@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <math.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -292,12 +293,18 @@ handle_pointer_swipe_begin(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event swipe_begin from wlr_input_device");
 
-    // struct bsi_input_device* device =
-    //     wl_container_of(listener, device, listen.swipe_begin);
-    // struct wlr_seat* seat = device->server->wlr_seat;
-    // struct wlr_pointer_swipe_begin_event* event = data;
+    struct bsi_input_device* device =
+        wl_container_of(listener, device, listen.swipe_begin);
+    struct bsi_server* server = device->server;
+    struct wlr_pointer_swipe_begin_event* event = data;
 
-    // TODO: Server is primary handler.
+    bsi_debug("swipe_begin { time_msec=%u, fingers=%u }",
+              event->time_msec,
+              event->fingers);
+
+    server->cursor.cursor_mode = BSI_CURSOR_SWIPE;
+    server->cursor.swipe_fingers = event->fingers;
+    server->cursor.swipe_timest = event->time_msec;
 }
 
 void
@@ -305,12 +312,19 @@ handle_pointer_swipe_update(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event swipe_update from wlr_input_device");
 
-    // struct bsi_input_device* device =
-    //     wl_container_of(listener, device, listen.swipe_update);
-    // struct wlr_seat* seat = device->server->wlr_seat;
-    // struct wlr_pointer_swipe_update_event* event = data;
+    struct bsi_input_device* device =
+        wl_container_of(listener, device, listen.swipe_update);
+    struct bsi_server* server = device->server;
+    struct wlr_pointer_swipe_update_event* event = data;
 
-    // TODO: Server is primary handler.
+    bsi_debug("swipe_update { time_msec=%u, fingers=%u, dx=%.3f, dy=%.3f }",
+              event->time_msec,
+              event->fingers,
+              event->dx,
+              event->dy);
+
+    union bsi_cursor_event cursor_event = { .swipe_update = event };
+    bsi_cursor_process_swipe(server, cursor_event);
 }
 
 void
@@ -318,12 +332,42 @@ handle_pointer_swipe_end(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event swipe_end from wlr_input_device");
 
-    // struct bsi_input_device* device =
-    //     wl_container_of(listener, device, listen.swipe_end);
-    // struct wlr_seat* seat = device->server->wlr_seat;
-    // struct wlr_pointer_swipe_end_event* event = data;
+    struct bsi_input_device* device =
+        wl_container_of(listener, device, listen.swipe_end);
+    struct bsi_server* server = device->server;
+    struct wlr_pointer_swipe_end_event* event = data;
 
-    // TODO: Server is primary handler.
+    bsi_debug("swipe_end { time_msec=%u, cancelled=%d }",
+              event->time_msec,
+              event->cancelled);
+
+    server->cursor.cursor_mode = BSI_CURSOR_NORMAL;
+    server->cursor.swipe_cancelled = event->cancelled;
+    server->cursor.swipe_timest = event->time_msec;
+
+    if (event->cancelled)
+        return;
+
+    struct wlr_output* wlr_output =
+        wlr_output_layout_output_at(server->wlr_output_layout,
+                                    server->wlr_cursor->x,
+                                    server->wlr_cursor->y);
+    struct bsi_output* output = bsi_outputs_find(server, wlr_output);
+    struct bsi_workspace* active_workspace = bsi_workspaces_get_active(output);
+
+    bsi_debug("Accumulated swipe is { swipe_dx=%.3f, swipe_dy=%.3f }",
+              server->cursor.swipe_dx,
+              server->cursor.swipe_dy);
+
+    if (fabs(server->cursor.swipe_dx) > fabs(server->cursor.swipe_dy)) {
+        /* Switch workspaces. */
+    } else {
+        /* Show/hide all views. */
+        if (server->cursor.swipe_dy > 0)
+            bsi_workspace_views_show_all(active_workspace, false);
+        else
+            bsi_workspace_views_show_all(active_workspace, true);
+    }
 }
 
 void

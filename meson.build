@@ -27,6 +27,7 @@ dep_wayland_cursor = dependency('wayland-cursor', required : true)
 dep_wayland_egl = dependency('wayland-egl', required : true)
 dep_wayland_protocols = dependency('wayland-protocols', required : true)
 dep_pixman = dependency('pixman-1', required : true)
+dep_cairo = dependency('cairo', required : true)
 dep_math = cc.find_library('m', required : true)
 
 ### Dependencies (Optional)

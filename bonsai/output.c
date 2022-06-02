@@ -5,11 +5,14 @@
 #include <time.h>
 #include <wayland-server-core.h>
 #include <wayland-util.h>
+#include <wlr/render/wlr_renderer.h>
+#include <wlr/render/wlr_texture.h>
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_output_damage.h>
 #include <wlr/types/wlr_output_management_v1.h>
 
+#include "bonsai/desktop/decoration.h"
 #include "bonsai/desktop/layers.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/desktop/workspace.h"
@@ -17,6 +20,7 @@
 #include "bonsai/output.h"
 #include "bonsai/server.h"
 #include "bonsai/util.h"
+#include "pixman.h"
 
 void
 bsi_outputs_add(struct bsi_server* server, struct bsi_output* output)
@@ -250,4 +254,44 @@ handle_output_destroy(struct wl_listener* listener, void* data)
         bsi_debug("Out of outputs, exiting");
         bsi_server_exit(server);
     }
+}
+
+void
+handle_output_damage_frame(struct wl_listener* listener, void* data)
+{
+    bsi_debug("Got event damage_frame from wlr_output_damage");
+
+    struct bsi_output* output =
+        wl_container_of(listener, output, listen.damage_frame);
+
+    // TODO: How the fuck do you render stuff compositor side?
+
+    // struct bsi_server* server = output->server;
+
+    // wlr_renderer_begin(
+    //     server->wlr_renderer, output->output->width, output->output->height);
+
+    // bool needs_frame;
+    // pixman_region32_t damage;
+    // pixman_region32_init(&damage);
+    // if (!wlr_output_damage_attach_render(output->damage, &needs_frame,
+    // &damage))
+    //     return;
+
+    // if (needs_frame) {
+    //     struct bsi_decoration* deco;
+    //     wl_list_for_each(deco, &server->scene.decorations, link_server)
+    //     {
+    //         float matrix[9];
+    //         struct wlr_texture* texture;
+    //         struct wlr_fbox source_box;
+    //         bsi_decoration_draw(deco, &texture, matrix, &source_box);
+    //         wlr_render_texture_with_matrix(
+    //             output->output->renderer, texture, matrix, 1.0f);
+    //     }
+    // } else {
+    //     wlr_output_rollback(output->output);
+    // }
+
+    // pixman_region32_fini(&damage);
 }

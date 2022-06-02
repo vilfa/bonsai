@@ -40,6 +40,19 @@
 
 // TODO: Fix mru out of order.
 
+// TODO: Refuse layer shell clients wanting to arrange themselves into already
+// exclusively taken layers.
+
+// TODO: Add a number of default workspaces.
+
+// TODO: Add ability to switch workspaces.
+
+// TODO: Fix scaling issues on low resolution displays.
+
+// TODO: Take into account output usable box, when resizing or moving clients?
+
+// TODO: Fix modesetting.
+
 int
 main(void)
 {

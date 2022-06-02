@@ -2,6 +2,7 @@
 
 #include <wayland-server-core.h>
 #include <wlr/types/wlr_server_decoration.h>
+#include <wlr/types/wlr_xdg_decoration_v1.h>
 
 #include "bonsai/desktop/view.h"
 #include "bonsai/desktop/workspace.h"
@@ -26,7 +27,7 @@ struct bsi_server
     struct wlr_cursor* wlr_cursor;
     struct wlr_xcursor_manager* wlr_xcursor_manager;
     struct wlr_layer_shell_v1* wlr_layer_shell;
-    struct wlr_server_decoration_manager* wlr_server_decoration_manager;
+    struct wlr_xdg_decoration_manager_v1* wlr_xdg_decoration_manager;
 
     /*
      * Global state
@@ -97,9 +98,13 @@ struct bsi_server
         uint32_t cursor_mode;
         uint32_t cursor_image;
         uint32_t resize_edges;
+        uint32_t swipe_fingers;
+        uint32_t swipe_timest; // TODO: Maybe use this for animation.
+        bool swipe_cancelled;
         struct bsi_view* grabbed_view;
         struct wlr_box grab_box;
         double grab_sx, grab_sy;
+        double swipe_dx, swipe_dy;
     } cursor;
 };
 

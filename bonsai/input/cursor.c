@@ -1,3 +1,4 @@
+#include <math.h>
 #include <string.h>
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_pointer.h>
@@ -9,8 +10,10 @@
 #include <wlr/util/edges.h>
 
 #include "bonsai/desktop/view.h"
+#include "bonsai/desktop/workspace.h"
 #include "bonsai/input/cursor.h"
 #include "bonsai/log.h"
+#include "bonsai/output.h"
 #include "bonsai/server.h"
 
 void
@@ -198,4 +201,25 @@ bsi_cursor_process_view_resize(struct bsi_server* server,
         view->toplevel, new_right - new_left, new_bottom - new_top);
 
     wlr_xdg_toplevel_set_resizing(view->toplevel, false);
+}
+
+void
+bsi_cursor_process_swipe(struct bsi_server* server,
+                         union bsi_cursor_event cursor_event)
+{
+    if (server->cursor.cursor_mode != BSI_CURSOR_SWIPE)
+        return;
+
+    struct wlr_pointer_swipe_update_event* event = cursor_event.swipe_update;
+
+    if (fabs(event->dx) > fabs(event->dy)) {
+        /* This is a horizontal swipe event. */
+        server->cursor.swipe_dx += event->dx;
+    } else if (fabs(event->dy) > fabs(event->dx)) {
+        /* This is a vertical swipe event. */
+        server->cursor.swipe_dy += event->dy;
+    } else {
+        /* This is very very very unlikely, but hey, it's not impossible. */
+        bsi_debug("Whoa, exactly equal swipe directions");
+    }
 }

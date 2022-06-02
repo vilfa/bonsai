@@ -22,6 +22,7 @@
 #include <wlr/types/wlr_seat.h>
 #include <wlr/types/wlr_subcompositor.h>
 #include <wlr/types/wlr_xcursor_manager.h>
+#include <wlr/types/wlr_xdg_decoration_v1.h>
 #include <wlr/types/wlr_xdg_output_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/box.h>
@@ -107,13 +108,10 @@ bsi_server_init(struct bsi_server* server)
                           handle_xdgshell_new_surface);
     bsi_debug("Created wlr_xdg_shell & attached handlers");
 
-    server->wlr_server_decoration_manager =
-        wlr_server_decoration_manager_create(server->wl_display);
-    wlr_server_decoration_manager_set_default_mode(
-        server->wlr_server_decoration_manager,
-        WLR_SERVER_DECORATION_MANAGER_MODE_SERVER);
+    server->wlr_xdg_decoration_manager =
+        wlr_xdg_decoration_manager_v1_create(server->wl_display);
     bsi_util_slot_connect(
-        &server->wlr_server_decoration_manager->events.new_decoration,
+        &server->wlr_xdg_decoration_manager->events.new_toplevel_decoration,
         &server->listen.new_decoration,
         handle_deco_manager_new_decoration);
 
@@ -122,7 +120,7 @@ bsi_server_init(struct bsi_server* server)
     server->wlr_layer_shell = wlr_layer_shell_v1_create(server->wl_display);
     bsi_util_slot_connect(&server->wlr_layer_shell->events.new_surface,
                           &server->listen.layer_new_surface,
-                          handle_layer_shell_new_surface);
+                          handle_layershell_new_surface);
     bsi_debug("Created wlr_layer_shell_v1 & attached handlers");
 
     server->wlr_cursor = wlr_cursor_create();
@@ -147,6 +145,11 @@ bsi_server_init(struct bsi_server* server)
     server->cursor.grab_box.x = 0;
     server->cursor.grab_box.y = 0;
     server->cursor.grabbed_view = NULL;
+    server->cursor.swipe_dx = 0.0;
+    server->cursor.swipe_dy = 0.0;
+    server->cursor.swipe_cancelled = false;
+    server->cursor.swipe_fingers = 0;
+    server->cursor.swipe_timest = 0;
     bsi_debug("Initialized bsi_cursor");
 
     const char* seat_name = "seat0";
@@ -296,6 +299,9 @@ handle_new_output(struct wl_listener* listener, void* data)
     bsi_util_slot_connect(&output->output->events.destroy,
                           &output->listen.destroy,
                           handle_output_destroy);
+    bsi_util_slot_connect(&output->damage->events.frame,
+                          &output->listen.damage_frame,
+                          handle_output_damage_frame);
 
     struct wlr_output_configuration_v1* config =
         wlr_output_configuration_v1_create();
@@ -713,7 +719,7 @@ handle_xdgshell_new_surface(struct wl_listener* listener, void* data)
 }
 
 void
-handle_layer_shell_new_surface(struct wl_listener* listener, void* data)
+handle_layershell_new_surface(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event new_surface from wlr_layer_shell_v1");
 
@@ -776,17 +782,25 @@ handle_deco_manager_new_decoration(struct wl_listener* listener, void* data)
 
     struct bsi_server* server =
         wl_container_of(listener, server, listen.new_decoration);
-    struct wlr_server_decoration* deco = data;
+    struct wlr_xdg_toplevel_decoration_v1* toplevel_deco = data;
 
-    struct bsi_server_decoration* server_deco =
-        calloc(1, sizeof(struct bsi_server_decoration));
-    bsi_server_decoration_init(server_deco, server, deco);
+    struct bsi_view* view =
+        ((struct wlr_scene_node*)toplevel_deco->surface->data)->data;
+    assert(view);
 
-    bsi_util_slot_connect(&deco->events.destroy,
-                          &server_deco->listen.destroy,
-                          handle_serverdeco_destroy);
-    bsi_util_slot_connect(
-        &deco->events.mode, &server_deco->listen.mode, handle_serverdeco_mode);
+    struct bsi_decoration* deco = calloc(1, sizeof(struct bsi_decoration));
+    bsi_decoration_init(deco, server, view, toplevel_deco);
 
-    bsi_decorations_add(server, server_deco);
+    bsi_util_slot_connect(&toplevel_deco->events.destroy,
+                          &deco->listen.destroy,
+                          handle_decoration_destroy);
+    bsi_util_slot_connect(&toplevel_deco->events.request_mode,
+                          &deco->listen.request_mode,
+                          handle_decoration_request_mode);
+
+    bsi_decorations_add(server, deco);
+
+    // TODO: Until server side decorations are implemented, refuse to set SSD.
+    wlr_xdg_toplevel_decoration_v1_set_mode(
+        toplevel_deco, WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_CLIENT_SIDE);
 }

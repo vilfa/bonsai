@@ -28,6 +28,7 @@ bonsai_dep = [
     dep_wayland_egl,
     dep_wayland_protocols,
     dep_pixman,
+    dep_cairo,
     dep_math,
 ]
 

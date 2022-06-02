@@ -136,3 +136,6 @@ void
 bsi_workspace_view_move(struct bsi_workspace* workspace_from,
                         struct bsi_workspace* workspace_to,
                         struct bsi_view* view);
+
+void
+bsi_workspace_views_show_all(struct bsi_workspace* workspace, bool show_all);

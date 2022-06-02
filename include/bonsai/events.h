@@ -30,7 +30,7 @@ extern bsi_notify_func_t handle_request_start_drag_notify;
 /* wlr_xdg_shell */
 extern bsi_notify_func_t handle_xdgshell_new_surface;
 /* wlr_layer_shell_v1 */
-extern bsi_notify_func_t handle_layer_shell_new_surface;
+extern bsi_notify_func_t handle_layershell_new_surface;
 /* wlr_decoration_manager */
 extern bsi_notify_func_t handle_deco_manager_new_decoration;
 
@@ -52,6 +52,7 @@ extern bsi_notify_func_t handle_toplvl_request_show_window_menu;
  */
 extern bsi_notify_func_t handle_output_frame;
 extern bsi_notify_func_t handle_output_destroy;
+extern bsi_notify_func_t handle_output_damage_frame;
 
 /*
  * bsi_input_{pointer,keyboard}
@@ -115,5 +116,5 @@ extern bsi_notify_func_t handle_layershell_subsurface_commit;
 /*
  * bsi_server_decoration
  */
-extern bsi_notify_func_t handle_serverdeco_destroy;
-extern bsi_notify_func_t handle_serverdeco_mode;
+extern bsi_notify_func_t handle_decoration_destroy;
+extern bsi_notify_func_t handle_decoration_request_mode;

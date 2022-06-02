@@ -5,6 +5,7 @@
 #include <wayland-server-core.h>
 #include <wayland-util.h>
 
+#include "bonsai/desktop/view.h"
 #include "bonsai/desktop/workspace.h"
 #include "bonsai/events.h"
 #include "bonsai/log.h"
@@ -154,10 +155,48 @@ bsi_workspace_view_move(struct bsi_workspace* workspace_from,
     bsi_workspace_view_add(workspace_to, view);
 }
 
+void
+bsi_workspace_views_show_all(struct bsi_workspace* workspace, bool show_all)
+{
+    if (wl_list_empty(&workspace->views))
+        return;
+
+    struct bsi_view* view;
+    if (show_all) {
+        bsi_info("Show all views of workspace '%s'", workspace->name);
+
+        wl_list_for_each(view, &workspace->views, link_workspace)
+        {
+            if (view->state == BSI_VIEW_STATE_MINIMIZED)
+                bsi_view_set_minimized(view, false);
+        }
+    } else {
+        bsi_info("Hide all views of workspace '%s'", workspace->name);
+
+        wl_list_for_each(view, &workspace->views, link_workspace)
+        {
+            switch (view->state) {
+                case BSI_VIEW_STATE_MINIMIZED:
+                    break;
+                case BSI_VIEW_STATE_FULLSCREEN:
+                    bsi_view_set_fullscreen(view, false);
+                    bsi_view_set_minimized(view, true);
+                    break;
+                case BSI_VIEW_STATE_MAXIMIZED:
+                    bsi_view_set_maximized(view, false);
+                    bsi_view_set_minimized(view, true);
+                    break;
+                default:
+                    bsi_view_set_minimized(view, true);
+                    break;
+            }
+        }
+    }
+}
+
 /**
  * Handlers
  */
-
 void
 handle_server_workspace_active(struct wl_listener* listener, void* data)
 {

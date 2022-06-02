@@ -8,6 +8,7 @@
 #include <wayland-util.h>
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_scene.h>
+#include <wlr/types/wlr_xdg_decoration_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/box.h>
 #include <wlr/util/edges.h>
@@ -98,6 +99,7 @@ bsi_view_init(struct bsi_view* view,
     view->box.height = 0;
     view->mapped = false;
     view->state = BSI_VIEW_STATE_NORMAL;
+    view->decoration_mode = WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_CLIENT_SIDE;
 
     /* Create a new node from the root server node. */
     view->scene_node = wlr_scene_xdg_surface_create(
@@ -285,7 +287,8 @@ bsi_view_set_minimized(struct bsi_view* view, bool minimized)
         bsi_views_remove(view);
         bsi_views_add_minimized(view->server, view);
 
-        bsi_views_mru_focus(view->server);
+        if (!wl_list_empty(&view->server->scene.views))
+            bsi_views_mru_focus(view->server);
     }
 }
 

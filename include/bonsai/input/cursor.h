@@ -11,6 +11,7 @@ enum bsi_cursor_mode
     BSI_CURSOR_NORMAL,
     BSI_CURSOR_MOVE,
     BSI_CURSOR_RESIZE,
+    BSI_CURSOR_SWIPE,
 };
 
 enum bsi_cursor_image
@@ -122,3 +123,7 @@ bsi_cursor_process_view_move(struct bsi_server* server,
 void
 bsi_cursor_process_view_resize(struct bsi_server* server,
                                union bsi_cursor_event cursor_event);
+
+void
+bsi_cursor_process_swipe(struct bsi_server* server,
+                         union bsi_cursor_event cursor_event);

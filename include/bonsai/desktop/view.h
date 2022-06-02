@@ -2,6 +2,7 @@
 
 #include <wayland-server-core.h>
 #include <wayland-util.h>
+#include <wlr/types/wlr_xdg_decoration_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 
 #include "bonsai/desktop/workspace.h"
@@ -26,6 +27,7 @@ struct bsi_view
 
     bool mapped;
     enum bsi_view_state state;
+    enum wlr_xdg_toplevel_decoration_v1_mode decoration_mode;
 
     /* Note, that when the window goes fullscreen, minimized or maximized,
      * this will hold the last state of the window that should be restored when

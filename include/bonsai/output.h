@@ -38,6 +38,8 @@ struct bsi_output
         /* wlr_output */
         struct wl_listener frame;
         struct wl_listener destroy;
+        /* wlr_output_damage */
+        struct wl_listener damage_frame;
         /* bsi_workspace */
         struct wl_listener workspace_active;
     } listen;
