@@ -214,7 +214,7 @@ bsi_server_setup_extern(struct bsi_server* server)
             char** argp = NULL;
             size_t len_argp =
                 bsi_util_split_argsp((char*)exep, argsp, " ", &argp);
-            bsi_util_forkexec(argp, len_argp);
+            bsi_util_tryexec(argp, len_argp);
             bsi_util_split_free(&argp);
             server->extern_setup[i] = true;
         }

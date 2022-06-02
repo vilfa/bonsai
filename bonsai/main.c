@@ -36,7 +36,7 @@
 
 // TODO: Finish server decoration implementation.
 
-// TODO: Take into account usable area of an output when maximizing.
+// TODO: Swipe up and down to hide or show all views of current workspace.
 
 // TODO: Fix mru out of order.
 

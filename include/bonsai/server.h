@@ -113,9 +113,9 @@ enum bsi_server_extern_prog
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-variable"
 static char* bsi_server_extern_progs[] = { [BSI_SERVER_EXTERN_PROG_WALLPAPER] =
-                                               "/usr/bin/swaybg",
+                                               "swaybg",
                                            [BSI_SERVER_EXTERN_PROG_BAR] =
-                                               "/usr/bin/waybar" };
+                                               "waybar" };
 
 /* The arguments for the external program. */
 static char* bsi_server_extern_progs_args[] = {

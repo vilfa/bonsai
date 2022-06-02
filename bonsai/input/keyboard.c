@@ -137,13 +137,13 @@ bsi_keyboard_mod_super_handle(struct bsi_server* server, xkb_keysym_t sym)
     switch (sym) {
         case XKB_KEY_d: {
             bsi_debug("Got Super+d -> bemenu");
-            char* const argp[] = { "/usr/bin/bemenu-run", "-c", "-i", NULL };
-            return bsi_util_forkexec(argp, 4);
+            char* const argp[] = { "bemenu-run", "-c", "-i", NULL };
+            return bsi_util_tryexec(argp, 4);
         }
         case XKB_KEY_Return: {
             bsi_debug("Got Super+Return -> term");
-            char* const argp[] = { "/usr/bin/foot", NULL };
-            return bsi_util_forkexec(argp, 2);
+            char* const argp[] = { "foot", NULL };
+            return bsi_util_tryexec(argp, 2);
         }
         case XKB_KEY_Up: {
             bsi_debug("Got Super+Up -> maximize active");

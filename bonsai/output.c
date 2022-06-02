@@ -56,7 +56,7 @@ bsi_output_init(struct bsi_output* output,
     output->new = true;
     wlr_output->data = output;
     /* Set the usable size of the output. */
-    struct wlr_box box = { .x = 0, .y = 0 };
+    struct wlr_box box = { 0 };
     wlr_output_effective_resolution(wlr_output, &box.width, &box.height);
     bsi_output_set_usable_box(output, &box);
     /* Initialize damage. Initialize output configuration. */

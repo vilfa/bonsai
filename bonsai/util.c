@@ -1,7 +1,9 @@
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
 #include <wayland-server-core.h>
@@ -35,6 +37,29 @@ void
 bsi_util_slot_disconnect(struct wl_listener* listener_memb)
 {
     wl_list_remove(&listener_memb->link);
+}
+
+bool
+bsi_util_tryexec(char* const* argp, const size_t len_argp)
+{
+    const char* binpaths[] = { "/usr/bin/", "/usr/local/bin/" };
+    char fargp[50] = { 0 };
+    char* aargp[len_argp];
+    for (size_t i = 0; i < 2; ++i) {
+        snprintf(fargp, 50, "%s%s", binpaths[i], argp[0]);
+        aargp[0] = fargp;
+        for (size_t i = 1; i < len_argp; ++i) {
+            aargp[i] = argp[i];
+        }
+        bsi_info("Trying to exec '%s'", fargp);
+        if (access(fargp, F_OK | X_OK) == 0) {
+            return bsi_util_forkexec(aargp, len_argp);
+        } else {
+            bsi_errno("File '%s' F_OK | X_OK != 0", fargp);
+        }
+        memset(fargp, 0, 50);
+    }
+    return false;
 }
 
 bool

@@ -19,7 +19,22 @@ bsi_util_slot_disconnect(struct wl_listener* listener_memb);
 
 /**
  * @brief Sets the proper environment and executes an execve call with the
- * specified argp.
+ * specified argp. Takes into account different possible binary locations. As of
+ * now, it searches `/usr/bin` and `/usr/local/bin`.
+ *
+ * @param argp The execve call argp, **with executable name only**.
+ * @param len_argp The argp len.
+ * @return true Exec was successful.
+ * @return false Exec was unsuccessful.
+ */
+bool
+bsi_util_tryexec(char* const* argp, const size_t len_argp);
+
+/**
+ * @brief Sets the proper environment and executes an execve call with the
+ * specified argp. Always prefer using the `bsi_util_tryexec(...)`. Only use
+ * this if you know the executable will be installed in the same location on all
+ * machines.
  *
  * @param argp The execve call argp.
  * @param len_argp The argp len.
