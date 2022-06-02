@@ -15,6 +15,8 @@
 #include <wlr/util/region.h>
 
 #include "bonsai/desktop/layers.h"
+#include "bonsai/desktop/view.h"
+#include "bonsai/desktop/workspace.h"
 #include "bonsai/events.h"
 #include "bonsai/log.h"
 #include "bonsai/output.h"
@@ -22,6 +24,7 @@
 #include "bonsai/util.h"
 #include "pixman.h"
 #include "wlr-layer-shell-unstable-v1-protocol.h"
+#include "xdg-shell-protocol.h"
 
 void
 bsi_layers_add(struct bsi_output* output,
@@ -47,6 +50,7 @@ bsi_layer_surface_toplevel_init(struct bsi_layer_surface_toplevel* toplevel,
     toplevel->at_layer = layer_surface->pending.layer;
     layer_surface->data = toplevel;
     wl_list_init(&toplevel->subsurfaces);
+    toplevel->exclusive_configured = false;
 
     toplevel->scene_node = wlr_scene_layer_surface_v1_create(
         &output->server->wlr_scene->node, toplevel->layer_surface);
@@ -202,8 +206,23 @@ bsi_layer_arrange(struct bsi_output* output,
     struct bsi_layer_surface_toplevel* layer_toplevel;
     wl_list_for_each(layer_toplevel, shell_layer, link_output)
     {
+        const char* layer_level =
+            (layer_toplevel->at_layer == ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND)
+                ? "ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND"
+            : (layer_toplevel->at_layer == ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM)
+                ? "ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM"
+            : (layer_toplevel->at_layer == ZWLR_LAYER_SHELL_V1_LAYER_TOP)
+                ? "ZWLR_LAYER_SHELL_V1_LAYER_TOP"
+            : (layer_toplevel->at_layer == ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY)
+                ? "ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY"
+                : "";
+
         struct wlr_layer_surface_v1* layer_surf = layer_toplevel->layer_surface;
         struct wlr_layer_surface_v1_state* state = &layer_surf->current;
+
+        bsi_debug("Arranging layer surface at level '%s', wants exclusive %d",
+                  layer_level,
+                  state->exclusive_zone > 0);
 
         /* Check if this surface wants the layer exclusively. */
         if (exclusive != (state->exclusive_zone > 0))
@@ -280,12 +299,58 @@ bsi_layer_arrange(struct bsi_output* output,
         assert(wants_box.width >= 0 && wants_box.height >= 0);
         layer_toplevel->box = wants_box;
 
-        // TODO: Apply exclusive.
+        /* Setup the available area of an output, so views can not cover
+         * surfaces above them, but only if these are top layers. */
+        if (exclusive && !layer_toplevel->exclusive_configured &&
+            layer_toplevel->at_layer == ZWLR_LAYER_SHELL_V1_LAYER_TOP) {
+            struct wlr_box usable_box = output->usable;
+            if (state->anchor & horiz) {
+                usable_box.y +=
+                    (state->anchor & ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP)
+                        ? wants_box.height
+                        : 0;
+                usable_box.height -= wants_box.height;
+            } else if (state->anchor & vert) {
+                usable_box.x +=
+                    (state->anchor & ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT)
+                        ? wants_box.width
+                        : 0;
+                usable_box.width -= wants_box.width;
+            }
+            bsi_output_set_usable_box(output, &usable_box);
+            layer_toplevel->exclusive_configured = true;
+        }
 
         wlr_layer_surface_v1_configure(
             layer_surf, wants_box.width, wants_box.height);
         wlr_scene_layer_surface_v1_configure(
             layer_toplevel->scene_node, &maxbounds_box, &wants_box);
+
+        bsi_views_output_arrange(output);
+    }
+}
+
+static void
+bsi_view_to_output_usable_box(struct bsi_output* output, struct bsi_view* view)
+{
+    if (bsi_view_intersects(view, &output->usable)) {
+        struct wlr_box correction = { 0 };
+        bsi_view_intersection_correct_box(view, &output->usable, &correction);
+        bsi_view_correct_with_box(view, &correction);
+    }
+}
+
+void
+bsi_views_output_arrange(struct bsi_output* output)
+{
+    struct bsi_workspace* workspace;
+    wl_list_for_each(workspace, &output->workspaces, link_output)
+    {
+        struct bsi_view* view;
+        wl_list_for_each(view, &workspace->views, link_workspace)
+        {
+            bsi_view_to_output_usable_box(output, view);
+        }
     }
 }
 

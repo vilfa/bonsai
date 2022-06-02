@@ -292,10 +292,10 @@ handle_pointer_swipe_begin(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event swipe_begin from wlr_input_device");
 
-    struct bsi_input_device* device =
-        wl_container_of(listener, device, listen.swipe_begin);
-    struct wlr_seat* seat = device->server->wlr_seat;
-    struct wlr_pointer_swipe_begin_event* event = data;
+    // struct bsi_input_device* device =
+    //     wl_container_of(listener, device, listen.swipe_begin);
+    // struct wlr_seat* seat = device->server->wlr_seat;
+    // struct wlr_pointer_swipe_begin_event* event = data;
 
     // TODO: Server is primary handler.
 }
@@ -305,10 +305,10 @@ handle_pointer_swipe_update(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event swipe_update from wlr_input_device");
 
-    struct bsi_input_device* device =
-        wl_container_of(listener, device, listen.swipe_update);
-    struct wlr_seat* seat = device->server->wlr_seat;
-    struct wlr_pointer_swipe_update_event* event = data;
+    // struct bsi_input_device* device =
+    //     wl_container_of(listener, device, listen.swipe_update);
+    // struct wlr_seat* seat = device->server->wlr_seat;
+    // struct wlr_pointer_swipe_update_event* event = data;
 
     // TODO: Server is primary handler.
 }
@@ -318,10 +318,10 @@ handle_pointer_swipe_end(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event swipe_end from wlr_input_device");
 
-    struct bsi_input_device* device =
-        wl_container_of(listener, device, listen.swipe_end);
-    struct wlr_seat* seat = device->server->wlr_seat;
-    struct wlr_pointer_swipe_end_event* event = data;
+    // struct bsi_input_device* device =
+    //     wl_container_of(listener, device, listen.swipe_end);
+    // struct wlr_seat* seat = device->server->wlr_seat;
+    // struct wlr_pointer_swipe_end_event* event = data;
 
     // TODO: Server is primary handler.
 }
@@ -331,10 +331,10 @@ handle_pointer_pinch_begin(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event pinch_begin from wlr_input_device");
 
-    struct bsi_input_device* device =
-        wl_container_of(listener, device, listen.pinch_begin);
-    struct wlr_seat* seat = device->server->wlr_seat;
-    struct wlr_pointer_pinch_begin_event* event = data;
+    // struct bsi_input_device* device =
+    //     wl_container_of(listener, device, listen.pinch_begin);
+    // struct wlr_seat* seat = device->server->wlr_seat;
+    // struct wlr_pointer_pinch_begin_event* event = data;
 }
 
 void
@@ -342,10 +342,10 @@ handle_pointer_pinch_update(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event pinch_update from wlr_input_device");
 
-    struct bsi_input_device* device =
-        wl_container_of(listener, device, listen.pinch_update);
-    struct wlr_seat* seat = device->server->wlr_seat;
-    struct wlr_pointer_pinch_update_event* event = data;
+    // struct bsi_input_device* device =
+    //     wl_container_of(listener, device, listen.pinch_update);
+    // struct wlr_seat* seat = device->server->wlr_seat;
+    // struct wlr_pointer_pinch_update_event* event = data;
 }
 
 void
@@ -353,10 +353,10 @@ handle_pointer_pinch_end(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event pinch_end from wlr_input_device");
 
-    struct bsi_input_device* device =
-        wl_container_of(listener, device, listen.pinch_update);
-    struct wlr_seat* seat = device->server->wlr_seat;
-    struct wlr_pointer_pinch_end_event* event = data;
+    // struct bsi_input_device* device =
+    //     wl_container_of(listener, device, listen.pinch_update);
+    // struct wlr_seat* seat = device->server->wlr_seat;
+    // struct wlr_pointer_pinch_end_event* event = data;
 }
 
 void
@@ -364,10 +364,10 @@ handle_pointer_hold_begin(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event hold_begin from wlr_input_device");
 
-    struct bsi_input_device* device =
-        wl_container_of(listener, device, listen.pinch_update);
-    struct wlr_seat* seat = device->server->wlr_seat;
-    struct wlr_pointer_hold_begin_event* event = data;
+    // struct bsi_input_device* device =
+    //     wl_container_of(listener, device, listen.pinch_update);
+    // struct wlr_seat* seat = device->server->wlr_seat;
+    // struct wlr_pointer_hold_begin_event* event = data;
 }
 
 void
@@ -375,10 +375,10 @@ handle_pointer_hold_end(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event hold_end from wlr_input_device");
 
-    struct bsi_input_device* device =
-        wl_container_of(listener, device, listen.pinch_update);
-    struct wlr_seat* seat = device->server->wlr_seat;
-    struct wlr_pointer_hold_end_event* event = data;
+    // struct bsi_input_device* device =
+    //     wl_container_of(listener, device, listen.pinch_update);
+    // struct wlr_seat* seat = device->server->wlr_seat;
+    // struct wlr_pointer_hold_end_event* event = data;
 }
 
 void

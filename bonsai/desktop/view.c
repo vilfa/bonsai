@@ -1,4 +1,3 @@
-#include "bonsai/desktop/layers.h"
 #define _POSIX_C_SOURCE 200809L
 #include <assert.h>
 #include <stdbool.h>
@@ -13,6 +12,7 @@
 #include <wlr/util/box.h>
 #include <wlr/util/edges.h>
 
+#include "bonsai/desktop/layers.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/desktop/workspace.h"
 #include "bonsai/input/cursor.h"
@@ -253,14 +253,12 @@ bsi_view_set_maximized(struct bsi_view* view, bool maximized)
         wlr_scene_node_coords(view->scene_node, &view->box.x, &view->box.y);
 
         /* Maximize. */
-        struct wlr_box output_box;
-        wlr_output_layout_get_box(view->server->wlr_output_layout,
-                                  view->parent_workspace->output->output,
-                                  &output_box);
-        wlr_scene_node_set_position(view->scene_node, 0, 0);
+        struct wlr_box* usable_box = &view->parent_workspace->output->usable;
+        wlr_scene_node_set_position(
+            view->scene_node, usable_box->x, usable_box->y);
         wlr_xdg_toplevel_set_resizing(view->toplevel, true);
         wlr_xdg_toplevel_set_size(
-            view->toplevel, output_box.width, output_box.height);
+            view->toplevel, usable_box->width, usable_box->height);
         wlr_xdg_toplevel_set_resizing(view->toplevel, false);
         wlr_xdg_toplevel_set_maximized(view->toplevel, true);
     }
@@ -348,15 +346,13 @@ bsi_view_set_tiled_left(struct bsi_view* view, bool tiled)
         wlr_xdg_surface_get_geometry(view->toplevel->base, &view->box);
         wlr_scene_node_coords(view->scene_node, &view->box.x, &view->box.y);
 
-        /* Tile right. */
-        struct wlr_box output_box;
-        wlr_output_layout_get_box(view->server->wlr_output_layout,
-                                  view->parent_workspace->output->output,
-                                  &output_box);
-        wlr_scene_node_set_position(view->scene_node, 0, 0);
+        /* Tile left. */
+        struct wlr_box* usable_box = &view->parent_workspace->output->usable;
+        wlr_scene_node_set_position(
+            view->scene_node, usable_box->x, usable_box->y);
         wlr_xdg_toplevel_set_resizing(view->toplevel, true);
         wlr_xdg_toplevel_set_size(
-            view->toplevel, output_box.width / 2, output_box.height);
+            view->toplevel, usable_box->width / 2, usable_box->height);
         wlr_xdg_toplevel_set_resizing(view->toplevel, false);
     }
 }
@@ -383,14 +379,12 @@ bsi_view_set_tiled_right(struct bsi_view* view, bool tiled)
         wlr_scene_node_coords(view->scene_node, &view->box.x, &view->box.y);
 
         /* Tile right. */
-        struct wlr_box output_box;
-        wlr_output_layout_get_box(view->server->wlr_output_layout,
-                                  view->parent_workspace->output->output,
-                                  &output_box);
-        wlr_scene_node_set_position(view->scene_node, output_box.width / 2, 0);
+        struct wlr_box* usable_box = &view->parent_workspace->output->usable;
+        wlr_scene_node_set_position(
+            view->scene_node, usable_box->width / 2, usable_box->y);
         wlr_xdg_toplevel_set_resizing(view->toplevel, true);
         wlr_xdg_toplevel_set_size(
-            view->toplevel, output_box.width / 2, output_box.height);
+            view->toplevel, usable_box->width / 2, usable_box->height);
         wlr_xdg_toplevel_set_resizing(view->toplevel, false);
     }
 }
@@ -409,11 +403,69 @@ bsi_view_restore_prev(struct bsi_view* view)
             break;
         case BSI_VIEW_STATE_FULLSCREEN:
             wlr_xdg_toplevel_set_maximized(view->toplevel, false);
+            break;
+        default:
+            break;
     }
 
     bsi_debug("Restoring view position to (%d, %d)", view->box.x, view->box.y);
     bsi_debug(
         "Restoring view size to (%d, %d)", view->box.width, view->box.height);
+    wlr_scene_node_set_position(view->scene_node, view->box.x, view->box.y);
+    wlr_xdg_toplevel_set_resizing(view->toplevel, true);
+    wlr_xdg_toplevel_set_size(
+        view->toplevel, view->box.width, view->box.height);
+    wlr_xdg_toplevel_set_resizing(view->toplevel, false);
+}
+
+bool
+bsi_view_intersects(struct bsi_view* view, struct wlr_box* box)
+{
+    if (view->box.x < box->x ||
+        view->box.x + view->box.width > box->x + box->width ||
+        view->box.y < box->y ||
+        view->box.y + view->box.height > box->y + box->height) {
+        return true;
+    }
+    return false;
+}
+
+void
+bsi_view_intersection_correct_box(struct bsi_view* view,
+                                  struct wlr_box* box,
+                                  struct wlr_box* correction)
+{
+    if (view->box.x <= box->x) {
+        correction->x += box->x - view->box.x + 1;
+    }
+    if (view->box.x + view->box.width >= box->x + box->width) {
+        int32_t corr =
+            (box->x + box->width) - (view->box.x + view->box.width) - 1;
+        if (view->box.x + corr > box->x)
+            correction->x += corr;
+        else
+            correction->width += corr;
+    }
+    if (view->box.y <= box->y) {
+        correction->y += box->y - view->box.y + 1;
+    }
+    if (view->box.y + view->box.height >= box->y + box->height) {
+        int32_t corr =
+            (box->y + box->height) - (view->box.y + view->box.height) - 1;
+        if (view->box.y + corr > box->y)
+            correction->y += corr;
+        else
+            correction->width += corr;
+    }
+}
+
+void
+bsi_view_correct_with_box(struct bsi_view* view, struct wlr_box* correction)
+{
+    view->box.x += correction->x;
+    view->box.y += correction->y;
+    view->box.width += correction->width;
+    view->box.height += correction->height;
     wlr_scene_node_set_position(view->scene_node, view->box.x, view->box.y);
     wlr_xdg_toplevel_set_resizing(view->toplevel, true);
     wlr_xdg_toplevel_set_size(

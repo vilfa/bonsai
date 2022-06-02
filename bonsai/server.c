@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -196,8 +197,28 @@ bsi_server_init(struct bsi_server* server)
 
     server->active_workspace = NULL;
     server->shutting_down = false;
+    for (size_t i = 0; i < BSI_SERVER_EXTERN_PROG_MAX; ++i) {
+        server->extern_setup[i] = false;
+    }
 
     return server;
+}
+
+void
+bsi_server_setup_extern(struct bsi_server* server)
+{
+    for (size_t i = 0; i < BSI_SERVER_EXTERN_PROG_MAX; ++i) {
+        if (!server->extern_setup[i] || bsi_server_extern_progs_per_output[i]) {
+            const char* exep = bsi_server_extern_progs[i];
+            char* argsp = bsi_server_extern_progs_args[i];
+            char** argp = NULL;
+            size_t len_argp =
+                bsi_util_split_argsp((char*)exep, argsp, " ", &argp);
+            bsi_util_forkexec(argp, len_argp);
+            bsi_util_split_free(&argp);
+            server->extern_setup[i] = true;
+        }
+    }
 }
 
 void
@@ -283,6 +304,12 @@ handle_new_output(struct wl_listener* listener, void* data)
     wlr_output_manager_v1_set_configuration(server->wlr_output_manager, config);
 
     wlr_output_layout_add_auto(server->wlr_output_layout, wlr_output);
+
+    /* This if is kinda useless. */
+    if (output->new) {
+        bsi_server_setup_extern(server);
+        output->new = false;
+    }
 }
 
 void
@@ -432,6 +459,25 @@ handle_output_layout_change(struct wl_listener* listener, void* data)
             config_head->state.x = output_box.x;
             config_head->state.y = output_box.y;
         }
+
+        /* Reset the usable box. */
+        struct wlr_box usable_box = { 0 };
+        wlr_output_effective_resolution(
+            output->output, &usable_box.width, &usable_box.height);
+        bsi_output_set_usable_box(output, &usable_box);
+
+        /* Reset the state of the layer shell layers, with regards to output box
+         * exclusive configuration. */
+        for (size_t i = 0; i < 4; ++i) {
+            struct bsi_layer_surface_toplevel* toplevel;
+            wl_list_for_each(toplevel, &output->layers[i], link_output)
+            {
+                toplevel->exclusive_configured = false;
+            }
+        }
+
+        bsi_layers_output_arrange(output);
+        bsi_views_output_arrange(output);
 
         bsi_output_surface_damage(output, NULL, true);
     }

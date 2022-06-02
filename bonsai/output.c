@@ -55,6 +55,10 @@ bsi_output_init(struct bsi_output* output,
     output->output = wlr_output;
     output->new = true;
     wlr_output->data = output;
+    /* Set the usable size of the output. */
+    struct wlr_box box = { .x = 0, .y = 0 };
+    wlr_output_effective_resolution(wlr_output, &box.width, &box.height);
+    bsi_output_set_usable_box(output, &box);
     /* Initialize damage. Initialize output configuration. */
     output->damage = wlr_output_damage_create(wlr_output);
     /* Initialize workspaces. */
@@ -71,18 +75,17 @@ bsi_output_init(struct bsi_output* output,
 }
 
 void
-bsi_output_setup_extern_progs(struct bsi_output* output)
+bsi_output_set_usable_box(struct bsi_output* output, struct wlr_box* box)
 {
-    // TODO: Maybe depends on output.
-
-    for (size_t i = 0; i < BSI_OUTPUT_EXTERN_PROG_MAX; ++i) {
-        const char* exep = bsi_output_extern_progs[i];
-        char* argsp = bsi_output_extern_progs_args[i];
-        char** argp = NULL;
-        size_t len_argp = bsi_util_split_argsp((char*)exep, argsp, " ", &argp);
-        bsi_util_forkexec(argp, len_argp);
-        bsi_util_split_free(&argp);
-    }
+    bsi_debug("Set output usable box to [%d, %d, %d, %d]",
+              box->x,
+              box->y,
+              box->width,
+              box->height);
+    output->usable.x = box->x;
+    output->usable.y = box->y;
+    output->usable.width = box->width;
+    output->usable.height = box->height;
 }
 
 void

@@ -16,6 +16,7 @@ struct bsi_output
     struct bsi_server* server;
     struct wlr_output* output;
     struct timespec last_frame;
+    struct wlr_box usable;
 
     size_t id; /* Incremental. */
     bool new;  /* If this output has just been added. */
@@ -44,26 +45,6 @@ struct bsi_output
     struct wl_list link_server; // bsi_server
 };
 
-enum bsi_output_extern_prog
-{
-    BSI_OUTPUT_EXTERN_PROG_WALLPAPER,
-    BSI_OUTPUT_EXTERN_PROG_BAR,
-    BSI_OUTPUT_EXTERN_PROG_MAX,
-};
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-variable"
-static char* bsi_output_extern_progs[] = { [BSI_OUTPUT_EXTERN_PROG_WALLPAPER] =
-                                               "/usr/bin/swaybg",
-                                           [BSI_OUTPUT_EXTERN_PROG_BAR] =
-                                               "/usr/bin/waybar" };
-
-static char* bsi_output_extern_progs_args[] = {
-    [BSI_OUTPUT_EXTERN_PROG_WALLPAPER] = "--image=assets/Wallpaper-Default.jpg",
-    [BSI_OUTPUT_EXTERN_PROG_BAR] = "",
-};
-#pragma GCC diagnostic pop
-
 void
 bsi_outputs_add(struct bsi_server* server, struct bsi_output* output);
 
@@ -86,7 +67,7 @@ bsi_output_init(struct bsi_output* output,
                 struct wlr_output* wlr_output);
 
 void
-bsi_output_setup_extern_progs(struct bsi_output* output);
+bsi_output_set_usable_box(struct bsi_output* output, struct wlr_box* box);
 
 void
 bsi_output_surface_damage(struct bsi_output* output,

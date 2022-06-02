@@ -34,6 +34,7 @@ struct bsi_layer_surface_toplevel
     struct wlr_layer_surface_v1* layer_surface;
     struct wlr_scene_layer_surface_v1* scene_node;
     struct wl_list subsurfaces;
+    bool exclusive_configured;
 
     bool mapped;
     struct wlr_box box, extent;
@@ -103,6 +104,9 @@ bsi_layers_add(struct bsi_output* output,
 
 void
 bsi_layers_remove(struct bsi_layer_surface_toplevel* layer);
+
+void
+bsi_views_output_arrange(struct bsi_output* output);
 
 void
 bsi_layers_output_arrange(struct bsi_output* output);

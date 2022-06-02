@@ -158,3 +158,14 @@ bsi_view_set_tiled_right(struct bsi_view* view, bool tiled);
 
 void
 bsi_view_restore_prev(struct bsi_view* view);
+
+bool
+bsi_view_intersects(struct bsi_view* view, struct wlr_box* box);
+
+void
+bsi_view_intersection_correct_box(struct bsi_view* view,
+                                  struct wlr_box* box,
+                                  struct wlr_box* correction);
+
+void
+bsi_view_correct_with_box(struct bsi_view* view, struct wlr_box* correction);

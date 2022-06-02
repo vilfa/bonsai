@@ -166,11 +166,6 @@ handle_server_workspace_active(struct wl_listener* listener, void* data)
     struct bsi_workspace* wspace = data;
     wspace->server->active_workspace = wspace;
 
-    if (wspace->output->new) {
-        bsi_output_setup_extern_progs(wspace->output);
-        wspace->output->new = false;
-    }
-
     bsi_debug("Active server workspace is now %ld/%s",
               bsi_workspace_get_global_id(wspace),
               wspace->name);

@@ -36,8 +36,6 @@
 
 // TODO: Finish server decoration implementation.
 
-// TODO: Fix layer shell ordering.
-
 // TODO: Take into account usable area of an output when maximizing.
 
 // TODO: Fix mru out of order.

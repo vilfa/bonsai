@@ -9,6 +9,7 @@
 #include "bonsai/input/cursor.h"
 #include "bonsai/output.h"
 
+#define bsi_server_extern_prog_len 2
 struct bsi_server
 {
     /* Globals */
@@ -31,6 +32,7 @@ struct bsi_server
      * Global state
      */
     bool shutting_down;
+    bool extern_setup[bsi_server_extern_prog_len];
 
     struct
     {
@@ -101,8 +103,38 @@ struct bsi_server
     } cursor;
 };
 
+enum bsi_server_extern_prog
+{
+    BSI_SERVER_EXTERN_PROG_WALLPAPER,
+    BSI_SERVER_EXTERN_PROG_BAR,
+    BSI_SERVER_EXTERN_PROG_MAX,
+};
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+static char* bsi_server_extern_progs[] = { [BSI_SERVER_EXTERN_PROG_WALLPAPER] =
+                                               "/usr/bin/swaybg",
+                                           [BSI_SERVER_EXTERN_PROG_BAR] =
+                                               "/usr/bin/waybar" };
+
+/* The arguments for the external program. */
+static char* bsi_server_extern_progs_args[] = {
+    [BSI_SERVER_EXTERN_PROG_WALLPAPER] = "--image=assets/Wallpaper-Default.jpg",
+    [BSI_SERVER_EXTERN_PROG_BAR] = "",
+};
+
+/* If a new instance should be started for each output. */
+static bool bsi_server_extern_progs_per_output[] = {
+    [BSI_SERVER_EXTERN_PROG_WALLPAPER] = false,
+    [BSI_SERVER_EXTERN_PROG_BAR] = false,
+};
+#pragma GCC diagnostic pop
+
 struct bsi_server*
 bsi_server_init(struct bsi_server* server);
+
+void
+bsi_server_setup_extern(struct bsi_server* server);
 
 void
 bsi_server_exit(struct bsi_server* server);
