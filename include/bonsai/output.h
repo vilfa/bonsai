@@ -77,5 +77,11 @@ bsi_output_surface_damage(struct bsi_output* output,
                           struct wlr_surface* wlr_surface,
                           bool entire_output);
 
+struct bsi_workspace*
+bsi_output_get_next_workspace(struct bsi_output* output);
+
+struct bsi_workspace*
+bsi_output_get_prev_workspace(struct bsi_output* output);
+
 void
 bsi_output_destroy(struct bsi_output* output);

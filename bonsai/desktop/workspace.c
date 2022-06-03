@@ -97,12 +97,42 @@ void
 bsi_workspaces_next(struct bsi_output* output)
 {
     bsi_info("Switch to next workspace");
+
+    int32_t len_ws = wl_list_length(&output->workspaces);
+    if (len_ws < 5 && (int32_t)output->active_workspace->id == len_ws - 1) {
+        /* Attach a workspace to the output. */
+        char workspace_name[25];
+        struct bsi_workspace* workspace =
+            calloc(1, sizeof(struct bsi_workspace));
+        sprintf(workspace_name,
+                "Workspace %d",
+                wl_list_length(&output->workspaces) + 1);
+        bsi_workspace_init(workspace, output->server, output, workspace_name);
+        bsi_workspaces_add(output, workspace);
+
+        bsi_info(
+            "Created new workspace %ld/%s", workspace->id, workspace->name);
+        bsi_info("Attached %ld/%s to output %ld/%s",
+                 workspace->id,
+                 workspace->name,
+                 output->id,
+                 output->output->name);
+    } else {
+        struct bsi_workspace* next_workspace =
+            bsi_output_get_next_workspace(output);
+        bsi_workspace_set_active(output->active_workspace, false);
+        bsi_workspace_set_active(next_workspace, true);
+    }
 }
 
 void
 bsi_workspaces_prev(struct bsi_output* output)
 {
     bsi_info("Switch to previous workspace");
+    struct bsi_workspace* prev_workspace =
+        bsi_output_get_prev_workspace(output);
+    bsi_workspace_set_active(output->active_workspace, false);
+    bsi_workspace_set_active(prev_workspace, true);
 }
 
 struct bsi_workspace*
@@ -149,7 +179,23 @@ void
 bsi_workspace_set_active(struct bsi_workspace* workspace, bool active)
 {
     workspace->active = active;
-    wl_signal_emit(&workspace->signal.active, workspace);
+
+    struct wl_listener *pos, *tmp;
+    struct wl_list* head = &workspace->signal.active.listener_list;
+    for (pos = wl_container_of((head)->next, pos, link),
+        tmp = wl_container_of((pos)->link.next, tmp, link);
+         &pos->link != (head);
+         pos = tmp, tmp = wl_container_of(pos->link.next, tmp, link)) {
+        pos->notify(pos, workspace);
+    }
+
+    // struct wl_listener *l, *next;
+    // wl_list_for_each_safe(
+    //     l, next, &workspace->signal.active.listener_list, link)
+    // {
+    //     l->notify(l, workspace);
+    // }
+    // wl_signal_emit(&workspace->signal.active, workspace);
 }
 
 void
@@ -229,10 +275,11 @@ handle_server_workspace_active(struct wl_listener* listener, void* data)
 
     struct bsi_workspace* workspace = data;
     struct bsi_server* server = workspace->server;
-    server->active_workspace = workspace;
-    bsi_debug("Active server workspace is now %ld/%s",
-              bsi_workspace_get_global_id(workspace),
-              workspace->name);
+    server->active_workspace = (workspace->active) ? workspace : NULL;
+    bsi_info("Server workspace %ld/%s is now %s",
+             bsi_workspace_get_global_id(workspace),
+             workspace->name,
+             (workspace->active) ? "active" : "inactive");
 }
 
 void
@@ -242,12 +289,13 @@ handle_output_workspace_active(struct wl_listener* listener, void* data)
 
     struct bsi_workspace* workspace = data;
     struct bsi_output* output = workspace->output;
-    output->active_workspace = workspace;
-    bsi_debug("Active workspace for output %ld/%s is now %ld/%s",
+    output->active_workspace = (workspace->active) ? workspace : NULL;
+    bsi_debug("Workspace %ld/%s for output %ld/%s is now %s",
+              bsi_workspace_get_global_id(workspace),
+              workspace->name,
               output->id,
               output->output->name,
-              bsi_workspace_get_global_id(workspace),
-              workspace->name);
+              (workspace->active) ? "active" : "inactive");
 }
 
 void

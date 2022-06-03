@@ -36,8 +36,6 @@
 
 // TODO: Finish server decoration implementation.
 
-// TODO: Fix mru out of order.
-
 // TODO: Add a number of default workspaces.
 
 // TODO: Add ability to switch workspaces.

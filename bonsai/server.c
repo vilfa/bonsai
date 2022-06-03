@@ -226,7 +226,7 @@ bsi_server_setup_extern(struct bsi_server* server)
 }
 
 void
-bsi_server_exit(struct bsi_server* server)
+bsi_server_finish(struct bsi_server* server)
 {
     server->shutting_down = true;
 
@@ -246,10 +246,6 @@ bsi_server_exit(struct bsi_server* server)
     wl_list_remove(&server->listen.request_start_drag.link);
     /* wlr_xdg_shell */
     wl_list_remove(&server->listen.xdg_new_surface.link);
-    /* bsi_workspace */
-    // wl_list_remove(&server->listen.workspace_active.link);
-
-    wl_display_terminate(server->wl_display);
 }
 
 /**
@@ -298,14 +294,14 @@ handle_new_output(struct wl_listener* listener, void* data)
 
     /* Attach a workspace to the output. */
     char workspace_name[25];
-    struct bsi_workspace* wspace = calloc(1, sizeof(struct bsi_workspace));
+    struct bsi_workspace* workspace = calloc(1, sizeof(struct bsi_workspace));
     sprintf(workspace_name,
             "Workspace %d",
             wl_list_length(&output->workspaces) + 1);
-    bsi_workspace_init(wspace, server, output, workspace_name);
-    bsi_workspaces_add(output, wspace);
+    bsi_workspace_init(workspace, server, output, workspace_name);
+    bsi_workspaces_add(output, workspace);
 
-    bsi_info("Attached %s to output %s", wspace->name, output->output->name);
+    bsi_info("Attached %s to output %s", workspace->name, output->output->name);
 
     bsi_util_slot_connect(&output->output->events.frame,
                           &output->listen.frame,
@@ -757,25 +753,26 @@ handle_layershell_new_surface(struct wl_listener* listener, void* data)
     }
 
     /* Refuse this client, if a layer is already exclusively taken. */
-    if (!wl_list_empty(&active_output->layers[layer_surface->pending.layer])) {
-        struct bsi_layer_surface_toplevel* toplevel;
-        wl_list_for_each(toplevel,
-                         &active_output->layers[layer_surface->pending.layer],
-                         link_output)
-        {
-            if (toplevel->layer_surface->current.exclusive_zone > 0) {
-                bsi_debug(
-                    "Refusing layer shell client wanting already exclusively "
-                    "taken layer");
-                bsi_debug("New client namespace '%s', exclusive client "
-                          "namespace '%s'",
-                          toplevel->layer_surface->namespace,
-                          layer_surface->namespace);
-                wlr_layer_surface_v1_destroy(layer_surface);
-                return;
-            }
-        }
-    }
+    // if (!wl_list_empty(&active_output->layers[layer_surface->pending.layer]))
+    // {
+    //     struct bsi_layer_surface_toplevel* toplevel;
+    //     wl_list_for_each(toplevel,
+    //                      &active_output->layers[layer_surface->pending.layer],
+    //                      link_output)
+    //     {
+    //         if (toplevel->layer_surface->current.exclusive_zone > 0) {
+    //             bsi_debug(
+    //                 "Refusing layer shell client wanting already exclusively
+    //                 " "taken layer");
+    //             bsi_debug("New client namespace '%s', exclusive client "
+    //                       "namespace '%s'",
+    //                       toplevel->layer_surface->namespace,
+    //                       layer_surface->namespace);
+    //             wlr_layer_surface_v1_destroy(layer_surface);
+    //             return;
+    //         }
+    //     }
+    // }
 
     struct bsi_layer_surface_toplevel* layer =
         calloc(1, sizeof(struct bsi_layer_surface_toplevel));

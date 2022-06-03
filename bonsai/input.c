@@ -265,7 +265,8 @@ handle_pointer_axis(struct wl_listener* listener, void* data)
 
     struct bsi_input_device* device =
         wl_container_of(listener, device, listen.axis);
-    struct wlr_seat* wlr_seat = device->server->wlr_seat;
+    struct bsi_server* server = device->server;
+    struct wlr_seat* wlr_seat = server->wlr_seat;
     struct wlr_pointer_axis_event* event = data;
 
     /* Notify client that has pointer focus of the event. */

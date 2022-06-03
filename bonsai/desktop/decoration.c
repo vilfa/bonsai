@@ -1,6 +1,7 @@
 #include <cairo/cairo.h>
 #include <drm_fourcc.h>
 #include <stdlib.h>
+#include <string.h>
 #include <wayland-server-protocol.h>
 #include <wayland-server.h>
 #include <wayland-util.h>

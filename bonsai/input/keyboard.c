@@ -9,17 +9,22 @@
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <wayland-server-core.h>
 #include <wayland-server-protocol.h>
 #include <wayland-util.h>
+#include <wlr/backend.h>
+#include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_keyboard.h>
 #include <wlr/util/log.h>
 #include <xkbcommon/xkbcommon-keysyms.h>
 #include <xkbcommon/xkbcommon.h>
 
 #include "bonsai/desktop/view.h"
+#include "bonsai/desktop/workspace.h"
 #include "bonsai/input.h"
 #include "bonsai/input/keyboard.h"
 #include "bonsai/log.h"
+#include "bonsai/output.h"
 #include "bonsai/server.h"
 #include "bonsai/util.h"
 
@@ -135,8 +140,9 @@ bsi_keyboard_mod_super_handle(struct bsi_server* server, xkb_keysym_t sym)
 {
     bsi_debug("Got Super mod");
     switch (sym) {
-        case XKB_KEY_d: {
-            bsi_debug("Got Super+d -> bemenu");
+        case XKB_KEY_d:
+        case XKB_KEY_D: {
+            bsi_debug("Got Super+D -> bemenu");
             char* const argp[] = { "bemenu-run", "-c", "-i", NULL };
             return bsi_util_tryexec(argp, 4);
         }
@@ -193,6 +199,18 @@ bsi_keyboard_mod_super_handle(struct bsi_server* server, xkb_keysym_t sym)
             }
             return true;
         }
+        case XKB_KEY_x:
+        case XKB_KEY_X: {
+            bsi_debug("Got Super+X -> hide all workspace views");
+            bsi_workspace_views_show_all(server->active_workspace, false);
+            return true;
+        }
+        case XKB_KEY_z:
+        case XKB_KEY_Z: {
+            bsi_debug("Got Super+Z -> show all workspace views");
+            bsi_workspace_views_show_all(server->active_workspace, true);
+            return true;
+        }
     }
     return false;
 }
@@ -201,6 +219,34 @@ bool
 bsi_keyboard_mod_ctrl_alt_handle(struct bsi_server* server, xkb_keysym_t sym)
 {
     bsi_debug("Got Ctrl+Alt mod");
+    switch (sym) {
+        case XKB_KEY_Right: {
+            struct wlr_output* output =
+                wlr_output_layout_output_at(server->wlr_output_layout,
+                                            server->wlr_cursor->x,
+                                            server->wlr_cursor->y);
+
+            if (!output)
+                return true;
+
+            struct bsi_output* active_output = bsi_outputs_find(server, output);
+            bsi_workspaces_next(active_output);
+            return true;
+        }
+        case XKB_KEY_Left: {
+            struct wlr_output* output =
+                wlr_output_layout_output_at(server->wlr_output_layout,
+                                            server->wlr_cursor->x,
+                                            server->wlr_cursor->y);
+
+            if (!output)
+                return true;
+
+            struct bsi_output* active_output = bsi_outputs_find(server, output);
+            bsi_workspaces_prev(active_output);
+            return true;
+        }
+    }
     return false;
 }
 
@@ -224,10 +270,12 @@ bsi_keyboard_mod_super_shift_handle(struct bsi_server* server, xkb_keysym_t sym)
 {
     bsi_debug("Got Super+Shift mod");
     switch (sym) {
+        case XKB_KEY_q:
         case XKB_KEY_Q:
             bsi_info("Got Super+Shift+Q -> exit");
-            bsi_server_exit(server);
-            break;
+            wlr_backend_destroy(server->wlr_backend);
+            bsi_server_finish(server);
+            exit(EXIT_SUCCESS);
     }
     return false;
 }

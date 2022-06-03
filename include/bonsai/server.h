@@ -140,4 +140,4 @@ void
 bsi_server_setup_extern(struct bsi_server* server);
 
 void
-bsi_server_exit(struct bsi_server* server);
+bsi_server_finish(struct bsi_server* server);

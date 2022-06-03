@@ -135,6 +135,30 @@ bsi_output_surface_damage(struct bsi_output* output,
     }
 }
 
+struct bsi_workspace*
+bsi_output_get_next_workspace(struct bsi_output* output)
+{
+    struct bsi_workspace* curr;
+    wl_list_for_each(curr, &output->workspaces, link_output)
+    {
+        if (curr->id == output->active_workspace->id + 1)
+            return curr;
+    }
+    return output->active_workspace;
+}
+
+struct bsi_workspace*
+bsi_output_get_prev_workspace(struct bsi_output* output)
+{
+    struct bsi_workspace* curr;
+    wl_list_for_each_reverse(curr, &output->workspaces, link_output)
+    {
+        if (curr->id == output->active_workspace->id - 1)
+            return curr;
+    }
+    return output->active_workspace;
+}
+
 void
 bsi_output_destroy(struct bsi_output* output)
 {
@@ -175,23 +199,20 @@ bsi_output_destroy(struct bsi_output* output)
         /* Destroy everything, there are no more outputs. */
 
         bsi_debug("Last output, destroy everything");
+        bsi_debug("Destroying %d workspaces for output %ld/%s",
+                  wl_list_length(&output->workspaces),
+                  output->id,
+                  output->output->name);
 
-        struct wl_list* curr_output_wspaces = &output->workspaces;
-
-        struct bsi_workspace *wspace, *wspace_tmp;
-        wl_list_for_each_safe(
-            wspace, wspace_tmp, curr_output_wspaces, link_output)
+        struct bsi_workspace *ws, *ws_tmp;
+        wl_list_for_each_safe(ws, ws_tmp, &output->workspaces, link_output)
         {
-            bsi_debug("Destroying %d workspaces for output %ld/%s",
-                      wl_list_length(&output->workspaces),
-                      output->id,
-                      output->output->name);
 
             /* The view take care of themselves -- they receive an xdg_surface
              * destroy event. Note that a workspace might be freed before the
              * views, kind of depends on scheduling. */
 
-            bsi_workspace_destroy(wspace);
+            bsi_workspace_destroy(ws);
         }
     }
 
@@ -207,7 +228,8 @@ bsi_output_destroy(struct bsi_output* output)
                 toplevel, toplevel_tmp, &output->layers[i], link_output)
             {
                 union bsi_layer_surface surf = { .toplevel = toplevel };
-                wlr_layer_surface_v1_destroy(toplevel->layer_surface);
+                if (!server->shutting_down)
+                    wlr_layer_surface_v1_destroy(toplevel->layer_surface);
                 bsi_layer_surface_destroy(surf, BSI_LAYER_SURFACE_TOPLEVEL);
             }
         }
@@ -254,7 +276,8 @@ handle_output_destroy(struct wl_listener* listener, void* data)
 
     if (wl_list_length(&server->output.outputs) == 0) {
         bsi_debug("Out of outputs, exiting");
-        bsi_server_exit(server);
+        bsi_server_finish(server);
+        exit(EXIT_SUCCESS);
     }
 }
 
