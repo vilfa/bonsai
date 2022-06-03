@@ -189,7 +189,8 @@ bsi_cursor_process_view_resize(struct bsi_server* server,
     struct wlr_box box;
     wlr_xdg_surface_get_geometry(view->toplevel->base, &box);
 
-    /* Set new view position. Account for possible titlebars, etc. */
+    /* Set new view position. Account for possible titlebars, etc. Clients will
+     * not be limited when moving under layer surfaces above them.*/
     view->box.x = new_left - box.x;
     view->box.y = new_top - box.y;
     view->box.width = box.width;

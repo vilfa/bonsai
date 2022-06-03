@@ -345,29 +345,46 @@ handle_pointer_swipe_end(struct wl_listener* listener, void* data)
     server->cursor.swipe_cancelled = event->cancelled;
     server->cursor.swipe_timest = event->time_msec;
 
-    if (event->cancelled)
+    if (event->cancelled) {
+        server->cursor.swipe_dx = 0.0;
+        server->cursor.swipe_dy = 0.0;
+        server->cursor.swipe_fingers = 0;
+        server->cursor.swipe_timest = 0;
+        server->cursor.swipe_cancelled = false;
         return;
+    }
 
     struct wlr_output* wlr_output =
         wlr_output_layout_output_at(server->wlr_output_layout,
                                     server->wlr_cursor->x,
                                     server->wlr_cursor->y);
     struct bsi_output* output = bsi_outputs_find(server, wlr_output);
-    struct bsi_workspace* active_workspace = bsi_workspaces_get_active(output);
+    // struct bsi_workspace* active_workspace =
+    // bsi_workspaces_get_active(output);
 
     bsi_debug("Accumulated swipe is { swipe_dx=%.3f, swipe_dy=%.3f }",
               server->cursor.swipe_dx,
               server->cursor.swipe_dy);
 
     if (fabs(server->cursor.swipe_dx) > fabs(server->cursor.swipe_dy)) {
-        /* Switch workspaces. */
+        /* Switch workspaces. We use inverted directions for natrual swiping. */
+        if (server->cursor.swipe_dx > 0)
+            bsi_workspaces_prev(output);
+        else
+            bsi_workspaces_next(output);
     } else {
         /* Show/hide all views. */
         if (server->cursor.swipe_dy > 0)
-            bsi_workspace_views_show_all(active_workspace, false);
+            bsi_workspace_views_show_all(server->active_workspace, false);
         else
-            bsi_workspace_views_show_all(active_workspace, true);
+            bsi_workspace_views_show_all(server->active_workspace, true);
     }
+
+    server->cursor.swipe_dx = 0.0;
+    server->cursor.swipe_dy = 0.0;
+    server->cursor.swipe_fingers = 0;
+    server->cursor.swipe_timest = 0;
+    server->cursor.swipe_cancelled = false;
 }
 
 void

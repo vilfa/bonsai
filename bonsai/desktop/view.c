@@ -25,42 +25,18 @@ void
 bsi_views_add(struct bsi_server* server, struct bsi_view* view)
 {
     wl_list_insert(&server->scene.views, &view->link_server);
-    wlr_scene_node_set_enabled(view->scene_node, true);
-    /* Initialize geometry state. */
+    /* Initialize geometry state and arrange output. */
     wlr_xdg_surface_get_geometry(view->toplevel->base, &view->box);
     wlr_scene_node_coords(view->scene_node, &view->box.x, &view->box.y);
-    /* Add as most recent. */
-    if (view->link_recent.prev != view->link_recent.next)
-        wl_list_remove(&view->link_recent);
-    wl_list_insert(&server->scene.views_recent, &view->link_recent);
-
-    bsi_layers_output_arrange(view->parent_workspace->output);
-}
-
-void
-bsi_views_add_minimized(struct bsi_server* server, struct bsi_view* view)
-{
-    wl_list_insert(&server->scene.views_minimized, &view->link_server);
-    wlr_scene_node_set_enabled(view->scene_node, false);
-    /* Save the geometry. */
-    wlr_xdg_surface_get_geometry(view->toplevel->base, &view->box);
-    wlr_scene_node_coords(view->scene_node, &view->box.x, &view->box.y);
-    /* Add as most recent. */
-    if (view->link_recent.prev != view->link_recent.next)
-        wl_list_remove(&view->link_recent);
-    wl_list_insert(&server->scene.views_recent, &view->link_recent);
-
     bsi_layers_output_arrange(view->parent_workspace->output);
 }
 
 void
 bsi_views_mru_focus(struct bsi_server* server)
 {
-    if (!wl_list_empty(&server->scene.views_recent)) {
+    if (!wl_list_empty(&server->scene.views)) {
         struct bsi_view* mru =
-            wl_container_of(server->scene.views_recent.prev, mru, link_recent);
-        bsi_views_remove(mru);
-        bsi_views_add(server, mru);
+            wl_container_of(server->scene.views.prev, mru, link_server);
         bsi_view_focus(mru);
     }
 }
@@ -80,8 +56,6 @@ void
 bsi_views_remove(struct bsi_view* view)
 {
     wl_list_remove(&view->link_server);
-    wl_list_remove(&view->link_recent);
-    wlr_scene_node_set_enabled(view->scene_node, false);
 
     bsi_layers_output_arrange(view->parent_workspace->output);
 }
@@ -282,13 +256,13 @@ bsi_view_set_minimized(struct bsi_view* view, bool minimized)
         bsi_view_restore_prev(view);
         bsi_views_remove(view);
         bsi_views_add(view->server, view);
+        wlr_scene_node_set_enabled(view->scene_node, true);
     } else {
         bsi_debug("Minimize view '%s'", view->toplevel->app_id);
+        wlr_scene_node_set_enabled(view->scene_node, false);
         bsi_views_remove(view);
-        bsi_views_add_minimized(view->server, view);
-
-        if (!wl_list_empty(&view->server->scene.views))
-            bsi_views_mru_focus(view->server);
+        bsi_views_mru_focus(view->server);
+        bsi_views_add(view->server, view);
     }
 }
 
@@ -595,12 +569,6 @@ handle_toplvl_request_minimize(struct wl_listener* listener, void* data)
     struct bsi_view* view =
         wl_container_of(listener, view, listen.request_minimize);
     struct wlr_xdg_surface* surface = view->toplevel->base;
-
-    /* Again, not sure if this is necessary, only a toplevel surface should be
-     * able to request minimize anyway. */
-    if (surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL)
-        return;
-
     struct wlr_xdg_toplevel_requested* requested =
         &surface->toplevel->requested;
 

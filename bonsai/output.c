@@ -71,6 +71,8 @@ bsi_output_init(struct bsi_output* output,
     for (size_t i = 0; i < 4; ++i) {
         wl_list_init(&output->layers[i]);
     }
+    /* Initialize workspace listeners. */
+    wl_list_init(&output->listen.workspace);
 
     struct timespec now = bsi_util_timespec_get();
     output->last_frame = now;

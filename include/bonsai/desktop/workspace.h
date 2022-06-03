@@ -1,5 +1,6 @@
 #pragma once
 
+#include <wayland-server-core.h>
 #include <wayland-util.h>
 
 struct bsi_server;
@@ -24,12 +25,23 @@ struct bsi_workspace
 
     struct wl_list views; /* All views that belong to this workspace. */
 
+    /* The workspace owns the listeners of the server and output, so it can also
+     * take care of them when destroying itself. */
+    struct bsi_workspace_listener* foreign_listeners; /* len = 2 */
+
     struct
     {
         struct wl_signal active;
     } signal;
 
     struct wl_list link_output; // bsi_output
+};
+
+struct bsi_workspace_listener
+{
+    struct wl_listener active;
+    struct wl_list link; // bsi_server::listen::workspace_active,
+                         // bsi_output::listen::workspace_active
 };
 
 /**
@@ -62,6 +74,12 @@ bsi_workspaces_remove(struct bsi_output* output,
  */
 struct bsi_workspace*
 bsi_workspaces_get_active(struct bsi_output* output);
+
+void
+bsi_workspaces_next(struct bsi_output* output);
+
+void
+bsi_workspaces_prev(struct bsi_output* output);
 
 /**
  * @brief Initialize a preallocated workspace.

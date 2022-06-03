@@ -9,6 +9,7 @@
 #include "bonsai/desktop/workspace.h"
 #include "bonsai/events.h"
 #include "bonsai/log.h"
+#include "bonsai/output.h"
 #include "bonsai/server.h"
 #include "bonsai/util.h"
 
@@ -24,12 +25,17 @@ bsi_workspaces_add(struct bsi_output* output, struct bsi_workspace* workspace)
 
     wl_list_insert(&output->workspaces, &workspace->link_output);
 
+    wl_list_insert(&output->server->listen.workspace,
+                   &workspace->foreign_listeners[0].link); // bsi_server
+    wl_list_insert(&output->listen.workspace,
+                   &workspace->foreign_listeners[1].link); // bsi_output
+
     /* To whom it may concern... */
     bsi_util_slot_connect(&workspace->signal.active,
-                          &output->server->listen.workspace_active,
+                          &workspace->foreign_listeners[0].active, // bsi_server
                           handle_server_workspace_active);
     bsi_util_slot_connect(&workspace->signal.active,
-                          &output->listen.workspace_active,
+                          &workspace->foreign_listeners[1].active, // bsi_output
                           handle_output_workspace_active);
 
     bsi_workspace_set_active(workspace, true);
@@ -64,9 +70,13 @@ bsi_workspaces_remove(struct bsi_output* output,
     }
 
     /* Take care of the workspaces state. */
-    bsi_workspaces_remove(output, workspace);
     bsi_workspace_set_active(workspace, false);
     bsi_workspace_set_active(workspace_adj, true);
+    wl_list_remove(&workspace->foreign_listeners[0].link); // bsi_server
+    wl_list_remove(&workspace->foreign_listeners[1].link); // bsi_output
+    bsi_util_slot_disconnect(&workspace->foreign_listeners[0].active);
+    bsi_util_slot_disconnect(&workspace->foreign_listeners[1].active);
+    wl_list_remove(&workspace->link_output);
 }
 
 struct bsi_workspace*
@@ -81,6 +91,18 @@ bsi_workspaces_get_active(struct bsi_output* output)
 
     /* Should not happen. */
     return NULL;
+}
+
+void
+bsi_workspaces_next(struct bsi_output* output)
+{
+    bsi_info("Switch to next workspace");
+}
+
+void
+bsi_workspaces_prev(struct bsi_output* output)
+{
+    bsi_info("Switch to previous workspace");
 }
 
 struct bsi_workspace*
@@ -98,14 +120,17 @@ bsi_workspace_init(struct bsi_workspace* workspace,
     wl_list_init(&workspace->views);
     wl_signal_init(&workspace->signal.active);
 
+    /* Better to explicitly have an array of size 2. */
+    workspace->foreign_listeners =
+        calloc(2, sizeof(struct bsi_workspace_listener));
+
     return workspace;
 }
 
 void
 bsi_workspace_destroy(struct bsi_workspace* workspace)
 {
-    wl_list_remove(&workspace->server->listen.workspace_active.link);
-    wl_list_remove(&workspace->output->listen.workspace_active.link);
+    free(workspace->foreign_listeners);
     free(workspace->name);
     free(workspace);
 }
@@ -202,12 +227,12 @@ handle_server_workspace_active(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event active for bsi_server from bsi_workspace");
 
-    struct bsi_workspace* wspace = data;
-    wspace->server->active_workspace = wspace;
-
+    struct bsi_workspace* workspace = data;
+    struct bsi_server* server = workspace->server;
+    server->active_workspace = workspace;
     bsi_debug("Active server workspace is now %ld/%s",
-              bsi_workspace_get_global_id(wspace),
-              wspace->name);
+              bsi_workspace_get_global_id(workspace),
+              workspace->name);
 }
 
 void
@@ -215,7 +240,14 @@ handle_output_workspace_active(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event active for bsi_output from bsi_workspace");
 
-    struct bsi_workspace* wspace = data;
+    struct bsi_workspace* workspace = data;
+    struct bsi_output* output = workspace->output;
+    output->active_workspace = workspace;
+    bsi_debug("Active workspace for output %ld/%s is now %ld/%s",
+              output->id,
+              output->output->name,
+              bsi_workspace_get_global_id(workspace),
+              workspace->name);
 }
 
 void
@@ -223,5 +255,13 @@ handle_view_workspace_active(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event active for bsi_view from bsi_workspace");
 
-    struct bsi_workspace* wspace = data;
+    struct bsi_workspace* workspace = data;
+    struct bsi_view* view =
+        wl_container_of(listener, view, listen.workspace_active);
+    wlr_scene_node_set_enabled(view->scene_node, workspace->active);
+    bsi_debug("View with app_id '%s' of workspace %ld/%s is now %s",
+              view->toplevel->app_id,
+              bsi_workspace_get_global_id(workspace),
+              workspace->name,
+              (workspace->active) ? "enabled" : "disabled");
 }

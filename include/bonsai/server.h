@@ -63,7 +63,7 @@ struct bsi_server
         /* wlr_server_decoration_manager */
         struct wl_listener new_decoration;
         /* bsi_workspace */
-        struct wl_listener workspace_active;
+        struct wl_list workspace; // bsi_workspace_listener::link
     } listen;
 
     struct
@@ -88,8 +88,6 @@ struct bsi_server
     struct
     {
         struct wl_list views;
-        struct wl_list views_minimized;
-        struct wl_list views_recent;
         struct wl_list decorations;
     } scene;
 

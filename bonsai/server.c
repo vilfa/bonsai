@@ -193,10 +193,11 @@ bsi_server_init(struct bsi_server* server)
     bsi_debug("Attached handlers for seat '%s'", seat_name);
 
     wl_list_init(&server->scene.views);
-    wl_list_init(&server->scene.views_minimized);
-    wl_list_init(&server->scene.views_recent);
     wl_list_init(&server->scene.decorations);
     bsi_debug("Initialized views and decorations");
+
+    wl_list_init(&server->listen.workspace);
+    bsi_debug("Initialized workspace listeners");
 
     server->active_workspace = NULL;
     server->shutting_down = false;
@@ -269,7 +270,20 @@ handle_new_output(struct wl_listener* listener, void* data)
 
     // TODO: Allow user to pick output mode.
 
-    if (!wl_list_empty(&wlr_output->modes)) {
+    struct wlr_output_mode* preffered_mode =
+        wlr_output_preferred_mode(wlr_output);
+    /* Set preffered mode first, if output has one. */
+    if (preffered_mode) {
+        bsi_info("Output has preffered mode, setting %dx%d@%d",
+                 preffered_mode->width,
+                 preffered_mode->height,
+                 preffered_mode->refresh);
+
+        wlr_output_set_mode(wlr_output, preffered_mode);
+        wlr_output_enable(wlr_output, true);
+        if (!wlr_output_commit(wlr_output))
+            return;
+    } else if (!wl_list_empty(&wlr_output->modes)) {
         struct wlr_output_mode* mode =
             wl_container_of(wlr_output->modes.prev, mode, link);
         wlr_output_set_mode(wlr_output, mode);
@@ -740,6 +754,27 @@ handle_layershell_new_surface(struct wl_listener* listener, void* data)
     } else {
         active_output = bsi_outputs_find(server, layer_surface->output);
         layer_surface->output->data = active_output;
+    }
+
+    /* Refuse this client, if a layer is already exclusively taken. */
+    if (!wl_list_empty(&active_output->layers[layer_surface->pending.layer])) {
+        struct bsi_layer_surface_toplevel* toplevel;
+        wl_list_for_each(toplevel,
+                         &active_output->layers[layer_surface->pending.layer],
+                         link_output)
+        {
+            if (toplevel->layer_surface->current.exclusive_zone > 0) {
+                bsi_debug(
+                    "Refusing layer shell client wanting already exclusively "
+                    "taken layer");
+                bsi_debug("New client namespace '%s', exclusive client "
+                          "namespace '%s'",
+                          toplevel->layer_surface->namespace,
+                          layer_surface->namespace);
+                wlr_layer_surface_v1_destroy(layer_surface);
+                return;
+            }
+        }
     }
 
     struct bsi_layer_surface_toplevel* layer =

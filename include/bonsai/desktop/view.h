@@ -54,7 +54,6 @@ struct bsi_view
 
     struct wl_list link_server;    // bsi_server::scene::{views,views_minimized}
     struct wl_list link_workspace; // bsi_workspace::views
-    struct wl_list link_recent;    // bsi_server::scene::views_recent
 };
 
 union bsi_view_toplevel_event
@@ -72,15 +71,6 @@ union bsi_view_toplevel_event
  */
 void
 bsi_views_add(struct bsi_server* server, struct bsi_view* view);
-
-/**
- * @brief Adds a view to the minimized views.
- *
- * @param server The server.
- * @param view The minimized view.
- */
-void
-bsi_views_add_minimized(struct bsi_server* server, struct bsi_view* view);
 
 /**
  * @brief Focuses the most recently used view, if any exists.

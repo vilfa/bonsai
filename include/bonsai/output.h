@@ -23,6 +23,7 @@ struct bsi_output
 
     struct wlr_output_damage* damage;
 
+    struct bsi_workspace* active_workspace;
     struct wl_list workspaces; /* All workspaces that belong to this output. */
 
     /* Basically an ad-hoc map of linked lists indexable by `enum
@@ -41,7 +42,7 @@ struct bsi_output
         /* wlr_output_damage */
         struct wl_listener damage_frame;
         /* bsi_workspace */
-        struct wl_listener workspace_active;
+        struct wl_list workspace; // bsi_workspace_listener::link
     } listen;
 
     struct wl_list link_server; // bsi_server
