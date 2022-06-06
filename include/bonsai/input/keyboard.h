@@ -10,13 +10,14 @@
  */
 enum bsi_keyboard_modifier
 {
-    BSI_KEYBOARD_MOD_CTRL = 1 << 0,
-    BSI_KEYBOARD_MOD_ALT = 1 << 1,
-    BSI_KEYBOARD_MOD_SUPER = 1 << 2,
-    BSI_KEYBOARD_MOD_CTRL_ALT = 1 << 3,
-    BSI_KEYBOARD_MOD_CTRL_SHIFT = 1 << 4,
-    BSI_KEYBOARD_MOD_CTRL_ALT_SHIFT = 1 << 5,
-    BSI_KEYBOARD_MOD_SUPER_SHIFT = 1 << 6,
+    BSI_KEYBOARD_MOD_NONE = 1 << 0,
+    BSI_KEYBOARD_MOD_CTRL = 1 << 1,
+    BSI_KEYBOARD_MOD_ALT = 1 << 2,
+    BSI_KEYBOARD_MOD_SUPER = 1 << 3,
+    BSI_KEYBOARD_MOD_CTRL_ALT = 1 << 4,
+    BSI_KEYBOARD_MOD_CTRL_SHIFT = 1 << 5,
+    BSI_KEYBOARD_MOD_CTRL_ALT_SHIFT = 1 << 6,
+    BSI_KEYBOARD_MOD_SUPER_SHIFT = 1 << 7,
 };
 
 /**
@@ -46,6 +47,9 @@ bsi_keyboard_keybinds_handle(struct bsi_server* server,
                              enum bsi_keyboard_modifier combo,
                              const xkb_keysym_t* syms,
                              const size_t syms_len);
+
+bool
+bsi_keyboard_mod_none_handle(struct bsi_server* server, xkb_keysym_t sym);
 
 bool
 bsi_keyboard_mod_ctrl_handle(struct bsi_server* server, xkb_keysym_t sym);

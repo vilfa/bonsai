@@ -46,7 +46,8 @@ bsi_keyboard_keybinds_process(struct bsi_input_device* device,
     const size_t syms_len =
         xkb_state_key_get_syms(wlr_keyboard->xkb_state, keycode, &syms);
 
-    if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED && mods != 0) {
+    if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED &&
+        (mods != 0 || (syms_len == 1 && syms[0] == XKB_KEY_Print))) {
         uint32_t combo;
 
         if ((mods ^
@@ -64,6 +65,8 @@ bsi_keyboard_keybinds_process(struct bsi_input_device* device,
             combo = BSI_KEYBOARD_MOD_ALT;
         else if (mods & WLR_MODIFIER_LOGO)
             combo = BSI_KEYBOARD_MOD_SUPER;
+        else if (syms[0] == XKB_KEY_Print)
+            combo = BSI_KEYBOARD_MOD_NONE;
         else
             return false;
 
@@ -81,6 +84,10 @@ bsi_keyboard_keybinds_handle(struct bsi_server* server,
 {
     bool handled = false;
     switch (combo) {
+        case BSI_KEYBOARD_MOD_NONE:
+            for (size_t i = 0; i < syms_len; ++i)
+                handled = bsi_keyboard_mod_none_handle(server, syms[i]);
+            break;
         case BSI_KEYBOARD_MOD_CTRL:
             for (size_t i = 0; i < syms_len; ++i)
                 handled = bsi_keyboard_mod_ctrl_handle(server, syms[i]);
@@ -115,9 +122,39 @@ bsi_keyboard_keybinds_handle(struct bsi_server* server,
 }
 
 bool
+bsi_keyboard_mod_none_handle(struct bsi_server* server, xkb_keysym_t sym)
+{
+    switch (sym) {
+        case XKB_KEY_Print: {
+            bsi_debug("Got Print -> screenshot all outputs");
+            char* const argp[] = { "sh", "-c", "grim - | wl-copy", NULL };
+            return bsi_util_tryexec(argp, 4);
+        }
+    }
+    return false;
+}
+
+bool
 bsi_keyboard_mod_ctrl_handle(struct bsi_server* server, xkb_keysym_t sym)
 {
     bsi_debug("Got Ctrl mod");
+    switch (sym) {
+        case XKB_KEY_Print: {
+            bsi_debug("Got Ctrl+Print -> screenshot active output");
+            struct wlr_output* output =
+                wlr_output_layout_output_at(server->wlr_output_layout,
+                                            server->wlr_cursor->x,
+                                            server->wlr_cursor->y);
+
+            if (!output)
+                return true;
+
+            char cmd[50] = { 0 };
+            sprintf(cmd, "grim -o %s - | wl-copy", output->name);
+            char* const argp[] = { "sh", "-c", cmd, NULL };
+            return bsi_util_tryexec(argp, 4);
+        }
+    }
     return false;
 }
 
@@ -254,6 +291,15 @@ bool
 bsi_keyboard_mod_ctrl_shift_handle(struct bsi_server* server, xkb_keysym_t sym)
 {
     bsi_debug("Got Ctrl+Shift mod");
+    switch (sym) {
+        case XKB_KEY_Print: {
+            bsi_debug("Got Ctrl+Shift+Print -> screenshot selection");
+            char* const argp[] = {
+                "sh", "-c", "grim -g \"$(slurp)\" - | wl-copy", NULL
+            };
+            return bsi_util_tryexec(argp, 4);
+        }
+    }
     return false;
 }
 

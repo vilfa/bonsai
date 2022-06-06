@@ -31,12 +31,15 @@
 #include "bonsai/server.h"
 #include "bonsai/util.h"
 
-// TODO: Take a look at
-// https://gitlab.freedesktop.org/wlroots/wlroots/-/tree/master/examples
+// TODO: Figure out how to set Meson runtime program dependencies.
 
-// TODO: Implement xdg-desktop-portal
+// TODO: Implement xdg-desktop-portal.
 
-// TODO: Finish server decoration implementation.
+// TODO: Implement working screenshot.
+
+// TODO: Implement working screenshare.
+
+// TODO: Implement server decoration.
 
 // TODO: Fix scaling issues on low resolution displays.
 
