@@ -13,6 +13,7 @@
 #include <wlr/util/box.h>
 #include <wlr/util/edges.h>
 
+#include "bonsai/desktop/decoration.h"
 #include "bonsai/desktop/layers.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/desktop/workspace.h"
@@ -28,6 +29,13 @@ bsi_views_add(struct bsi_server* server, struct bsi_view* view)
     /* Initialize geometry state and arrange output. */
     wlr_xdg_surface_get_geometry(view->toplevel->base, &view->box);
     wlr_scene_node_coords(view->scene_node, &view->box.x, &view->box.y);
+    // struct bsi_view* v;
+    // wl_list_for_each(v, &server->scene.views, link_server)
+    // {
+    //     if (view->xdg_decoration_mode ==
+    //         WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE)
+    //         bsi_decoration_update(view->xdg_decoration);
+    // }
     bsi_layers_output_arrange(view->parent_workspace->output);
 }
 
@@ -56,7 +64,13 @@ void
 bsi_views_remove(struct bsi_view* view)
 {
     wl_list_remove(&view->link_server);
-
+    struct bsi_view* v;
+    // wl_list_for_each(v, &view->server->scene.views, link_server)
+    // {
+    //     if (view->xdg_decoration_mode ==
+    //         WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE)
+    //         bsi_decoration_update(view->xdg_decoration);
+    // }
     bsi_layers_output_arrange(view->parent_workspace->output);
 }
 
@@ -73,7 +87,7 @@ bsi_view_init(struct bsi_view* view,
     view->box.height = 0;
     view->mapped = false;
     view->state = BSI_VIEW_STATE_NORMAL;
-    view->decoration_mode = WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_CLIENT_SIDE;
+    view->xdg_decoration_mode = WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_CLIENT_SIDE;
 
     /* Create a new node from the root server node. */
     view->scene_node = wlr_scene_xdg_surface_create(
@@ -128,6 +142,16 @@ bsi_view_focus(struct bsi_view* view)
     /* Node to top & activate. */
     wlr_scene_node_raise_to_top(view->scene_node);
     wlr_xdg_toplevel_set_activated(view->toplevel, true);
+
+    /* Update decor if SSD. */
+    // struct bsi_view* v;
+    // wl_list_for_each(v, &server->scene.views, link_server)
+    // {
+    //     if (view->xdg_decoration_mode ==
+    //         WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE)
+    //         bsi_decoration_update(view->xdg_decoration);
+    // }
+
     /* Seat, enter this surface with the keyboard. Leave the pointer. */
     struct wlr_keyboard* keyboard = wlr_seat_get_keyboard(seat);
     wlr_seat_keyboard_notify_enter(seat,
@@ -448,6 +472,13 @@ bsi_view_correct_with_box(struct bsi_view* view, struct wlr_box* correction)
     wlr_xdg_toplevel_set_size(
         view->toplevel, view->box.width, view->box.height);
     wlr_xdg_toplevel_set_resizing(view->toplevel, false);
+}
+
+void
+bsi_view_request_activate(struct bsi_view* view)
+{
+    // TODO: Do this properly.
+    bsi_view_focus(view);
 }
 
 /**

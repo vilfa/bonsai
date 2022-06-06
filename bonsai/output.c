@@ -284,8 +284,6 @@ handle_output_destroy(struct wl_listener* listener, void* data)
 void
 handle_output_damage_frame(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event damage_frame from wlr_output_damage");
-
     struct bsi_output* output =
         wl_container_of(listener, output, listen.damage_frame);
 

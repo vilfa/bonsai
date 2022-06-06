@@ -5,10 +5,12 @@
 #include <wlr/types/wlr_scene.h>
 #include <wlr/types/wlr_seat.h>
 #include <wlr/types/wlr_xcursor_manager.h>
+#include <wlr/types/wlr_xdg_decoration_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/box.h>
 #include <wlr/util/edges.h>
 
+#include "bonsai/desktop/decoration.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/desktop/workspace.h"
 #include "bonsai/input/cursor.h"
@@ -200,6 +202,9 @@ bsi_cursor_process_view_resize(struct bsi_server* server,
     /* Set new view size. */
     wlr_xdg_toplevel_set_size(
         view->toplevel, new_right - new_left, new_bottom - new_top);
+    // if (view->xdg_decoration_mode ==
+    //     WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE)
+    //     bsi_decoration_update(view->xdg_decoration);
 
     wlr_xdg_toplevel_set_resizing(view->toplevel, false);
 }

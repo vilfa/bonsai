@@ -11,18 +11,26 @@
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_compositor.h>
 #include <wlr/types/wlr_cursor.h>
+#include <wlr/types/wlr_data_control_v1.h>
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_drm.h>
+#include <wlr/types/wlr_export_dmabuf_v1.h>
+#include <wlr/types/wlr_gamma_control_v1.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_output_damage.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_output_management_v1.h>
 #include <wlr/types/wlr_primary_selection.h>
+#include <wlr/types/wlr_primary_selection_v1.h>
 #include <wlr/types/wlr_scene.h>
+#include <wlr/types/wlr_screencopy_v1.h>
 #include <wlr/types/wlr_seat.h>
 #include <wlr/types/wlr_subcompositor.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/types/wlr_xdg_decoration_v1.h>
+#include <wlr/types/wlr_xdg_foreign_registry.h>
+#include <wlr/types/wlr_xdg_foreign_v1.h>
+#include <wlr/types/wlr_xdg_foreign_v2.h>
 #include <wlr/types/wlr_xdg_output_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/box.h>
@@ -74,8 +82,9 @@ bsi_server_init(struct bsi_server* server)
     wlr_compositor_create(server->wl_display, server->wlr_renderer);
     wlr_subcompositor_create(server->wl_display);
     wlr_data_device_manager_create(server->wl_display);
-    bsi_debug(
-        "Created wlr_compositor, wlr_subcompositor & wlr_data_device_manager");
+    wlr_gamma_control_manager_v1_create(server->wl_display);
+    bsi_debug("Created wlr_compositor, wlr_subcompositor, "
+              "wlr_data_device_manager & wlr_gamma_control_manager");
 
     server->wlr_output_layout = wlr_output_layout_create();
     bsi_util_slot_connect(&server->wlr_output_layout->events.change,
@@ -113,9 +122,8 @@ bsi_server_init(struct bsi_server* server)
     bsi_util_slot_connect(
         &server->wlr_xdg_decoration_manager->events.new_toplevel_decoration,
         &server->listen.new_decoration,
-        handle_deco_manager_new_decoration);
-
-    bsi_debug("Created wlr_server_decoration_manager & attached handlers");
+        handle_xdg_deco_manager_new_decoration);
+    bsi_debug("Created wlr_xdg_decoration_manager & attached handlers");
 
     server->wlr_layer_shell = wlr_layer_shell_v1_create(server->wl_display);
     bsi_util_slot_connect(&server->wlr_layer_shell->events.new_surface,
@@ -134,6 +142,26 @@ bsi_server_init(struct bsi_server* server)
     bsi_debug(
         "Created wlr_xcursor_manager & loaded xcursor theme with scale %.1f",
         cursor_scale);
+
+    wlr_export_dmabuf_manager_v1_create(server->wl_display);
+    wlr_screencopy_manager_v1_create(server->wl_display);
+    wlr_data_control_manager_v1_create(server->wl_display);
+    wlr_primary_selection_v1_device_manager_create(server->wl_display);
+    bsi_debug(
+        "Created wlr_export_dmabuf_manager, wlr_screencopy_manager, "
+        "wlr_data_control_manager & wlr_primary_selection_device_manager");
+
+    struct wlr_xdg_foreign_registry* foreign_registry =
+        wlr_xdg_foreign_registry_create(server->wl_display);
+    wlr_xdg_foreign_v1_create(server->wl_display, foreign_registry);
+    wlr_xdg_foreign_v2_create(server->wl_display, foreign_registry);
+    bsi_debug("Created wlr_xdg_foreign_registry");
+
+    server->wlr_xdg_activation =
+        wlr_xdg_activation_v1_create(server->wl_display);
+    bsi_util_slot_connect(&server->wlr_xdg_activation->events.request_activate,
+                          &server->listen.request_activate,
+                          handle_xdg_request_activate);
 
     server->cursor.cursor_mode = BSI_CURSOR_NORMAL;
     server->cursor.cursor_image = BSI_CURSOR_IMAGE_NORMAL;
@@ -193,7 +221,7 @@ bsi_server_init(struct bsi_server* server)
     bsi_debug("Attached handlers for seat '%s'", seat_name);
 
     wl_list_init(&server->scene.views);
-    wl_list_init(&server->scene.decorations);
+    wl_list_init(&server->scene.xdg_decorations);
     bsi_debug("Initialized views and decorations");
 
     wl_list_init(&server->listen.workspace);
@@ -679,6 +707,8 @@ handle_xdgshell_new_surface(struct wl_listener* listener, void* data)
             struct wlr_scene_node* parent_node = parent_layer->scene_node->node;
             xdg_surface->data =
                 wlr_scene_xdg_surface_create(parent_node, xdg_surface);
+        } else if (wlr_surface_is_subsurface(xdg_surface->popup->parent)) {
+            // TODO: Wat do?
         }
     } else {
         struct bsi_view* view = calloc(1, sizeof(struct bsi_view));
@@ -808,7 +838,7 @@ handle_layershell_new_surface(struct wl_listener* listener, void* data)
 }
 
 void
-handle_deco_manager_new_decoration(struct wl_listener* listener, void* data)
+handle_xdg_deco_manager_new_decoration(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event new_decoration from wlr_decoration_manager");
 
@@ -820,19 +850,44 @@ handle_deco_manager_new_decoration(struct wl_listener* listener, void* data)
         ((struct wlr_scene_node*)toplevel_deco->surface->data)->data;
     assert(view);
 
-    struct bsi_decoration* deco = calloc(1, sizeof(struct bsi_decoration));
-    bsi_decoration_init(deco, server, view, toplevel_deco);
+    struct bsi_xdg_decoration* xdg_deco =
+        calloc(1, sizeof(struct bsi_xdg_decoration));
+    bsi_decoration_init(xdg_deco, server, view, toplevel_deco);
 
     bsi_util_slot_connect(&toplevel_deco->events.destroy,
-                          &deco->listen.destroy,
-                          handle_decoration_destroy);
+                          &xdg_deco->listen.destroy,
+                          handle_xdg_decoration_destroy);
     bsi_util_slot_connect(&toplevel_deco->events.request_mode,
-                          &deco->listen.request_mode,
-                          handle_decoration_request_mode);
+                          &xdg_deco->listen.request_mode,
+                          handle_xdg_decoration_request_mode);
 
-    bsi_decorations_add(server, deco);
+    bsi_decorations_add(server, xdg_deco);
+
+    // bsi_decoration_draw(xdg_deco);
 
     // TODO: Until server side decorations are implemented, refuse to set SSD.
     wlr_xdg_toplevel_decoration_v1_set_mode(
         toplevel_deco, WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_CLIENT_SIDE);
+    // wlr_xdg_toplevel_decoration_v1_set_mode(toplevel_deco,
+    // toplevel_deco->requested_mode);
+}
+
+void
+handle_xdg_request_activate(struct wl_listener* listener, void* data)
+{
+    bsi_debug("Got event request_activate from wlr_xdg_activation");
+
+    struct wlr_xdg_activation_v1_request_activate_event* event = data;
+
+    if (!wlr_surface_is_xdg_surface(event->surface))
+        return;
+
+    struct wlr_xdg_surface* surface =
+        wlr_xdg_surface_from_wlr_surface(event->surface);
+    struct bsi_view* view = surface->data;
+
+    if (view == NULL || !surface->mapped)
+        return;
+
+    bsi_view_request_activate(view);
 }

@@ -2,6 +2,7 @@
 
 #include <wayland-server-core.h>
 #include <wlr/types/wlr_server_decoration.h>
+#include <wlr/types/wlr_xdg_activation_v1.h>
 #include <wlr/types/wlr_xdg_decoration_v1.h>
 
 #include "bonsai/desktop/view.h"
@@ -28,6 +29,7 @@ struct bsi_server
     struct wlr_xcursor_manager* wlr_xcursor_manager;
     struct wlr_layer_shell_v1* wlr_layer_shell;
     struct wlr_xdg_decoration_manager_v1* wlr_xdg_decoration_manager;
+    struct wlr_xdg_activation_v1* wlr_xdg_activation;
 
     /*
      * Global state
@@ -60,8 +62,10 @@ struct bsi_server
         struct wl_listener xdg_new_surface;
         /* wlr_layer_shell_v1 */
         struct wl_listener layer_new_surface;
-        /* wlr_server_decoration_manager */
+        /* wlr_xdg_decoration_manager_v1 */
         struct wl_listener new_decoration;
+        /* wlr_xdg_activation_v1 */
+        struct wl_listener request_activate;
         /* bsi_workspace */
         struct wl_list workspace; // bsi_workspace_listener::link
     } listen;
@@ -88,7 +92,7 @@ struct bsi_server
     struct
     {
         struct wl_list views;
-        struct wl_list decorations;
+        struct wl_list xdg_decorations;
     } scene;
 
     struct

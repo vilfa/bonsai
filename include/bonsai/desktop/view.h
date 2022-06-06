@@ -5,6 +5,7 @@
 #include <wlr/types/wlr_xdg_decoration_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 
+#include "bonsai/desktop/decoration.h"
 #include "bonsai/desktop/workspace.h"
 #include "bonsai/input/cursor.h"
 
@@ -27,7 +28,8 @@ struct bsi_view
 
     bool mapped;
     enum bsi_view_state state;
-    enum wlr_xdg_toplevel_decoration_v1_mode decoration_mode;
+    enum wlr_xdg_toplevel_decoration_v1_mode xdg_decoration_mode;
+    struct bsi_xdg_decoration* xdg_decoration;
 
     /* Note, that when the window goes fullscreen, minimized or maximized,
      * this will hold the last state of the window that should be restored when
@@ -161,3 +163,6 @@ bsi_view_intersection_correct_box(struct bsi_view* view,
 
 void
 bsi_view_correct_with_box(struct bsi_view* view, struct wlr_box* correction);
+
+void
+bsi_view_request_activate(struct bsi_view* view);

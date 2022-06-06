@@ -180,14 +180,14 @@ bsi_workspace_set_active(struct bsi_workspace* workspace, bool active)
 {
     workspace->active = active;
 
-    struct wl_listener *pos, *tmp;
-    struct wl_list* head = &workspace->signal.active.listener_list;
-    for (pos = wl_container_of((head)->next, pos, link),
-        tmp = wl_container_of((pos)->link.next, tmp, link);
-         &pos->link != (head);
-         pos = tmp, tmp = wl_container_of(pos->link.next, tmp, link)) {
-        pos->notify(pos, workspace);
-    }
+    // struct wl_listener *pos, *tmp;
+    // struct wl_list* head = &workspace->signal.active.listener_list;
+    // for (pos = wl_container_of((head)->next, pos, link),
+    //     tmp = wl_container_of((pos)->link.next, tmp, link);
+    //      &pos->link != (head);
+    //      pos = tmp, tmp = wl_container_of(pos->link.next, tmp, link)) {
+    //     pos->notify(pos, workspace);
+    // }
 
     // struct wl_listener *l, *next;
     // wl_list_for_each_safe(
@@ -195,7 +195,7 @@ bsi_workspace_set_active(struct bsi_workspace* workspace, bool active)
     // {
     //     l->notify(l, workspace);
     // }
-    // wl_signal_emit(&workspace->signal.active, workspace);
+    wl_signal_emit(&workspace->signal.active, workspace);
 }
 
 void

@@ -31,8 +31,10 @@ extern bsi_notify_func_t handle_request_start_drag_notify;
 extern bsi_notify_func_t handle_xdgshell_new_surface;
 /* wlr_layer_shell_v1 */
 extern bsi_notify_func_t handle_layershell_new_surface;
-/* wlr_decoration_manager */
-extern bsi_notify_func_t handle_deco_manager_new_decoration;
+/* wlr_xdg_decoration_manager_v1 */
+extern bsi_notify_func_t handle_xdg_deco_manager_new_decoration;
+/* wlr_xdg_activation_v1 */
+extern bsi_notify_func_t handle_xdg_request_activate;
 
 /*
  * bsi_view
@@ -116,5 +118,5 @@ extern bsi_notify_func_t handle_layershell_subsurface_commit;
 /*
  * bsi_server_decoration
  */
-extern bsi_notify_func_t handle_decoration_destroy;
-extern bsi_notify_func_t handle_decoration_request_mode;
+extern bsi_notify_func_t handle_xdg_decoration_destroy;
+extern bsi_notify_func_t handle_xdg_decoration_request_mode;

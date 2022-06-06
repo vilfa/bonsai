@@ -34,11 +34,9 @@
 // TODO: Take a look at
 // https://gitlab.freedesktop.org/wlroots/wlroots/-/tree/master/examples
 
+// TODO: Implement xdg-desktop-portal
+
 // TODO: Finish server decoration implementation.
-
-// TODO: Add a number of default workspaces.
-
-// TODO: Add ability to switch workspaces.
 
 // TODO: Fix scaling issues on low resolution displays.
 

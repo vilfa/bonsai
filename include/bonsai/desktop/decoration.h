@@ -5,11 +5,13 @@
 
 #include "bonsai/server.h"
 
-struct bsi_decoration
+struct bsi_xdg_decoration
 {
     struct bsi_server* server;
     struct bsi_view* view;
-    struct wlr_xdg_toplevel_decoration_v1* toplevel_decoration;
+    struct wlr_xdg_toplevel_decoration_v1* xdg_decoration;
+
+    struct wlr_scene_rect* scene_rect;
 
     struct
     {
@@ -22,22 +24,26 @@ struct bsi_decoration
 };
 
 void
-bsi_decorations_add(struct bsi_server* server, struct bsi_decoration* deco);
+bsi_decorations_add(struct bsi_server* server,
+                    struct bsi_xdg_decoration* decoration);
 
 void
-bsi_decorations_remove(struct bsi_decoration* deco);
+bsi_decorations_remove(struct bsi_xdg_decoration* decoration);
 
-struct bsi_decoration*
-bsi_decoration_init(struct bsi_decoration* deco,
+struct bsi_xdg_decoration*
+bsi_decoration_init(struct bsi_xdg_decoration* decoration,
                     struct bsi_server* server,
                     struct bsi_view* view,
-                    struct wlr_xdg_toplevel_decoration_v1* wlr_deco);
+                    struct wlr_xdg_toplevel_decoration_v1* xdg_deco);
 
 void
-bsi_decoration_draw(struct bsi_decoration* deco,
-                    struct wlr_texture** texture,
-                    float matrix[9],
-                    struct wlr_fbox* source_box);
+bsi_decoration_update(struct bsi_xdg_decoration* decoration);
 
 void
-bsi_decoration_destroy(struct bsi_decoration* deco);
+bsi_decoration_iter(struct wlr_scene_buffer* buffer,
+                    int sx,
+                    int sy,
+                    void* user_data);
+
+void
+bsi_decoration_destroy(struct bsi_xdg_decoration* deco);
