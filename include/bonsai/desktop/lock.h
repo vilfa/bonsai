@@ -9,6 +9,7 @@ struct bsi_session_lock
 {
     struct bsi_server* server;
     struct wlr_session_lock_v1* lock;
+    struct wlr_scene_tree* tree;
     struct wl_list surfaces; // struct bsi_session_lock_surface
 
     struct
@@ -26,7 +27,6 @@ struct bsi_session_lock_surface
     struct bsi_session_lock* lock;
     struct wlr_session_lock_surface_v1* lock_surface;
     struct wlr_surface* surface;
-    struct wlr_scene_surface* scene_surface;
 
     struct
     {
@@ -42,12 +42,6 @@ struct bsi_session_lock_surface
 
     struct wl_list link_session_lock; // bsi_session_lock::surfaces
 };
-
-void
-bsi_session_locks_add(struct bsi_server* server, struct bsi_session_lock* lock);
-
-void
-bsi_session_locks_remove(struct bsi_session_lock* lock);
 
 struct bsi_session_lock*
 bsi_session_lock_init(struct bsi_session_lock* lock,

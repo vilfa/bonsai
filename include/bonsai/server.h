@@ -6,6 +6,7 @@
 #include <wlr/types/wlr_xdg_activation_v1.h>
 #include <wlr/types/wlr_xdg_decoration_v1.h>
 
+#include "bonsai/desktop/lock.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/desktop/workspace.h"
 #include "bonsai/input.h"
@@ -97,7 +98,7 @@ struct bsi_server
     {
         bool locked;
         bool shutting_down;
-        struct wl_list locks;
+        struct bsi_session_lock* lock;
     } session;
 
     /* So, the way I imagine it, a workspace can be attached to a single output

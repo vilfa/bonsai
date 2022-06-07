@@ -1,5 +1,8 @@
+#include <assert.h>
 #include <stdlib.h>
 #include <wayland-util.h>
+#include <wlr/types/wlr_scene.h>
+#include <wlr/types/wlr_session_lock_v1.h>
 
 #include "bonsai/desktop/lock.h"
 #include "bonsai/events.h"
@@ -8,18 +11,6 @@
 #include "bonsai/output.h"
 #include "bonsai/util.h"
 
-void
-bsi_session_locks_add(struct bsi_server* server, struct bsi_session_lock* lock)
-{
-    wl_list_insert(&server->session.locks, &lock->link_server);
-}
-
-void
-bsi_session_locks_remove(struct bsi_session_lock* lock)
-{
-    wl_list_remove(&lock->link_server);
-}
-
 struct bsi_session_lock*
 bsi_session_lock_init(struct bsi_session_lock* lock,
                       struct bsi_server* server,
@@ -27,6 +18,7 @@ bsi_session_lock_init(struct bsi_session_lock* lock,
 {
     lock->lock = wlr_lock;
     lock->server = server;
+    lock->tree = wlr_scene_tree_create(&server->wlr_scene->node);
     wl_list_init(&lock->surfaces);
     return lock;
 }
@@ -49,11 +41,6 @@ bsi_session_lock_surface_init(
     surface->lock_surface = wlr_lock_surface;
     surface->lock = lock;
     surface->surface = wlr_lock_surface->surface;
-
-    surface->scene_surface = wlr_scene_surface_create(
-        &lock->server->wlr_scene->node, surface->surface);
-    surface->scene_surface->surface->data = surface;
-
     return surface;
 }
 
@@ -104,6 +91,8 @@ handle_session_lock_new_surface(struct wl_listener* listener, void* data)
 
     wl_list_insert(&lock->surfaces, &lock_surface->link_session_lock);
 
+    wlr_scene_subsurface_tree_create(&lock->tree->node, surface->surface);
+
     wlr_session_lock_surface_v1_configure(
         surface, surface->output->width, surface->output->height);
 
@@ -124,6 +113,7 @@ handle_session_lock_unlock(struct wl_listener* listener, void* data)
     struct bsi_server* server = lock->server;
 
     server->session.locked = false;
+    bsi_info("Session unlocked");
 
     struct bsi_output* output;
     wl_list_for_each(output, &server->output.outputs, link_server)
@@ -141,7 +131,7 @@ handle_session_lock_destroy(struct wl_listener* listener, void* data)
         wl_container_of(listener, lock, listen.destroy);
     struct bsi_server* server = lock->server;
 
-    bsi_session_locks_remove(lock);
+    server->session.lock = NULL;
     bsi_session_lock_destroy(lock);
 
     struct bsi_output* output;

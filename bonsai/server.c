@@ -185,7 +185,8 @@ bsi_server_init(struct bsi_server* server)
     bsi_util_slot_connect(&server->wlr_session_lock_manager->events.new_lock,
                           &server->listen.new_lock,
                           handle_session_new_lock);
-    wl_list_init(&server->session.locks);
+    server->session.locked = false;
+    server->session.lock = NULL;
     bsi_debug("Created wlr_session_lock_manager & added handlers");
 
     server->cursor.cursor_mode = BSI_CURSOR_NORMAL;
@@ -976,7 +977,7 @@ handle_session_new_lock(struct wl_listener* listener, void* data)
     struct wlr_session_lock_v1* lock = data;
     // struct wl_client* client = wl_resource_get_client(lock->resource);
 
-    if (wl_list_length(&server->session.locks) > 0) {
+    if (server->session.lock != NULL) {
         wlr_session_lock_v1_destroy(lock);
         return;
     }
@@ -998,7 +999,7 @@ handle_session_new_lock(struct wl_listener* listener, void* data)
                           &session_lock->listen.destroy,
                           handle_session_lock_destroy);
 
-    bsi_session_locks_add(server, session_lock);
+    server->session.lock = session_lock;
 
     wlr_session_lock_v1_send_locked(session_lock->lock);
 

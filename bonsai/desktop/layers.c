@@ -406,8 +406,14 @@ bsi_layers_output_arrange(struct bsi_output* output)
         wlr_scene_node_raise_to_top(view->scene_node);
     }
 
-    /* Last, focus the topmost keyboard-interactive layer, if it exists. */
+    /* If locked lock node should always be topmost. */
     struct bsi_server* server = output->server;
+    if (server->session.locked && server->session.lock) {
+        wlr_scene_node_raise_to_top(&server->session.lock->tree->node);
+        return;
+    }
+
+    /* Last, focus the topmost keyboard-interactive layer, if it exists. */
     struct wlr_keyboard* keyboard = wlr_seat_get_keyboard(server->wlr_seat);
     static enum zwlr_layer_shell_v1_layer focusable_layers[] = {
         ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY,

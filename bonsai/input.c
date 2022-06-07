@@ -511,8 +511,6 @@ handle_pointer_hold_end(struct wl_listener* listener, void* data)
 void
 handle_keyboard_key(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event key from wlr_input_device");
-
     struct bsi_input_device* device =
         wl_container_of(listener, device, listen.key);
     struct bsi_server* server = device->server;
@@ -536,8 +534,6 @@ handle_keyboard_key(struct wl_listener* listener, void* data)
 void
 handle_keyboard_modifiers(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event modifiers from wlr_input_device");
-
     struct bsi_input_device* device =
         wl_container_of(listener, device, listen.modifiers);
     struct bsi_server* server = device->server;
