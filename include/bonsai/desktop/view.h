@@ -59,8 +59,9 @@ struct bsi_view
         struct wl_listener workspace_active;
     } listen;
 
-    struct wl_list link_server;    // bsi_server::scene::{views,views_minimized}
-    struct wl_list link_workspace; // bsi_workspace::views
+    struct wl_list link_server;     // bsi_server::scene::views
+    struct wl_list link_fullscreen; // bsi_server::scene::views_fullscreen;
+    struct wl_list link_workspace;  // bsi_workspace::views
 };
 
 union bsi_view_toplevel_event

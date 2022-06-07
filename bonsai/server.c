@@ -238,6 +238,7 @@ bsi_server_init(struct bsi_server* server)
     bsi_debug("Attached handlers for seat '%s'", seat_name);
 
     wl_list_init(&server->scene.views);
+    wl_list_init(&server->scene.views_fullscreen);
     wl_list_init(&server->scene.xdg_decorations);
     bsi_debug("Initialized views and decorations");
 

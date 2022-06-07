@@ -31,11 +31,7 @@
 #include "bonsai/server.h"
 #include "bonsai/util.h"
 
-// TODO: Figure out how to set Meson runtime program dependencies.
-
-// TODO: Implement xdg-desktop-portal.
-
-// TODO: Implement working screenshare.
+// TODO: Implement working screenshare, look into xdg-desktop-portal.
 
 // TODO: Maybe add multipurpose client for indicating things to the user (e.g.
 // took screenshot, switched to workspace).
@@ -43,12 +39,7 @@
 // TODO: Look into waybar and sway/workspace module implementation, and how to
 // make it work.
 
-// TODO: Views that are maximized should be kept maximized when showing/hiding
-// using touchpad gestures.
-
 // TODO: Implement session locking.
-
-// TODO: Fullscreen views should be in overlay layer.
 
 // TODO: Look into other useful interfaces.
 

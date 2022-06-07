@@ -398,6 +398,14 @@ bsi_layers_output_arrange(struct bsi_output* output)
         }
     }
 
+    /* Arrange fullscreen views. */
+    struct bsi_view* v;
+    wl_list_for_each(
+        v, &output->server->scene.views_fullscreen, link_fullscreen)
+    {
+        wlr_scene_node_raise_to_top(v->scene_node);
+    }
+
     /* Last, focus the topmost keyboard-interactive layer, if it exists. */
     struct bsi_server* server = output->server;
     struct wlr_keyboard* keyboard = wlr_seat_get_keyboard(server->wlr_seat);

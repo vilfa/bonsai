@@ -103,6 +103,7 @@ struct bsi_server
     struct
     {
         struct wl_list views;
+        struct wl_list views_fullscreen;
         struct wl_list xdg_decorations;
     } scene;
 

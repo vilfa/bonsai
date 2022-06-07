@@ -28,6 +28,9 @@ bsi_idle_inhibitors_remove(struct bsi_idle_inhibitor* inhibitor)
 void
 bsi_idle_inhibitors_state_update(struct bsi_server* server)
 {
+    bsi_debug("Update idle inhibitors state, len %d",
+              wl_list_length(&server->idle.inhibitors));
+
     if (wl_list_empty(&server->idle.inhibitors))
         return;
 

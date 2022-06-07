@@ -1,4 +1,3 @@
-#include "bonsai/desktop/idle.h"
 #define _POSIX_C_SOURCE 200809L
 #include <assert.h>
 #include <stdbool.h>
@@ -15,6 +14,7 @@
 #include <wlr/util/edges.h>
 
 #include "bonsai/desktop/decoration.h"
+#include "bonsai/desktop/idle.h"
 #include "bonsai/desktop/layers.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/desktop/workspace.h"
@@ -306,6 +306,9 @@ bsi_view_set_fullscreen(struct bsi_view* view, bool fullscreen)
     if (view->state == BSI_VIEW_STATE_NORMAL) {
         bsi_debug("Unfullscreen view '%s'", view->toplevel->app_id);
 
+        /* Remove from fullscreen views. */
+        wl_list_remove(&view->link_fullscreen);
+
         /* Remove fullscreen idle inhibitor. */
         bsi_idle_inhibitors_remove(view->fullscreen_inhibitor);
         bsi_idle_inhibitor_destroy(view->fullscreen_inhibitor);
@@ -324,6 +327,10 @@ bsi_view_set_fullscreen(struct bsi_view* view, bool fullscreen)
         /* Save the geometry. */
         wlr_xdg_surface_get_geometry(view->toplevel->base, &view->box);
         wlr_scene_node_coords(view->scene_node, &view->box.x, &view->box.y);
+
+        /* Add to fullscreen views. */
+        wl_list_insert(&view->server->scene.views_fullscreen,
+                       &view->link_fullscreen);
 
         /* Add fullscreen idle inhibitor. */
         struct bsi_idle_inhibitor* idle =
@@ -350,6 +357,8 @@ bsi_view_set_fullscreen(struct bsi_view* view, bool fullscreen)
         wlr_xdg_toplevel_set_resizing(view->toplevel, false);
         wlr_xdg_toplevel_set_fullscreen(view->toplevel, true);
     }
+
+    bsi_layers_output_arrange(view->parent_workspace->output);
 }
 
 void

@@ -30,13 +30,28 @@ dep_pixman = dependency('pixman-1', required : true)
 dep_cairo = dependency('cairo', required : true)
 dep_math = cc.find_library('m', required : true)
 
-### Dependencies (Optional)
-dep_swaybg = dependency('swaybg', required : false)
-dep_bemenu = dependency('bemenu', required : false)
-dep_waybar = dependency('waybar', required : false)
-dep_slurp = dependency('slurp', required : false)
-dep_grim = dependency('grim', required : false)
-dep_wlclipboard = dependency('wl-clipboard', required : false)
+### Optional extern
+ext_swaybg = find_program('swaybg', required : false)
+if not ext_swaybg.found()
+    warning('swaybg is needed for wallpaper support')
+endif
+
+ext_bemenu = find_program('bemenu', required : false)
+if not ext_bemenu.found()
+    warning('bemenu is needed for run menu support')
+endif
+
+ext_waybar = find_program('waybar', required : false)
+if not ext_waybar.found()
+    warning('waybar is needed for status bar support')
+endif
+
+ext_slurp = find_program('slurp', required : false)
+ext_grim = find_program('grim', required : false)
+ext_wlclipboard = find_program('wl-copy', required : false)
+if not ext_slurp.found() or not ext_grim.found() or not ext_wlclipboard.found()
+    warning('slurp, grim & wl_clipboard are needed for screenshot support')
+endif
 
 ### Include dirs
 inc_default = include_directories('include')
