@@ -35,15 +35,30 @@
 
 // TODO: Implement xdg-desktop-portal.
 
-// TODO: Implement working screenshot.
-
 // TODO: Implement working screenshare.
+
+// TODO: Maybe add multipurpose client for indicating things to the user (e.g.
+// took screenshot, switched to workspace).
+
+// TODO: Look into waybar and sway/workspace module implementation, and how to
+// make it work.
+
+// TODO: Views that are maximized should be kept maximized when showing/hiding
+// using touchpad gestures.
+
+// TODO: Implement session locking.
+
+// TODO: Fullscreen views should be in overlay layer.
+
+// TODO: Look into other useful interfaces.
 
 // TODO: Implement server decoration.
 
-// TODO: Fix scaling issues on low resolution displays.
+// TODO: Look into adding xwayland support.
 
-// TODO: Fix modesetting.
+// TODO: Dynamic output resolution setting.
+
+// TODO: Config file.
 
 int
 main(void)
@@ -76,7 +91,7 @@ main(void)
     }
 
     if (setenv("GDK_BACKEND", "wayland", true) != 0) {
-        /*  If this is not set, waybar thinks it's running under X. */
+        /* If this is not set, waybar thinks it's running under X. */
         bsi_errno("Failed to set GDK_BACKEND env var");
         wlr_backend_destroy(server.wlr_backend);
         wl_display_destroy(server.wl_display);

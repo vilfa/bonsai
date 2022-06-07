@@ -12,6 +12,7 @@ bonsai_src = files(
     'desktop/workspace.c',
     'desktop/layers.c',
     'desktop/decoration.c',
+    'desktop/idle.c',
 )
 
 bonsai_dep = [

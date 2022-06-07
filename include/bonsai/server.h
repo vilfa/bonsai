@@ -30,6 +30,8 @@ struct bsi_server
     struct wlr_layer_shell_v1* wlr_layer_shell;
     struct wlr_xdg_decoration_manager_v1* wlr_xdg_decoration_manager;
     struct wlr_xdg_activation_v1* wlr_xdg_activation;
+    struct wlr_idle* wlr_idle;
+    struct wlr_idle_inhibit_manager_v1* wlr_idle_inhibit_manager;
 
     /*
      * Global state
@@ -66,6 +68,10 @@ struct bsi_server
         struct wl_listener new_decoration;
         /* wlr_xdg_activation_v1 */
         struct wl_listener request_activate;
+        /* wlr_idle_inhibit_manager_v1 */
+        struct wl_listener new_inhibitor;
+        /* wlr_idle */
+        struct wl_listener activity_notify;
         /* bsi_workspace */
         struct wl_list workspace; // bsi_workspace_listener::link
     } listen;
@@ -79,6 +85,11 @@ struct bsi_server
     {
         struct wl_list inputs;
     } input;
+
+    struct
+    {
+        struct wl_list inhibitors;
+    } idle;
 
     /* So, the way I imagine it, a workspace can be attached to a single output
      * at one time, with each output being able to hold multiple workspaces.

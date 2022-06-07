@@ -422,6 +422,15 @@ bsi_layers_output_arrange(struct bsi_output* output)
     }
 }
 
+void
+bsi_layer_move(struct bsi_layer_surface_toplevel* toplevel,
+               struct bsi_output* output,
+               enum zwlr_layer_shell_v1_layer to_layer)
+{
+    wl_list_remove(&toplevel->link_output);
+    wl_list_insert(&output->layers[to_layer], &toplevel->link_output);
+}
+
 /**
  * Handlers
  */
@@ -556,14 +565,10 @@ handle_layershell_toplvl_commit(struct wl_listener* listener, void* data)
         layer_toplevel->mapped = layer_toplevel->layer_surface->mapped;
         to_another_layer = layer_toplevel->at_layer !=
                            layer_toplevel->layer_surface->current.layer;
-        if (to_another_layer) {
-            // TODO: Maybe add a util function for moving a surface between
-            // layers.
-            wl_list_remove(&layer_toplevel->link_output);
-            wl_list_insert(
-                &output->layers[layer_toplevel->layer_surface->current.layer],
-                &layer_toplevel->link_output);
-        }
+        if (to_another_layer)
+            bsi_layer_move(layer_toplevel,
+                           output,
+                           layer_toplevel->layer_surface->current.layer);
         bsi_layers_output_arrange(output);
     }
 

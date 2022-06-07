@@ -99,39 +99,12 @@ bsi_output_surface_damage(struct bsi_output* output,
                           struct wlr_surface* wlr_surface,
                           bool entire_output)
 {
-    // TODO: This probably isn't right.
-
     if (entire_output) {
         wlr_output_damage_add_whole(output->damage);
     } else {
         struct wlr_box box;
         wlr_surface_get_extends(wlr_surface, &box);
         wlr_output_damage_add_box(output->damage, &box);
-
-        // /* Get surface damage. */
-        // pixman_region32_t damage;
-        // pixman_region32_init(&damage);
-        // wlr_surface_get_effective_damage(surface, &damage);
-        // wlr_region_scale(&damage, &damage, output->wlr_output->scale);
-
-        // /* If scaling has changed, expand damage region. */
-        // if (ceil(output->wlr_output->scale) > surface->current.scale)
-        //     wlr_region_expand(&damage,
-        //                       &damage,
-        //                       ceil(output->wlr_output->scale) -
-        //                           surface->current.scale);
-
-        // /* Translate the damage box to the output. */
-        // pixman_region32_translate(&damage, box.x, box.y);
-        // wlr_output_damage_add(output->damage, &damage);
-        // pixman_region32_fini(&damage);
-
-        // if (entire_output) {
-        //     wlr_output_damage_add_box(output->damage, &box);
-        // }
-
-        // if (!wl_list_empty(&surface->current.frame_callback_list))
-        //     wlr_output_schedule_frame(output->wlr_output);
     }
 }
 

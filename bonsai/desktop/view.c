@@ -1,3 +1,4 @@
+#include "bonsai/desktop/idle.h"
 #define _POSIX_C_SOURCE 200809L
 #include <assert.h>
 #include <stdbool.h>
@@ -88,6 +89,7 @@ bsi_view_init(struct bsi_view* view,
     view->mapped = false;
     view->state = BSI_VIEW_STATE_NORMAL;
     view->xdg_decoration_mode = WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_CLIENT_SIDE;
+    view->fullscreen_inhibitor = NULL;
 
     /* Create a new node from the root server node. */
     view->scene_node = wlr_scene_xdg_surface_create(
@@ -303,6 +305,18 @@ bsi_view_set_fullscreen(struct bsi_view* view, bool fullscreen)
 
     if (view->state == BSI_VIEW_STATE_NORMAL) {
         bsi_debug("Unfullscreen view '%s'", view->toplevel->app_id);
+
+        /* Remove fullscreen idle inhibitor. */
+        bsi_idle_inhibitors_remove(view->fullscreen_inhibitor);
+        bsi_idle_inhibitor_destroy(view->fullscreen_inhibitor);
+        view->fullscreen_inhibitor = NULL;
+        bsi_idle_inhibitors_state_update(view->server);
+
+        /* Restore previous (incl. decoration mode). */
+        wlr_xdg_toplevel_decoration_v1_set_mode(
+            view->xdg_decoration->xdg_decoration,
+            /* view->xdg_decoration_mode */ // TODO
+            WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_CLIENT_SIDE);
         bsi_view_restore_prev(view);
     } else {
         bsi_debug("Fullscreen view '%s'", view->toplevel->app_id);
@@ -311,8 +325,20 @@ bsi_view_set_fullscreen(struct bsi_view* view, bool fullscreen)
         wlr_xdg_surface_get_geometry(view->toplevel->base, &view->box);
         wlr_scene_node_coords(view->scene_node, &view->box.x, &view->box.y);
 
-        // TODO: Get rid of decorations to put the entire app fullscreen
-        /* Fullscreen. */
+        /* Add fullscreen idle inhibitor. */
+        struct bsi_idle_inhibitor* idle =
+            calloc(1, sizeof(struct bsi_idle_inhibitor));
+        bsi_idle_inhibitor_init(
+            idle, NULL, view->server, view, BSI_IDLE_INHIBIT_FULLSCREEN);
+        bsi_idle_inhibitors_add(view->server, idle);
+        view->fullscreen_inhibitor = idle;
+        bsi_idle_inhibitors_state_update(view->server);
+
+        /* SSD, server doesn't display deco for fullscreen & fullscreen. */
+        wlr_xdg_toplevel_decoration_v1_set_mode(
+            view->xdg_decoration->xdg_decoration,
+            WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
+        // WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_NONE);
         struct wlr_box output_box;
         wlr_output_layout_get_box(view->server->wlr_output_layout,
                                   view->parent_workspace->output->output,
@@ -477,7 +503,6 @@ bsi_view_correct_with_box(struct bsi_view* view, struct wlr_box* correction)
 void
 bsi_view_request_activate(struct bsi_view* view)
 {
-    // TODO: Do this properly.
     bsi_view_focus(view);
 }
 

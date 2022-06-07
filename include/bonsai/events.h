@@ -35,6 +35,9 @@ extern bsi_notify_func_t handle_layershell_new_surface;
 extern bsi_notify_func_t handle_xdg_deco_manager_new_decoration;
 /* wlr_xdg_activation_v1 */
 extern bsi_notify_func_t handle_xdg_request_activate;
+/* wlr_idle_inhibit_manager_v1 */
+extern bsi_notify_func_t handle_idle_manager_new_inhibitor;
+extern bsi_notify_func_t handle_idle_activity_notify;
 
 /*
  * bsi_view
@@ -120,3 +123,8 @@ extern bsi_notify_func_t handle_layershell_subsurface_commit;
  */
 extern bsi_notify_func_t handle_xdg_decoration_destroy;
 extern bsi_notify_func_t handle_xdg_decoration_request_mode;
+
+/*
+ * bsi_idle_inhibitor
+ */
+extern bsi_notify_func_t handle_idle_inhibitor_destroy;

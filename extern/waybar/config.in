@@ -6,7 +6,6 @@
     ],
     "modules-center": [
         "sway/window",
-        "idle_inhibitor"
     ],
     "modules-right": [
         "tray",
@@ -16,6 +15,7 @@
         "memory",
         "pulseaudio",
         "battery",
+        "idle_inhibitor",
         "backlight",
         "clock"
     ],

@@ -45,9 +45,12 @@ bsi_keyboard_keybinds_process(struct bsi_input_device* device,
     const xkb_keysym_t* syms;
     const size_t syms_len =
         xkb_state_key_get_syms(wlr_keyboard->xkb_state, keycode, &syms);
+    const bool mod_none = (syms_len == 1 && (syms[0] == XKB_KEY_Print ||
+                                             syms[0] == XKB_KEY_Escape ||
+                                             syms[0] == XKB_KEY_F11));
 
     if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED &&
-        (mods != 0 || (syms_len == 1 && syms[0] == XKB_KEY_Print))) {
+        (mods != 0 || mod_none)) {
         uint32_t combo;
 
         if ((mods ^
@@ -65,7 +68,7 @@ bsi_keyboard_keybinds_process(struct bsi_input_device* device,
             combo = BSI_KEYBOARD_MOD_ALT;
         else if (mods & WLR_MODIFIER_LOGO)
             combo = BSI_KEYBOARD_MOD_SUPER;
-        else if (syms[0] == XKB_KEY_Print)
+        else if (mod_none)
             combo = BSI_KEYBOARD_MOD_NONE;
         else
             return false;
@@ -129,6 +132,20 @@ bsi_keyboard_mod_none_handle(struct bsi_server* server, xkb_keysym_t sym)
             bsi_debug("Got Print -> screenshot all outputs");
             char* const argp[] = { "sh", "-c", "grim - | wl-copy", NULL };
             return bsi_util_tryexec(argp, 4);
+        }
+        case XKB_KEY_Escape: {
+            bsi_debug("Got Escape -> un-fullscreen if fulscreen");
+            struct bsi_view* focused = bsi_views_get_focused(server);
+            if (focused && focused->state == BSI_VIEW_STATE_FULLSCREEN)
+                bsi_view_set_fullscreen(focused, false);
+            return true;
+        }
+        case XKB_KEY_F11: {
+            bsi_debug("Got F11 -> fullscreen focused view");
+            struct bsi_view* focused = bsi_views_get_focused(server);
+            if (focused && focused->state != BSI_VIEW_STATE_FULLSCREEN)
+                bsi_view_set_fullscreen(focused, true);
+            return true;
         }
     }
     return false;

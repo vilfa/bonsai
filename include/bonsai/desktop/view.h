@@ -6,6 +6,7 @@
 #include <wlr/types/wlr_xdg_shell.h>
 
 #include "bonsai/desktop/decoration.h"
+#include "bonsai/desktop/idle.h"
 #include "bonsai/desktop/workspace.h"
 #include "bonsai/input/cursor.h"
 
@@ -30,6 +31,10 @@ struct bsi_view
     enum bsi_view_state state;
     enum wlr_xdg_toplevel_decoration_v1_mode xdg_decoration_mode;
     struct bsi_xdg_decoration* xdg_decoration;
+
+    struct bsi_idle_inhibitor*
+        fullscreen_inhibitor; /* !NULL only when state ==
+                                 BSI_VIEW_STATE_FULLSCREEN */
 
     /* Note, that when the window goes fullscreen, minimized or maximized,
      * this will hold the last state of the window that should be restored when

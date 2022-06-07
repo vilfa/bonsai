@@ -16,6 +16,8 @@
 #include <wlr/types/wlr_drm.h>
 #include <wlr/types/wlr_export_dmabuf_v1.h>
 #include <wlr/types/wlr_gamma_control_v1.h>
+#include <wlr/types/wlr_idle.h>
+#include <wlr/types/wlr_idle_inhibit_v1.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_output_damage.h>
 #include <wlr/types/wlr_output_layout.h>
@@ -37,6 +39,7 @@
 #include <wlr/util/log.h>
 
 #include "bonsai/desktop/decoration.h"
+#include "bonsai/desktop/idle.h"
 #include "bonsai/desktop/layers.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/desktop/workspace.h"
@@ -162,6 +165,20 @@ bsi_server_init(struct bsi_server* server)
     bsi_util_slot_connect(&server->wlr_xdg_activation->events.request_activate,
                           &server->listen.request_activate,
                           handle_xdg_request_activate);
+
+    server->wlr_idle = wlr_idle_create(server->wl_display);
+    bsi_util_slot_connect(&server->wlr_idle->events.activity_notify,
+                          &server->listen.activity_notify,
+                          handle_idle_activity_notify);
+    server->wlr_idle_inhibit_manager =
+        wlr_idle_inhibit_v1_create(server->wl_display);
+    bsi_util_slot_connect(
+        &server->wlr_idle_inhibit_manager->events.new_inhibitor,
+        &server->listen.new_inhibitor,
+        handle_idle_manager_new_inhibitor);
+    wl_list_init(&server->idle.inhibitors);
+    bsi_debug(
+        "Created wlr_idle, wlr_idle_inhibit_manager & initialized inhibitors");
 
     server->cursor.cursor_mode = BSI_CURSOR_NORMAL;
     server->cursor.cursor_image = BSI_CURSOR_IMAGE_NORMAL;
@@ -707,8 +724,6 @@ handle_xdgshell_new_surface(struct wl_listener* listener, void* data)
             struct wlr_scene_node* parent_node = parent_layer->scene_node->node;
             xdg_surface->data =
                 wlr_scene_xdg_surface_create(parent_node, xdg_surface);
-        } else if (wlr_surface_is_subsurface(xdg_surface->popup->parent)) {
-            // TODO: Wat do?
         }
     } else {
         struct bsi_view* view = calloc(1, sizeof(struct bsi_view));
@@ -890,4 +905,55 @@ handle_xdg_request_activate(struct wl_listener* listener, void* data)
         return;
 
     bsi_view_request_activate(view);
+}
+
+void
+handle_idle_manager_new_inhibitor(struct wl_listener* listener, void* data)
+{
+    bsi_debug("Got event new_inhibitor from wlr_idle_inhibit_manager");
+
+    struct bsi_server* server =
+        wl_container_of(listener, server, listen.new_inhibitor);
+    struct wlr_idle_inhibitor_v1* idle_inhibitor = data;
+
+    /* Only xdg and layer shell surfaces can have inhbitors. */
+    if (!wlr_surface_is_xdg_surface(idle_inhibitor->surface) &&
+        !wlr_surface_is_layer_surface(idle_inhibitor->surface)) {
+        bsi_info("Refuse to set inhbitor for non- xdg or layer shell surface");
+        return;
+    }
+
+    struct bsi_idle_inhibitor* inhibitor =
+        calloc(1, sizeof(struct bsi_idle_inhibitor));
+
+    if (wlr_surface_is_xdg_surface(idle_inhibitor->surface)) {
+        struct wlr_xdg_surface* xdg_surface =
+            wlr_xdg_surface_from_wlr_surface(idle_inhibitor->surface);
+        struct bsi_view* view = xdg_surface->data;
+        bsi_idle_inhibitor_init(inhibitor,
+                                idle_inhibitor,
+                                server,
+                                view,
+                                BSI_IDLE_INHIBIT_APPLICATION);
+    } else if (wlr_surface_is_layer_surface(idle_inhibitor->surface)) {
+        bsi_idle_inhibitor_init(
+            inhibitor, idle_inhibitor, server, NULL, BSI_IDLE_INHIBIT_USER);
+    }
+
+    bsi_util_slot_connect(&idle_inhibitor->events.destroy,
+                          &inhibitor->listen.destroy,
+                          handle_idle_inhibitor_destroy);
+    bsi_idle_inhibitors_add(server, inhibitor);
+
+    bsi_idle_inhibitors_state_update(server);
+}
+
+void
+handle_idle_activity_notify(struct wl_listener* listener, void* data)
+{
+    bsi_debug("Got event activity_notify from wlr_idle");
+
+    struct bsi_server* server =
+        wl_container_of(listener, server, listen.activity_notify);
+    bsi_idle_inhibitors_state_update(server);
 }
