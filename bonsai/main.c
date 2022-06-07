@@ -39,11 +39,9 @@
 // TODO: Look into waybar and sway/workspace module implementation, and how to
 // make it work.
 
-// TODO: Implement session locking.
+// TODO: Implement server decoration.
 
 // TODO: Look into other useful interfaces.
-
-// TODO: Implement server decoration.
 
 // TODO: Look into adding xwayland support.
 

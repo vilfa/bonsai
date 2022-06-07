@@ -1,0 +1,7 @@
+indicator-caps-lock
+indicator-idle-visible
+ignore-empty-password
+show-keyboard-layout
+daemonize
+text-color=ffffff
+color=151515
