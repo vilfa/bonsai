@@ -41,6 +41,7 @@
 #include "bonsai/desktop/decoration.h"
 #include "bonsai/desktop/idle.h"
 #include "bonsai/desktop/layers.h"
+#include "bonsai/desktop/lock.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/desktop/workspace.h"
 #include "bonsai/events.h"
@@ -177,8 +178,15 @@ bsi_server_init(struct bsi_server* server)
         &server->listen.new_inhibitor,
         handle_idle_manager_new_inhibitor);
     wl_list_init(&server->idle.inhibitors);
-    bsi_debug(
-        "Created wlr_idle, wlr_idle_inhibit_manager & initialized inhibitors");
+    bsi_debug("Created wlr_idle, wlr_idle_inhibit_manager & added handlers");
+
+    server->wlr_session_lock_manager =
+        wlr_session_lock_manager_v1_create(server->wl_display);
+    bsi_util_slot_connect(&server->wlr_session_lock_manager->events.new_lock,
+                          &server->listen.new_lock,
+                          handle_session_new_lock);
+    wl_list_init(&server->session.locks);
+    bsi_debug("Created wlr_session_lock_manager & added handlers");
 
     server->cursor.cursor_mode = BSI_CURSOR_NORMAL;
     server->cursor.cursor_image = BSI_CURSOR_IMAGE_NORMAL;
@@ -246,9 +254,9 @@ bsi_server_init(struct bsi_server* server)
     bsi_debug("Initialized workspace listeners");
 
     server->active_workspace = NULL;
-    server->shutting_down = false;
+    server->session.shutting_down = false;
     for (size_t i = 0; i < BSI_SERVER_EXTERN_PROG_MAX; ++i) {
-        server->extern_setup[i] = false;
+        server->output.extern_setup[i] = false;
     }
 
     return server;
@@ -258,7 +266,8 @@ void
 bsi_server_setup_extern(struct bsi_server* server)
 {
     for (size_t i = 0; i < BSI_SERVER_EXTERN_PROG_MAX; ++i) {
-        if (!server->extern_setup[i] || bsi_server_extern_progs_per_output[i]) {
+        if (!server->output.extern_setup[i] ||
+            bsi_server_extern_progs_per_output[i]) {
             const char* exep = bsi_server_extern_progs[i];
             char* argsp = bsi_server_extern_progs_args[i];
             char** argp = NULL;
@@ -266,7 +275,7 @@ bsi_server_setup_extern(struct bsi_server* server)
                 bsi_util_split_argsp((char*)exep, argsp, " ", &argp);
             bsi_util_tryexec(argp, len_argp);
             bsi_util_split_free(&argp);
-            server->extern_setup[i] = true;
+            server->output.extern_setup[i] = true;
         }
     }
 }
@@ -274,7 +283,7 @@ bsi_server_setup_extern(struct bsi_server* server)
 void
 bsi_server_finish(struct bsi_server* server)
 {
-    server->shutting_down = true;
+    server->session.shutting_down = true;
 
     /* wlr_backend */
     wl_list_remove(&server->listen.new_output.link);
@@ -502,7 +511,7 @@ handle_output_layout_change(struct wl_listener* listener, void* data)
     struct bsi_server* server =
         wl_container_of(listener, server, listen.output_layout_change);
 
-    if (server->shutting_down)
+    if (server->session.shutting_down)
         return;
 
     struct wlr_output_configuration_v1* config =
@@ -952,9 +961,50 @@ handle_idle_manager_new_inhibitor(struct wl_listener* listener, void* data)
 void
 handle_idle_activity_notify(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event activity_notify from wlr_idle");
-
     struct bsi_server* server =
         wl_container_of(listener, server, listen.activity_notify);
     bsi_idle_inhibitors_state_update(server);
+}
+
+void
+handle_session_new_lock(struct wl_listener* listener, void* data)
+{
+    bsi_debug("Got event new_lock from wlr_session_lock_manager");
+
+    struct bsi_server* server =
+        wl_container_of(listener, server, listen.new_lock);
+    struct wlr_session_lock_v1* lock = data;
+    // struct wl_client* client = wl_resource_get_client(lock->resource);
+
+    if (wl_list_length(&server->session.locks) > 0) {
+        wlr_session_lock_v1_destroy(lock);
+        return;
+    }
+
+    server->session.locked = true;
+    bsi_info("Session locked");
+
+    struct bsi_session_lock* session_lock =
+        calloc(1, sizeof(struct bsi_session_lock));
+    bsi_session_lock_init(session_lock, server, lock);
+
+    bsi_util_slot_connect(&lock->events.new_surface,
+                          &session_lock->listen.new_surface,
+                          handle_session_lock_new_surface);
+    bsi_util_slot_connect(&lock->events.unlock,
+                          &session_lock->listen.unlock,
+                          handle_session_lock_unlock);
+    bsi_util_slot_connect(&lock->events.destroy,
+                          &session_lock->listen.destroy,
+                          handle_session_lock_destroy);
+
+    bsi_session_locks_add(server, session_lock);
+
+    wlr_session_lock_v1_send_locked(session_lock->lock);
+
+    struct bsi_output* output;
+    wl_list_for_each(output, &server->output.outputs, link_server)
+    {
+        bsi_output_surface_damage(output, NULL, true);
+    }
 }

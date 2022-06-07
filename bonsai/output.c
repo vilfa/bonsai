@@ -201,7 +201,7 @@ bsi_output_destroy(struct bsi_output* output)
                 toplevel, toplevel_tmp, &output->layers[i], link_output)
             {
                 union bsi_layer_surface surf = { .toplevel = toplevel };
-                if (!server->shutting_down)
+                if (!server->session.shutting_down)
                     wlr_layer_surface_v1_destroy(toplevel->layer_surface);
                 bsi_layer_surface_destroy(surf, BSI_LAYER_SURFACE_TOPLEVEL);
             }
@@ -240,7 +240,7 @@ handle_output_destroy(struct wl_listener* listener, void* data)
 
     if (wl_list_length(&server->output.outputs) == 1) {
         bsi_info("Last output destroyed, shutting down");
-        server->shutting_down = true;
+        server->session.shutting_down = true;
     }
 
     wlr_output_layout_remove(server->wlr_output_layout, output->output);

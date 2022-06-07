@@ -6,6 +6,7 @@
 #include <wayland-server-core.h>
 #include <wayland-util.h>
 #include <wlr/types/wlr_cursor.h>
+#include <wlr/types/wlr_idle.h>
 #include <wlr/types/wlr_keyboard.h>
 #include <wlr/types/wlr_pointer.h>
 #include <wlr/types/wlr_seat.h>
@@ -167,9 +168,14 @@ handle_pointer_motion(struct wl_listener* listener, void* data)
     struct wlr_pointer_motion_event* event = data;
     union bsi_cursor_event cursor_event = { .motion = event };
 
-    /* Firstly, move the cursor. */
+    /* Firstly, move the cursor and notify seat of activity. */
     wlr_cursor_move(
         device->cursor, device->device, event->delta_x, event->delta_y);
+
+    wlr_idle_notify_activity(server->wlr_idle, server->wlr_seat);
+
+    if (server->session.locked)
+        return;
 
     /* Secondly, check if we have any view stuff to do. */
     bsi_cursor_process_motion(server, cursor_event);
@@ -188,6 +194,9 @@ handle_pointer_motion_absolute(struct wl_listener* listener, void* data)
     wlr_cursor_warp_absolute(
         server->wlr_cursor, device->device, event->x, event->y);
 
+    if (server->session.locked)
+        return;
+
     /* Secondly, check if we have any view stuff to do. */
     bsi_cursor_process_motion(server, cursor_event);
 }
@@ -203,12 +212,18 @@ handle_pointer_button(struct wl_listener* listener, void* data)
     struct bsi_input_device* device =
         wl_container_of(listener, device, listen.button);
     struct bsi_server* server = device->server;
-    struct wlr_seat* wlr_seat = device->server->wlr_seat;
+
+    if (server->session.locked)
+        return;
+
+    struct wlr_seat* seat = device->server->wlr_seat;
     struct wlr_pointer_button_event* event = data;
 
     /* Notify client that has pointer focus of the event. */
     wlr_seat_pointer_notify_button(
-        wlr_seat, event->time_msec, event->button, event->state);
+        seat, event->time_msec, event->button, event->state);
+
+    wlr_idle_notify_activity(server->wlr_idle, server->wlr_seat);
 
     switch (event->state) {
         case WLR_BUTTON_RELEASED:
@@ -231,8 +246,8 @@ handle_pointer_button(struct wl_listener* listener, void* data)
                                                         &sy);
 
             if (scene_data == NULL) {
-                wlr_seat_pointer_notify_clear_focus(wlr_seat);
-                wlr_seat_keyboard_notify_clear_focus(wlr_seat);
+                wlr_seat_pointer_notify_clear_focus(seat);
+                wlr_seat_keyboard_notify_clear_focus(seat);
                 return;
             }
 
@@ -266,6 +281,10 @@ handle_pointer_axis(struct wl_listener* listener, void* data)
     struct bsi_input_device* device =
         wl_container_of(listener, device, listen.axis);
     struct bsi_server* server = device->server;
+
+    if (server->session.locked)
+        return;
+
     struct wlr_seat* wlr_seat = server->wlr_seat;
     struct wlr_pointer_axis_event* event = data;
 
@@ -276,6 +295,8 @@ handle_pointer_axis(struct wl_listener* listener, void* data)
                                  event->delta,
                                  event->delta_discrete,
                                  event->source);
+
+    wlr_idle_notify_activity(server->wlr_idle, server->wlr_seat);
 }
 
 void
@@ -283,10 +304,11 @@ handle_pointer_frame(struct wl_listener* listener, void* data)
 {
     struct bsi_input_device* device =
         wl_container_of(listener, device, listen.frame);
-    struct wlr_seat* wlr_seat = device->server->wlr_seat;
+    struct bsi_server* server = device->server;
+    struct wlr_seat* seat = server->wlr_seat;
 
     /* Notify client that has pointer focus of the event. */
-    wlr_seat_pointer_notify_frame(wlr_seat);
+    wlr_seat_pointer_notify_frame(seat);
 }
 
 void
@@ -297,6 +319,10 @@ handle_pointer_swipe_begin(struct wl_listener* listener, void* data)
     struct bsi_input_device* device =
         wl_container_of(listener, device, listen.swipe_begin);
     struct bsi_server* server = device->server;
+
+    if (server->session.locked)
+        return;
+
     struct wlr_pointer_swipe_begin_event* event = data;
 
     bsi_debug("swipe_begin { time_msec=%u, fingers=%u }",
@@ -306,6 +332,8 @@ handle_pointer_swipe_begin(struct wl_listener* listener, void* data)
     server->cursor.cursor_mode = BSI_CURSOR_SWIPE;
     server->cursor.swipe_fingers = event->fingers;
     server->cursor.swipe_timest = event->time_msec;
+
+    wlr_idle_notify_activity(server->wlr_idle, server->wlr_seat);
 }
 
 void
@@ -316,6 +344,10 @@ handle_pointer_swipe_update(struct wl_listener* listener, void* data)
     struct bsi_input_device* device =
         wl_container_of(listener, device, listen.swipe_update);
     struct bsi_server* server = device->server;
+
+    if (server->session.locked)
+        return;
+
     struct wlr_pointer_swipe_update_event* event = data;
 
     bsi_debug("swipe_update { time_msec=%u, fingers=%u, dx=%.3f, dy=%.3f }",
@@ -336,6 +368,10 @@ handle_pointer_swipe_end(struct wl_listener* listener, void* data)
     struct bsi_input_device* device =
         wl_container_of(listener, device, listen.swipe_end);
     struct bsi_server* server = device->server;
+
+    if (server->session.locked)
+        return;
+
     struct wlr_pointer_swipe_end_event* event = data;
 
     bsi_debug("swipe_end { time_msec=%u, cancelled=%d }",
@@ -393,10 +429,17 @@ handle_pointer_pinch_begin(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event pinch_begin from wlr_input_device");
 
-    // struct bsi_input_device* device =
-    //     wl_container_of(listener, device, listen.pinch_begin);
-    // struct wlr_seat* seat = device->server->wlr_seat;
-    // struct wlr_pointer_pinch_begin_event* event = data;
+    struct bsi_input_device* device =
+        wl_container_of(listener, device, listen.pinch_begin);
+    struct bsi_server* server = device->server;
+
+    if (server->session.locked)
+        return;
+
+    struct wlr_seat* seat = server->wlr_seat;
+    struct wlr_pointer_pinch_begin_event* event = data;
+
+    wlr_idle_notify_activity(device->server->wlr_idle, seat);
 }
 
 void
@@ -404,10 +447,15 @@ handle_pointer_pinch_update(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event pinch_update from wlr_input_device");
 
-    // struct bsi_input_device* device =
-    //     wl_container_of(listener, device, listen.pinch_update);
-    // struct wlr_seat* seat = device->server->wlr_seat;
-    // struct wlr_pointer_pinch_update_event* event = data;
+    struct bsi_input_device* device =
+        wl_container_of(listener, device, listen.pinch_update);
+    struct bsi_server* server = device->server;
+
+    if (server->session.locked)
+        return;
+
+    struct wlr_seat* seat = server->wlr_seat;
+    struct wlr_pointer_pinch_update_event* event = data;
 }
 
 void
@@ -415,10 +463,15 @@ handle_pointer_pinch_end(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event pinch_end from wlr_input_device");
 
-    // struct bsi_input_device* device =
-    //     wl_container_of(listener, device, listen.pinch_update);
-    // struct wlr_seat* seat = device->server->wlr_seat;
-    // struct wlr_pointer_pinch_end_event* event = data;
+    struct bsi_input_device* device =
+        wl_container_of(listener, device, listen.pinch_end);
+    struct bsi_server* server = device->server;
+
+    if (server->session.locked)
+        return;
+
+    struct wlr_seat* seat = server->wlr_seat;
+    struct wlr_pointer_pinch_end_event* event = data;
 }
 
 void
@@ -426,10 +479,17 @@ handle_pointer_hold_begin(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event hold_begin from wlr_input_device");
 
-    // struct bsi_input_device* device =
-    //     wl_container_of(listener, device, listen.pinch_update);
-    // struct wlr_seat* seat = device->server->wlr_seat;
-    // struct wlr_pointer_hold_begin_event* event = data;
+    struct bsi_input_device* device =
+        wl_container_of(listener, device, listen.hold_begin);
+    struct bsi_server* server = device->server;
+
+    if (server->session.locked)
+        return;
+
+    struct wlr_seat* seat = server->wlr_seat;
+    struct wlr_pointer_hold_begin_event* event = data;
+
+    wlr_idle_notify_activity(device->server->wlr_idle, seat);
 }
 
 void
@@ -437,10 +497,15 @@ handle_pointer_hold_end(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event hold_end from wlr_input_device");
 
-    // struct bsi_input_device* device =
-    //     wl_container_of(listener, device, listen.pinch_update);
-    // struct wlr_seat* seat = device->server->wlr_seat;
-    // struct wlr_pointer_hold_end_event* event = data;
+    struct bsi_input_device* device =
+        wl_container_of(listener, device, listen.hold_end);
+    struct bsi_server* server = device->server;
+
+    if (server->session.locked)
+        return;
+
+    struct wlr_seat* seat = server->wlr_seat;
+    struct wlr_pointer_hold_end_event* event = data;
 }
 
 void
@@ -450,18 +515,21 @@ handle_keyboard_key(struct wl_listener* listener, void* data)
 
     struct bsi_input_device* device =
         wl_container_of(listener, device, listen.key);
-    struct wlr_seat* wlr_seat = device->server->wlr_seat;
+    struct bsi_server* server = device->server;
+    struct wlr_seat* seat = server->wlr_seat;
     struct wlr_keyboard_key_event* event = data;
+
+    wlr_idle_notify_activity(device->server->wlr_idle, seat);
 
     if (!bsi_keyboard_keybinds_process(device, event)) {
         /* A seat can only have one keyboard, but multiple keyboards can be
          * attached. Switch the seat to the correct underlying keyboard. Roots
          * handles this for us :). */
-        wlr_seat_set_keyboard(wlr_seat, device->device->keyboard);
+        wlr_seat_set_keyboard(seat, device->device->keyboard);
         /* The server knows not thy keybind, the client shall handle it. Notify
          * client of keys not handled by the server. */
         wlr_seat_keyboard_notify_key(
-            wlr_seat, event->time_msec, event->keycode, event->state);
+            seat, event->time_msec, event->keycode, event->state);
     }
 }
 
@@ -472,15 +540,18 @@ handle_keyboard_modifiers(struct wl_listener* listener, void* data)
 
     struct bsi_input_device* device =
         wl_container_of(listener, device, listen.modifiers);
-    struct wlr_seat* wlr_seat = device->server->wlr_seat;
+    struct bsi_server* server = device->server;
+    struct wlr_seat* seat = server->wlr_seat;
     struct wlr_input_device* dev = device->device;
+
+    wlr_idle_notify_activity(device->server->wlr_idle, seat);
 
     /* A seat can only have one keyboard, but multiple keyboards can be
      * attached. Switch the seat to the correct underlying keyboard. Roots
      * handles this for us :). */
-    wlr_seat_set_keyboard(wlr_seat, dev->keyboard);
+    wlr_seat_set_keyboard(seat, dev->keyboard);
     /* Notify client of keys not handled by the server. */
-    wlr_seat_keyboard_notify_modifiers(wlr_seat, &dev->keyboard->modifiers);
+    wlr_seat_keyboard_notify_modifiers(seat, &dev->keyboard->modifiers);
 }
 
 void

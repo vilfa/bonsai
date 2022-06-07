@@ -2,6 +2,7 @@
 
 #include <wayland-server-core.h>
 #include <wlr/types/wlr_server_decoration.h>
+#include <wlr/types/wlr_session_lock_v1.h>
 #include <wlr/types/wlr_xdg_activation_v1.h>
 #include <wlr/types/wlr_xdg_decoration_v1.h>
 
@@ -32,13 +33,11 @@ struct bsi_server
     struct wlr_xdg_activation_v1* wlr_xdg_activation;
     struct wlr_idle* wlr_idle;
     struct wlr_idle_inhibit_manager_v1* wlr_idle_inhibit_manager;
+    struct wlr_session_lock_manager_v1* wlr_session_lock_manager;
 
     /*
      * Global state
      */
-    bool shutting_down;
-    bool extern_setup[bsi_server_extern_prog_len];
-
     struct
     {
         /* wlr_backend */
@@ -72,12 +71,15 @@ struct bsi_server
         struct wl_listener new_inhibitor;
         /* wlr_idle */
         struct wl_listener activity_notify;
+        /* wlr_session_lock_manager_v1 */
+        struct wl_listener new_lock;
         /* bsi_workspace */
         struct wl_list workspace; // bsi_workspace_listener::link
     } listen;
 
     struct
     {
+        bool extern_setup[bsi_server_extern_prog_len];
         struct wl_list outputs;
     } output;
 
@@ -90,6 +92,13 @@ struct bsi_server
     {
         struct wl_list inhibitors;
     } idle;
+
+    struct
+    {
+        bool locked;
+        bool shutting_down;
+        struct wl_list locks;
+    } session;
 
     /* So, the way I imagine it, a workspace can be attached to a single output
      * at one time, with each output being able to hold multiple workspaces.

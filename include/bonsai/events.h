@@ -38,6 +38,8 @@ extern bsi_notify_func_t handle_xdg_request_activate;
 /* wlr_idle_inhibit_manager_v1 */
 extern bsi_notify_func_t handle_idle_manager_new_inhibitor;
 extern bsi_notify_func_t handle_idle_activity_notify;
+/* wlr_session_lock_manager_v1 */
+extern bsi_notify_func_t handle_session_new_lock;
 
 /*
  * bsi_view
@@ -128,3 +130,19 @@ extern bsi_notify_func_t handle_xdg_decoration_request_mode;
  * bsi_idle_inhibitor
  */
 extern bsi_notify_func_t handle_idle_inhibitor_destroy;
+
+/*
+ * bsi_session_lock
+ */
+extern bsi_notify_func_t handle_session_lock_new_surface;
+extern bsi_notify_func_t handle_session_lock_unlock;
+extern bsi_notify_func_t handle_session_lock_destroy;
+
+/*
+ * bsi_session_lock_surface
+ */
+extern bsi_notify_func_t handle_lock_surface_map;
+extern bsi_notify_func_t handle_lock_surface_destroy;
+extern bsi_notify_func_t handle_lock_surface_surface_commit;
+extern bsi_notify_func_t handle_lock_surface_output_mode;
+extern bsi_notify_func_t handle_lock_surface_output_commit;

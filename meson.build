@@ -36,6 +36,11 @@ if not ext_swaybg.found()
     warning('swaybg is needed for wallpaper support')
 endif
 
+ext_swaylock = find_program('swaylock', required : false)
+if not ext_swaylock.found()
+    warning('swaylock is needed for session locking support')
+endif
+
 ext_bemenu = find_program('bemenu', required : false)
 if not ext_bemenu.found()
     warning('bemenu is needed for run menu support')

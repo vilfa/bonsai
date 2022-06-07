@@ -194,6 +194,12 @@ bsi_keyboard_mod_super_handle(struct bsi_server* server, xkb_keysym_t sym)
 {
     bsi_debug("Got Super mod");
     switch (sym) {
+        case XKB_KEY_l:
+        case XKB_KEY_L: {
+            bsi_debug("Got Super+L -> lock session");
+            char* const argp[] = { "swaylock", NULL };
+            return bsi_util_tryexec(argp, 2);
+        }
         case XKB_KEY_d:
         case XKB_KEY_D: {
             bsi_debug("Got Super+D -> bemenu");

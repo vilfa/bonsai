@@ -399,11 +399,11 @@ bsi_layers_output_arrange(struct bsi_output* output)
     }
 
     /* Arrange fullscreen views. */
-    struct bsi_view* v;
+    struct bsi_view* view;
     wl_list_for_each(
-        v, &output->server->scene.views_fullscreen, link_fullscreen)
+        view, &output->server->scene.views_fullscreen, link_fullscreen)
     {
-        wlr_scene_node_raise_to_top(v->scene_node);
+        wlr_scene_node_raise_to_top(view->scene_node);
     }
 
     /* Last, focus the topmost keyboard-interactive layer, if it exists. */
@@ -479,7 +479,7 @@ handle_layershell_toplvl_unmap(struct wl_listener* listener, void* data)
     struct bsi_output* output = layer_toplevel->output;
     struct bsi_server* server = output->server;
 
-    if (server->shutting_down)
+    if (server->session.shutting_down)
         return;
 
     if (wlr_seat_pointer_surface_has_focus(
@@ -500,7 +500,7 @@ handle_layershell_toplvl_destroy(struct wl_listener* listener, void* data)
     struct bsi_output* output = layer_toplevel->output;
     struct bsi_server* server = output->server;
 
-    if (server->shutting_down)
+    if (server->session.shutting_down)
         return;
 
     /* Destroy the layer and rearrange this output. */
@@ -651,7 +651,7 @@ handle_layershell_popup_unmap(struct wl_listener* listener, void* data)
     struct bsi_output* output = toplevel_parent->output;
     struct bsi_server* server = output->server;
 
-    if (server->shutting_down)
+    if (server->session.shutting_down)
         return;
 
     if (wlr_seat_pointer_surface_has_focus(output->server->wlr_seat,
@@ -674,7 +674,7 @@ handle_layershell_popup_destroy(struct wl_listener* listener, void* data)
                                               BSI_LAYER_SURFACE_POPUP);
     struct bsi_server* server = toplevel_parent->output->server;
 
-    if (server->shutting_down)
+    if (server->session.shutting_down)
         return;
 
     bsi_layer_surface_destroy(layer_surface, BSI_LAYER_SURFACE_POPUP);
@@ -774,7 +774,7 @@ handle_layershell_subsurface_unmap(struct wl_listener* listener, void* data)
     struct bsi_output* output = layer_subsurface->member_of->output;
     struct bsi_server* server = output->server;
 
-    if (server->shutting_down)
+    if (server->session.shutting_down)
         return;
 
     if (wlr_seat_pointer_surface_has_focus(
@@ -797,7 +797,7 @@ handle_layershell_subsurface_destroy(struct wl_listener* listener, void* data)
                                               BSI_LAYER_SURFACE_TOPLEVEL);
     struct bsi_server* server = toplevel_parent->output->server;
 
-    if (server->shutting_down)
+    if (server->session.shutting_down)
         return;
 
     wl_list_remove(&layer_subsurface->link);
