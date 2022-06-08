@@ -136,16 +136,20 @@ bsi_keyboard_mod_none_handle(struct bsi_server* server, xkb_keysym_t sym)
         case XKB_KEY_Escape: {
             bsi_debug("Got Escape -> un-fullscreen if fulscreen");
             struct bsi_view* focused = bsi_views_get_focused(server);
-            if (focused && focused->state == BSI_VIEW_STATE_FULLSCREEN)
+            if (focused && focused->state == BSI_VIEW_STATE_FULLSCREEN) {
                 bsi_view_set_fullscreen(focused, false);
-            return true;
+                return true;
+            }
+            return false;
         }
         case XKB_KEY_F11: {
             bsi_debug("Got F11 -> fullscreen focused view");
             struct bsi_view* focused = bsi_views_get_focused(server);
-            if (focused && focused->state != BSI_VIEW_STATE_FULLSCREEN)
+            if (focused && focused->state != BSI_VIEW_STATE_FULLSCREEN) {
                 bsi_view_set_fullscreen(focused, true);
-            return true;
+                return true;
+            }
+            return false;
         }
     }
     return false;

@@ -6,6 +6,7 @@
 #include <wlr/types/wlr_xdg_activation_v1.h>
 #include <wlr/types/wlr_xdg_decoration_v1.h>
 
+#include "bonsai/config/def.h"
 #include "bonsai/desktop/lock.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/desktop/workspace.h"
@@ -101,6 +102,13 @@ struct bsi_server
         struct bsi_session_lock* lock;
     } session;
 
+    struct
+    {
+        struct bsi_config* all;
+        char* wallpaper;
+        size_t workspaces_max;
+    } config;
+
     /* So, the way I imagine it, a workspace can be attached to a single output
      * at one time, with each output being able to hold multiple workspaces.
      * ---
@@ -139,31 +147,13 @@ enum bsi_server_extern_prog
     BSI_SERVER_EXTERN_PROG_MAX,
 };
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-variable"
-static char* bsi_server_extern_progs[] = { [BSI_SERVER_EXTERN_PROG_WALLPAPER] =
-                                               "swaybg",
-                                           [BSI_SERVER_EXTERN_PROG_BAR] =
-                                               "waybar" };
-
-/* The arguments for the external program. */
-static char* bsi_server_extern_progs_args[] = {
-    [BSI_SERVER_EXTERN_PROG_WALLPAPER] = "--image=assets/Wallpaper-Default.jpg",
-    [BSI_SERVER_EXTERN_PROG_BAR] = "",
-};
-
-/* If a new instance should be started for each output. */
-static bool bsi_server_extern_progs_per_output[] = {
-    [BSI_SERVER_EXTERN_PROG_WALLPAPER] = false,
-    [BSI_SERVER_EXTERN_PROG_BAR] = false,
-};
-#pragma GCC diagnostic pop
-
 struct bsi_server*
-bsi_server_init(struct bsi_server* server);
+bsi_server_init(struct bsi_server* server, struct bsi_config* config);
 
 void
 bsi_server_setup_extern(struct bsi_server* server);
 
 void
 bsi_server_finish(struct bsi_server* server);
+
+#undef bsi_server_extern_prog_len

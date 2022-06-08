@@ -14,6 +14,9 @@ bonsai_src = files(
     'desktop/decoration.c',
     'desktop/idle.c',
     'desktop/lock.c',
+
+    'config/def.c',
+    'config/parse.c',
 )
 
 bonsai_dep = [

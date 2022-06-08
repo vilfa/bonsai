@@ -121,16 +121,16 @@ bsi_layer_surface_focus(struct bsi_layer_surface_toplevel* toplevel)
     struct bsi_server* server = toplevel->output->server;
     struct wlr_seat* seat = server->wlr_seat;
     struct wlr_keyboard* keyboard = wlr_seat_get_keyboard(seat);
-    struct wlr_surface* prev_focused = seat->keyboard_state.focused_surface;
+    struct wlr_surface* prev_keyboard = seat->keyboard_state.focused_surface;
 
     /* The surface is already focused. */
-    if (prev_focused == toplevel->layer_surface->surface)
+    if (prev_keyboard == toplevel->layer_surface->surface)
         return;
 
-    if (prev_focused && wlr_surface_is_xdg_surface(prev_focused)) {
+    if (prev_keyboard && wlr_surface_is_xdg_surface(prev_keyboard)) {
         /* Deactivate the previously focused surface and notify the client. */
         struct wlr_xdg_surface* prev_focused_xdg =
-            wlr_xdg_surface_from_wlr_surface(prev_focused);
+            wlr_xdg_surface_from_wlr_surface(prev_keyboard);
         assert(prev_focused_xdg->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL);
         wlr_xdg_toplevel_set_activated(prev_focused_xdg->toplevel, false);
     }

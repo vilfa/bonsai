@@ -28,22 +28,6 @@ enum bsi_cursor_image
     BSI_CURSOR_IMAGE_RESIZE_RIGHT,
 };
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-variable"
-static const char* bsi_cursor_image_map[] = {
-    [BSI_CURSOR_IMAGE_NORMAL] = "left_ptr",
-    [BSI_CURSOR_IMAGE_MOVE] = "move",
-    [BSI_CURSOR_IMAGE_RESIZE_TOP] = "top_side",
-    [BSI_CURSOR_IMAGE_RESIZE_TOP_LEFT] = "top_left_corner",
-    [BSI_CURSOR_IMAGE_RESIZE_TOP_RIGHT] = "top_right_corner",
-    [BSI_CURSOR_IMAGE_RESIZE_BOTTOM] = "bottom_side",
-    [BSI_CURSOR_IMAGE_RESIZE_BOTTOM_LEFT] = "bottom_left_corner",
-    [BSI_CURSOR_IMAGE_RESIZE_BOTTOM_RIGHT] = "bottom_right_corner",
-    [BSI_CURSOR_IMAGE_RESIZE_LEFT] = "left_side",
-    [BSI_CURSOR_IMAGE_RESIZE_RIGHT] = "right_side",
-};
-#pragma GCC diagnostic pop
-
 /**
  * @brief Holds a single pointer event passed to various functions.
  *

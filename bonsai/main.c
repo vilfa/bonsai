@@ -22,6 +22,8 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 
+#include "bonsai/config/def.h"
+#include "bonsai/config/parse.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/events.h"
 #include "bonsai/input.h"
@@ -41,10 +43,6 @@
 
 // TODO: Implement server decoration.
 
-// TODO: Look into other useful interfaces.
-
-// TODO: Look into adding xwayland support.
-
 // TODO: Dynamic output resolution setting.
 
 // TODO: Config file.
@@ -55,8 +53,11 @@ main(void)
     wlr_log_init(WLR_DEBUG, NULL);
 
     struct bsi_server server;
+    struct bsi_config config;
 
-    bsi_server_init(&server);
+    bsi_config_init(&config, &server);
+    bsi_config_parse(&config);
+    bsi_server_init(&server, &config);
 
     server.wl_socket = wl_display_add_socket_auto(server.wl_display);
     bsi_debug("Created server socket '%s'", server.wl_socket);

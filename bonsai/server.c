@@ -38,6 +38,7 @@
 #include <wlr/util/box.h>
 #include <wlr/util/log.h>
 
+#include "bonsai/config/def.h"
 #include "bonsai/desktop/decoration.h"
 #include "bonsai/desktop/idle.h"
 #include "bonsai/desktop/layers.h"
@@ -51,9 +52,35 @@
 #include "bonsai/server.h"
 #include "bonsai/util.h"
 
+static char* bsi_server_extern_progs[] = { [BSI_SERVER_EXTERN_PROG_WALLPAPER] =
+                                               "swaybg",
+                                           [BSI_SERVER_EXTERN_PROG_BAR] =
+                                               "waybar" };
+
+/* If a new instance should be started for each output. */
+static bool bsi_server_extern_progs_per_output[] = {
+    [BSI_SERVER_EXTERN_PROG_WALLPAPER] = false,
+    [BSI_SERVER_EXTERN_PROG_BAR] = false,
+};
+
 struct bsi_server*
-bsi_server_init(struct bsi_server* server)
+bsi_server_init(struct bsi_server* server, struct bsi_config* config)
 {
+    server->config.all = config;
+
+    struct bsi_config_atom* atom;
+    wl_list_for_each(atom, &config->atoms, link)
+    {
+        switch (atom->type) {
+            case BSI_CONFIG_ATOM_WALLPAPER:
+            case BSI_CONFIG_ATOM_WORKSPACE:
+                atom->impl->apply(atom, server);
+                break;
+            default:
+                break;
+        }
+    }
+
     wl_list_init(&server->output.outputs);
     bsi_debug("Initialized bsi_outputs");
 
@@ -260,6 +287,9 @@ bsi_server_init(struct bsi_server* server)
         server->output.extern_setup[i] = false;
     }
 
+    server->config.wallpaper = "assets/Wallpaper-Default.jpg";
+    server->config.workspaces_max = 5;
+
     return server;
 }
 
@@ -270,7 +300,15 @@ bsi_server_setup_extern(struct bsi_server* server)
         if (!server->output.extern_setup[i] ||
             bsi_server_extern_progs_per_output[i]) {
             const char* exep = bsi_server_extern_progs[i];
-            char* argsp = bsi_server_extern_progs_args[i];
+            char* argsp;
+            if (i == BSI_SERVER_EXTERN_PROG_WALLPAPER) {
+                char swaybg_image[255] = { 0 };
+                snprintf(
+                    swaybg_image, 255, "--image=%s", server->config.wallpaper);
+                argsp = swaybg_image;
+            } else {
+                argsp = "";
+            }
             char** argp = NULL;
             size_t len_argp =
                 bsi_util_split_argsp((char*)exep, argsp, " ", &argp);
@@ -322,24 +360,33 @@ handle_new_output(struct wl_listener* listener, void* data)
 
     // TODO: Allow user to pick output mode.
 
+    bool has_config = false;
+    struct bsi_config_atom* atom;
+    wl_list_for_each(atom, &server->config.all->atoms, link)
+    {
+        if (atom->type == BSI_CONFIG_ATOM_OUTPUT) {
+            has_config = atom->impl->apply(atom, server);
+        }
+    }
+
     struct wlr_output_mode* preffered_mode =
         wlr_output_preferred_mode(wlr_output);
     /* Set preffered mode first, if output has one. */
-    if (preffered_mode) {
+    if (preffered_mode && !has_config) {
         bsi_info("Output has preffered mode, setting %dx%d@%d",
                  preffered_mode->width,
                  preffered_mode->height,
                  preffered_mode->refresh);
 
-        wlr_output_set_mode(wlr_output, preffered_mode);
         wlr_output_enable(wlr_output, true);
+        wlr_output_set_mode(wlr_output, preffered_mode);
         if (!wlr_output_commit(wlr_output))
             return;
-    } else if (!wl_list_empty(&wlr_output->modes)) {
+    } else if (!wl_list_empty(&wlr_output->modes) && !has_config) {
         struct wlr_output_mode* mode =
             wl_container_of(wlr_output->modes.prev, mode, link);
-        wlr_output_set_mode(wlr_output, mode);
         wlr_output_enable(wlr_output, true);
+        wlr_output_set_mode(wlr_output, mode);
         if (!wlr_output_commit(wlr_output))
             return;
     }

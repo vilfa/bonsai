@@ -114,8 +114,6 @@ bsi_view_destroy(struct bsi_view* view)
     wl_list_remove(&view->listen.request_move.link);
     wl_list_remove(&view->listen.request_resize.link);
     wl_list_remove(&view->listen.request_show_window_menu.link);
-    /* bsi_workspaces */
-    // wl_list_remove(&view->listen.workspace_active.link);
     free(view);
 }
 
@@ -124,17 +122,23 @@ bsi_view_focus(struct bsi_view* view)
 {
     struct bsi_server* server = view->server;
     struct wlr_seat* seat = server->wlr_seat;
-    struct wlr_surface* prev_focused = seat->keyboard_state.focused_surface;
+    struct wlr_surface* prev_pointer = seat->pointer_state.focused_surface;
+    struct wlr_surface* prev_keyboard = seat->keyboard_state.focused_surface;
 
     /* The surface is already focused. */
-    if (prev_focused && prev_focused == view->toplevel->base->surface)
+    if (prev_keyboard && prev_keyboard == view->toplevel->base->surface)
         return;
 
-    /* The surface is not a toplevel surface. */
-    if (prev_focused && wlr_surface_is_xdg_surface(prev_focused)) {
+    if (prev_keyboard && wlr_surface_is_xdg_surface(prev_keyboard)) {
         /* Deactivate the previously focused surface and notify the client. */
         struct wlr_xdg_surface* prev_focused_xdg =
-            wlr_xdg_surface_from_wlr_surface(prev_focused);
+            wlr_xdg_surface_from_wlr_surface(prev_keyboard);
+        wlr_xdg_toplevel_set_activated(prev_focused_xdg->toplevel, false);
+    }
+
+    if (prev_pointer && wlr_surface_is_xdg_surface(prev_pointer)) {
+        struct wlr_xdg_surface* prev_focused_xdg =
+            wlr_xdg_surface_from_wlr_surface(prev_pointer);
         wlr_xdg_toplevel_set_activated(prev_focused_xdg->toplevel, false);
     }
 
@@ -144,15 +148,6 @@ bsi_view_focus(struct bsi_view* view)
     /* Node to top & activate. */
     wlr_scene_node_raise_to_top(view->scene_node);
     wlr_xdg_toplevel_set_activated(view->toplevel, true);
-
-    /* Update decor if SSD. */
-    // struct bsi_view* v;
-    // wl_list_for_each(v, &server->scene.views, link_server)
-    // {
-    //     if (view->xdg_decoration_mode ==
-    //         WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE)
-    //         bsi_decoration_update(view->xdg_decoration);
-    // }
 
     /* Seat, enter this surface with the keyboard. Leave the pointer. */
     struct wlr_keyboard* keyboard = wlr_seat_get_keyboard(seat);
