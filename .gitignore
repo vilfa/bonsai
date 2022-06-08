@@ -63,3 +63,6 @@ dkms.conf
 
 # # # Meson # # #
 **/builddir
+
+# # # Bonsai # # #
+**/log*
