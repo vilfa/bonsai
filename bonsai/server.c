@@ -38,7 +38,7 @@
 #include <wlr/util/box.h>
 #include <wlr/util/log.h>
 
-#include "bonsai/config/def.h"
+#include "bonsai/config/config.h"
 #include "bonsai/desktop/decoration.h"
 #include "bonsai/desktop/idle.h"
 #include "bonsai/desktop/layers.h"
@@ -67,19 +67,10 @@ struct bsi_server*
 bsi_server_init(struct bsi_server* server, struct bsi_config* config)
 {
     server->config.all = config;
+    server->config.wallpaper = NULL;
+    server->config.workspaces_max = 0;
 
-    struct bsi_config_atom* atom;
-    wl_list_for_each(atom, &config->atoms, link)
-    {
-        switch (atom->type) {
-            case BSI_CONFIG_ATOM_WALLPAPER:
-            case BSI_CONFIG_ATOM_WORKSPACE:
-                atom->impl->apply(atom, server);
-                break;
-            default:
-                break;
-        }
-    }
+    bsi_config_apply(config);
 
     wl_list_init(&server->output.outputs);
     bsi_debug("Initialized bsi_outputs");
@@ -287,8 +278,10 @@ bsi_server_init(struct bsi_server* server, struct bsi_config* config)
         server->output.extern_setup[i] = false;
     }
 
-    server->config.wallpaper = "assets/Wallpaper-Default.jpg";
-    server->config.workspaces_max = 5;
+    if (!server->config.wallpaper)
+        server->config.wallpaper = "assets/Wallpaper-Default.jpg";
+    if (!server->config.workspaces_max)
+        server->config.workspaces_max = 5;
 
     return server;
 }
@@ -324,6 +317,8 @@ bsi_server_finish(struct bsi_server* server)
 {
     server->session.shutting_down = true;
 
+    bsi_debug("Server finish");
+
     /* wlr_backend */
     wl_list_remove(&server->listen.new_output.link);
     wl_list_remove(&server->listen.new_input.link);
@@ -340,6 +335,8 @@ bsi_server_finish(struct bsi_server* server)
     wl_list_remove(&server->listen.request_start_drag.link);
     /* wlr_xdg_shell */
     wl_list_remove(&server->listen.xdg_new_surface.link);
+
+    bsi_config_destroy(server->config.all);
 }
 
 /**
@@ -358,8 +355,12 @@ handle_new_output(struct wl_listener* listener, void* data)
     wlr_output_init_render(
         wlr_output, server->wlr_allocator, server->wlr_renderer);
 
-    // TODO: Allow user to pick output mode.
+    /* Allocate output. */
+    struct bsi_output* output = calloc(1, sizeof(struct bsi_output));
+    output->output = wlr_output;
+    bsi_outputs_add(server, output);
 
+    /* Configure output. */
     bool has_config = false;
     struct bsi_config_atom* atom;
     wl_list_for_each(atom, &server->config.all->atoms, link)
@@ -378,22 +379,24 @@ handle_new_output(struct wl_listener* listener, void* data)
                  preffered_mode->height,
                  preffered_mode->refresh);
 
-        wlr_output_enable(wlr_output, true);
         wlr_output_set_mode(wlr_output, preffered_mode);
-        if (!wlr_output_commit(wlr_output))
+        wlr_output_enable(wlr_output, true);
+        if (!wlr_output_commit(wlr_output)) {
+            bsi_error("Failed to commit on output '%s'", wlr_output->name);
             return;
+        }
     } else if (!wl_list_empty(&wlr_output->modes) && !has_config) {
         struct wlr_output_mode* mode =
             wl_container_of(wlr_output->modes.prev, mode, link);
-        wlr_output_enable(wlr_output, true);
         wlr_output_set_mode(wlr_output, mode);
-        if (!wlr_output_commit(wlr_output))
+        wlr_output_enable(wlr_output, true);
+        if (!wlr_output_commit(wlr_output)) {
+            bsi_error("Failed to commit on output '%s'", wlr_output->name);
             return;
+        }
     }
 
-    struct bsi_output* output = calloc(1, sizeof(struct bsi_output));
     bsi_output_init(output, server, wlr_output);
-    bsi_outputs_add(server, output);
 
     /* Attach a workspace to the output. */
     char workspace_name[25];

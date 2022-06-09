@@ -27,19 +27,14 @@ struct bsi_config_atom
     struct wl_list link;
 };
 
-struct bsi_config
-{
-    struct bsi_server* server;
-    struct wl_list atoms; // struct bsi_config_atom
-    bool found;
-    char path[255];
-};
-
 struct bsi_config_atom*
 bsi_config_atom_init(struct bsi_config_atom* atom,
                      enum bsi_config_atom_type type,
                      const struct bsi_config_atom_impl* impl,
                      const char* config);
+
+void
+bsi_config_atom_destroy(struct bsi_config_atom* atom);
 
 bool
 bsi_config_output_apply(struct bsi_config_atom* atom,

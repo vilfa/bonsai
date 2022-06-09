@@ -6,7 +6,7 @@
 #include <wlr/types/wlr_xdg_activation_v1.h>
 #include <wlr/types/wlr_xdg_decoration_v1.h>
 
-#include "bonsai/config/def.h"
+#include "bonsai/config/config.h"
 #include "bonsai/desktop/lock.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/desktop/workspace.h"

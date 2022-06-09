@@ -1,10 +1,11 @@
+#define _POSIX_C_SOURCE 200809L
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <wayland-util.h>
 #include <wlr/types/wlr_output.h>
 
-#include "bonsai/config/def.h"
+#include "bonsai/config/atom.h"
 #include "bonsai/log.h"
 #include "bonsai/output.h"
 #include "bonsai/util.h"
@@ -17,8 +18,15 @@ bsi_config_atom_init(struct bsi_config_atom* atom,
 {
     atom->type = type;
     atom->impl = impl;
-    atom->cmd = config;
+    atom->cmd = strdup(config);
     return atom;
+}
+
+void
+bsi_config_atom_destroy(struct bsi_config_atom* atom)
+{
+    free((void*)atom->cmd);
+    free(atom);
 }
 
 bool
@@ -29,7 +37,7 @@ bsi_config_output_apply(struct bsi_config_atom* atom, struct bsi_server* server)
     char **cmd = NULL, **resl = NULL;
     size_t len_cmd = bsi_util_split_delim((char*)atom->cmd, " ", &cmd);
 
-    if (len_cmd != 5 || strncmp("output", cmd[0], 6) ||
+    if (len_cmd != 7 || strncmp("output", cmd[0], 6) ||
         strncmp("mode", cmd[2], 6) || strncmp("refresh", cmd[4], 7))
         goto error;
 
@@ -48,7 +56,7 @@ bsi_config_output_apply(struct bsi_config_atom* atom, struct bsi_server* server)
         goto error;
 
     errno = 0;
-    int32_t oh = strtol(resl[2], NULL, 10);
+    int32_t oh = strtol(resl[1], NULL, 10);
     if (errno)
         goto error;
 
@@ -57,26 +65,29 @@ bsi_config_output_apply(struct bsi_config_atom* atom, struct bsi_server* server)
     if (errno)
         goto error;
 
-    struct wlr_output_mode mode = {
-        .width = ow, .height = oh, .refresh = or, .preferred = true
-    };
+    // struct wlr_output_mode mode = {
+    // .width = ow, .height = oh, .refresh = or, .preferred = true
+    // };
 
     struct bsi_output* output;
     wl_list_for_each(output, &server->output.outputs, link_server)
     {
         if (strcmp(output->output->name, output_name) == 0) {
-            if (!output->output->enabled)
-                wlr_output_enable(output->output, true);
-            wlr_output_set_mode(output->output, &mode);
+            wlr_output_set_custom_mode(output->output, ow, oh, or);
+            // wlr_output_set_mode(output->output, &mode);
+            wlr_output_enable(output->output, true);
+            if (!wlr_output_commit(output->output)) {
+                bsi_error("Failed to commit on output '%s'",
+                          output->output->name);
+                return false;
+            }
 
-            bsi_info("Set mode { width=%d, height=%d, refresh=%d, preffered=%d "
-                     "} for output %ld/%s",
-                     mode.width,
-                     mode.height,
-                     mode.refresh,
-                     mode.preferred,
-                     output->id,
-                     output->output->name);
+            bsi_info("Set mode { width=%d, height=%d, refresh=%d } for output "
+                     "%ld/%s",
+                     ow,
+                     oh,
+                     or
+                     , output->id, output->output->name);
 
             return true;
         }
@@ -111,6 +122,7 @@ bsi_config_workspace_apply(struct bsi_config_atom* atom,
     size_t len_cmd = bsi_util_split_delim((char*)atom->cmd, " ", &cmd);
     if (len_cmd != 5 || strncmp("workspace", cmd[0], 9) ||
         strncmp("count", cmd[1], 5) || strncmp("max", cmd[2], 3)) {
+        goto error;
     }
 
     errno = 0;
@@ -121,7 +133,7 @@ bsi_config_workspace_apply(struct bsi_config_atom* atom,
     server->config.workspaces_max = workspaces_max;
     bsi_util_split_free(&cmd);
 
-    bsi_info("Max workspace count is '%ld'", server->config.workspaces_max);
+    bsi_info("Max workspace count is %ld", server->config.workspaces_max);
 
     return true;
 

@@ -22,8 +22,7 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 
-#include "bonsai/config/def.h"
-#include "bonsai/config/parse.h"
+#include "bonsai/config/config.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/events.h"
 #include "bonsai/input.h"
@@ -44,8 +43,6 @@
 // TODO: Implement server decoration.
 
 // TODO: Dynamic output resolution setting.
-
-// TODO: Config file.
 
 int
 main(void)

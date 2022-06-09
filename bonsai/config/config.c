@@ -1,4 +1,9 @@
-#include "bonsai/config/parse.h"
+#define _POSIX_C_SOURCE 200809L
+#include <stdlib.h>
+#include <string.h>
+#include <wayland-util.h>
+
+#include "bonsai/config/config.h"
 #include "bonsai/log.h"
 
 #define len_config_loc 2
@@ -40,6 +45,16 @@ bsi_config_init(struct bsi_config* config, struct bsi_server* server)
 }
 
 void
+bsi_config_destroy(struct bsi_config* config)
+{
+    struct bsi_config_atom *atom, *atom_tmp;
+    wl_list_for_each_safe(atom, atom_tmp, &config->atoms, link)
+    {
+        bsi_config_atom_destroy(atom);
+    }
+}
+
+void
 bsi_config_find(struct bsi_config* config)
 {
     char* pconf;
@@ -49,7 +64,7 @@ bsi_config_find(struct bsi_config* config)
         for (size_t i = 0; i < len_config_loc; ++i) {
             snprintf(pfull, 255, "%s/%s", pconf, fnames[i]);
 
-            if (access(pfull, F_OK) != 0) {
+            if (access(pfull, F_OK | R_OK) != 0) {
                 bsi_error("No config exists in location '%s'", pfull);
                 memset(pfull, 0, 255);
                 continue;
@@ -72,7 +87,7 @@ bsi_config_find(struct bsi_config* config)
         for (size_t i = 0; i < len_config_loc; ++i) {
             snprintf(pfull, 255, "%s/%s", phome, fallback[i]);
 
-            if (access(pfull, F_OK) != 0) {
+            if (access(pfull, F_OK | R_OK) != 0) {
                 bsi_error("No config exists in location '%s'", pfull);
                 memset(pfull, 0, 255);
                 continue;
@@ -93,8 +108,10 @@ bsi_config_parse(struct bsi_config* config)
         return;
     }
 
+    bsi_info("Found config file '%s'", config->path);
+
     FILE* f;
-    if ((f = fopen(config->path, "r"))) {
+    if (!(f = fopen(config->path, "r+"))) {
         bsi_errno("Failed to open config file '%s'", config->path);
         exit(EXIT_FAILURE);
     }
@@ -104,10 +121,13 @@ bsi_config_parse(struct bsi_config* config)
     while (getline(&line, &len, f) != -1) {
         for (size_t i = 0; i < len_keywords; ++i) {
             if (strncmp(keywords[i], line, strlen(keywords[i])) == 0) {
+                line[strcspn(line, "\r\n")] = 0;
                 struct bsi_config_atom* atom =
                     calloc(1, sizeof(struct bsi_config_atom));
                 bsi_config_atom_init(atom, i, impls[i], line);
                 wl_list_insert(&config->atoms, &atom->link);
+                free(line);
+                line = NULL;
                 break;
             }
         }
@@ -127,8 +147,17 @@ bsi_config_apply(struct bsi_config* config)
     struct bsi_config_atom* atom;
     wl_list_for_each(atom, &config->atoms, link)
     {
-        atom->impl->apply(atom, config->server);
-        ++len_applied;
+        switch (atom->type) {
+            case BSI_CONFIG_ATOM_WALLPAPER:
+            case BSI_CONFIG_ATOM_WORKSPACE:
+                atom->impl->apply(atom, config->server);
+                ++len_applied;
+                break;
+            case BSI_CONFIG_ATOM_OUTPUT:
+            case BSI_CONFIG_ATOM_INPUT:
+                ++len_applied;
+                break;
+        }
     }
 
     bsi_info("Applied %ld config cmds", len_applied);
