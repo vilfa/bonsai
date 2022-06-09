@@ -105,6 +105,7 @@ struct bsi_server
     struct
     {
         struct bsi_config* all;
+        struct wl_list input;
         char* wallpaper;
         size_t workspaces_max;
     } config;

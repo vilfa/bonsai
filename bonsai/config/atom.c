@@ -1,7 +1,9 @@
 #define _POSIX_C_SOURCE 200809L
+#include <libinput.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <wayland-util.h>
 #include <wlr/types/wlr_output.h>
 
@@ -29,6 +31,15 @@ bsi_config_atom_destroy(struct bsi_config_atom* atom)
     free(atom);
 }
 
+void
+bsi_config_input_destroy(struct bsi_config_input* conf)
+{
+    free(conf->device_name);
+    if (conf->layout)
+        free(conf->layout);
+    free(conf);
+}
+
 bool
 bsi_config_output_apply(struct bsi_config_atom* atom, struct bsi_server* server)
 {
@@ -37,8 +48,8 @@ bsi_config_output_apply(struct bsi_config_atom* atom, struct bsi_server* server)
     char **cmd = NULL, **resl = NULL;
     size_t len_cmd = bsi_util_split_delim((char*)atom->cmd, " ", &cmd);
 
-    if (len_cmd != 7 || strncmp("output", cmd[0], 6) ||
-        strncmp("mode", cmd[2], 6) || strncmp("refresh", cmd[4], 7))
+    if (len_cmd != 7 || strcasecmp("output", cmd[0]) ||
+        strcasecmp("mode", cmd[2]) || strcasecmp("refresh", cmd[4]))
         goto error;
 
     char* output_name = cmd[1];
@@ -51,30 +62,32 @@ bsi_config_output_apply(struct bsi_config_atom* atom, struct bsi_server* server)
         goto error;
 
     errno = 0;
-    int32_t ow = strtol(resl[0], NULL, 10);
+    int32_t width = strtol(resl[0], NULL, 10);
     if (errno)
         goto error;
 
     errno = 0;
-    int32_t oh = strtol(resl[1], NULL, 10);
+    int32_t height = strtol(resl[1], NULL, 10);
     if (errno)
         goto error;
 
     errno = 0;
-    int32_t or = strtol(output_refr, NULL, 10);
+    int32_t refresh = strtol(output_refr, NULL, 10);
     if (errno)
         goto error;
 
-    // struct wlr_output_mode mode = {
-    // .width = ow, .height = oh, .refresh = or, .preferred = true
-    // };
-
+    bool found = false;
     struct bsi_output* output;
     wl_list_for_each(output, &server->output.outputs, link_server)
     {
         if (strcmp(output->output->name, output_name) == 0) {
-            wlr_output_set_custom_mode(output->output, ow, oh, or);
-            // wlr_output_set_mode(output->output, &mode);
+            bsi_debug("Matched output %s (%s %s)",
+                      output->output->name,
+                      output->output->make,
+                      output->output->model);
+            found = true;
+
+            wlr_output_set_custom_mode(output->output, width, height, refresh);
             wlr_output_enable(output->output, true);
             if (!wlr_output_commit(output->output)) {
                 bsi_error("Failed to commit on output '%s'",
@@ -83,15 +96,27 @@ bsi_config_output_apply(struct bsi_config_atom* atom, struct bsi_server* server)
             }
 
             bsi_info("Set mode { width=%d, height=%d, refresh=%d } for output "
-                     "%ld/%s",
-                     ow,
-                     oh,
-                     or
-                     , output->id, output->output->name);
+                     "%ld/%s (%s %s)",
+                     width,
+                     height,
+                     refresh,
+                     output->id,
+                     output->output->name,
+                     output->output->make,
+                     output->output->model);
 
             return true;
+        } else {
+            bsi_debug(
+                "Found output %s (%s %s), doesn't match current config entry",
+                output->output->name,
+                output->output->make,
+                output->output->model);
         }
     }
+
+    if (!found)
+        bsi_errno("No output matching name '%s' found", output_name);
 
     return false;
 
@@ -109,8 +134,101 @@ error:
 bool
 bsi_config_input_apply(struct bsi_config_atom* atom, struct bsi_server* server)
 {
-    // TODO: Which kinds of configs do we even want to have?
+    /* Syntax:
+     *  input pointer <name> accel_speed <f.f>
+     *  input pointer <name> accel_profile <none|flat|adaptive>
+     *  input pointer <name> scroll natural
+     *  input keyboard <name> layout <layout>
+     *  input keyboard <name> repeat_info <n> <n>
+     */
+
+    char** cmd = NULL;
+    size_t len_cmd = bsi_util_split_delim((char*)atom->cmd, " ", &cmd);
+    struct bsi_config_input* input_config = NULL;
+
+    if (len_cmd < 3 || strcasecmp("input", cmd[0]))
+        goto error;
+
+    input_config = calloc(1, sizeof(struct bsi_config_input));
+
+    if (strcasecmp("pointer", cmd[1]) == 0) {
+        if (len_cmd != 6)
+            goto error;
+
+        input_config->device_name = strdup(cmd[2]);
+
+        if (strcasecmp("accel_speed", cmd[3]) == 0) {
+            input_config->type = BSI_CONFIG_INPUT_POINTER_ACCEL_SPEED;
+            errno = 0;
+            input_config->accel_speed = strtod(cmd[4], NULL);
+            if (errno)
+                goto error;
+        } else if (strcasecmp("accel_profile", cmd[3]) == 0) {
+            input_config->type = BSI_CONFIG_INPUT_POINTER_ACCEL_PROFILE;
+            if (strcasecmp("none", cmd[4]) == 0) {
+                input_config->accel_profile =
+                    LIBINPUT_CONFIG_ACCEL_PROFILE_NONE;
+            } else if (strcasecmp("flat", cmd[4]) == 0) {
+                input_config->accel_profile =
+                    LIBINPUT_CONFIG_ACCEL_PROFILE_FLAT;
+            } else if (strcasecmp("adaptive", cmd[4]) == 0) {
+                input_config->accel_profile =
+                    LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE;
+            } else {
+                input_config->accel_profile =
+                    LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE;
+            }
+        } else if (strcasecmp("scroll", cmd[3]) == 0 &&
+                   strcasecmp("natural", cmd[4]) == 0) {
+            input_config->type = BSI_CONFIG_INPUT_POINTER_SCROLL_NATURAL;
+            input_config->natural_scroll = true;
+        } else {
+            goto error;
+        }
+    } else if (strcasecmp("keyboard", cmd[1]) == 0) {
+        if (len_cmd != 6 && len_cmd != 7)
+            goto error;
+
+        input_config->device_name = strdup(cmd[2]);
+
+        if (strcasecmp("layout", cmd[3]) == 0) {
+            input_config->type = BSI_CONFIG_INPUT_KEYBOARD_LAYOUT;
+            input_config->layout = strdup(cmd[4]);
+        } else if (strcasecmp("repeat_info", cmd[3]) == 0) {
+            input_config->type = BSI_CONFIG_INPUT_KEYBOARD_REPEAT_INFO;
+            errno = 0;
+            input_config->repeat_rate = strtoul(cmd[4], NULL, 10);
+            if (errno)
+                goto error;
+            errno = 0;
+            input_config->delay = strtoul(cmd[5], NULL, 10);
+            if (errno)
+                goto error;
+        } else {
+            goto error;
+        }
+    } else {
+        goto error;
+    }
+
+    wl_list_insert(&server->config.input, &input_config->link);
+
     return true;
+
+error:
+    if (input_config && input_config->device_name)
+        free(input_config->device_name);
+    if (input_config)
+        free(input_config);
+    bsi_util_split_free(&cmd);
+    bsi_error("Invalid input config syntax '%s', syntax is one of: \n"
+              "\tinput pointer <name> accel_speed <f.f>\n"
+              "\tinput pointer <name> accel_profile <none|flat|adaptive>\n"
+              "\tinput pointer <name> scroll natural\n"
+              "\tinput keyboard <name> layout <layout>\n"
+              "\tinput keyboard <name> repeat_info <n> <n>",
+              atom->cmd);
+    return false;
 }
 
 bool
@@ -120,8 +238,8 @@ bsi_config_workspace_apply(struct bsi_config_atom* atom,
     /* Syntax: workspace count max <n> */
     char** cmd = NULL;
     size_t len_cmd = bsi_util_split_delim((char*)atom->cmd, " ", &cmd);
-    if (len_cmd != 5 || strncmp("workspace", cmd[0], 9) ||
-        strncmp("count", cmd[1], 5) || strncmp("max", cmd[2], 3)) {
+    if (len_cmd != 5 || strcasecmp("workspace", cmd[0]) ||
+        strcasecmp("count", cmd[1]) || strcasecmp("max", cmd[2])) {
         goto error;
     }
 

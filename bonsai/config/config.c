@@ -3,8 +3,10 @@
 #include <string.h>
 #include <wayland-util.h>
 
+#include "bonsai/config/atom.h"
 #include "bonsai/config/config.h"
 #include "bonsai/log.h"
+#include "bonsai/server.h"
 
 #define len_config_loc 2
 
@@ -52,6 +54,11 @@ bsi_config_destroy(struct bsi_config* config)
     {
         bsi_config_atom_destroy(atom);
     }
+    struct bsi_config_input *conf, *conf_tmp;
+    wl_list_for_each_safe(conf, conf_tmp, &config->server->config.input, link)
+    {
+        bsi_config_input_destroy(conf);
+    }
 }
 
 void
@@ -65,7 +72,7 @@ bsi_config_find(struct bsi_config* config)
             snprintf(pfull, 255, "%s/%s", pconf, fnames[i]);
 
             if (access(pfull, F_OK | R_OK) != 0) {
-                bsi_error("No config exists in location '%s'", pfull);
+                bsi_info("No config exists in location '%s'", pfull);
                 memset(pfull, 0, 255);
                 continue;
             }
@@ -74,7 +81,7 @@ bsi_config_find(struct bsi_config* config)
             memcpy(config->path, pfull, 255);
         }
     } else {
-        bsi_error("$XDG_CONFIG_HOME not set");
+        bsi_info("$XDG_CONFIG_HOME not set");
 
         char* phome;
         char pfull[255] = { 0 };
@@ -88,7 +95,7 @@ bsi_config_find(struct bsi_config* config)
             snprintf(pfull, 255, "%s/%s", phome, fallback[i]);
 
             if (access(pfull, F_OK | R_OK) != 0) {
-                bsi_error("No config exists in location '%s'", pfull);
+                bsi_info("No config exists in location '%s'", pfull);
                 memset(pfull, 0, 255);
                 continue;
             }
@@ -104,7 +111,7 @@ bsi_config_parse(struct bsi_config* config)
 {
     bsi_config_find(config);
     if (!config->found) {
-        bsi_error("No config found, using defaults");
+        bsi_info("No config found, using defaults");
         return;
     }
 
@@ -150,17 +157,17 @@ bsi_config_apply(struct bsi_config* config)
         switch (atom->type) {
             case BSI_CONFIG_ATOM_WALLPAPER:
             case BSI_CONFIG_ATOM_WORKSPACE:
+            case BSI_CONFIG_ATOM_INPUT:
                 atom->impl->apply(atom, config->server);
                 ++len_applied;
                 break;
             case BSI_CONFIG_ATOM_OUTPUT:
-            case BSI_CONFIG_ATOM_INPUT:
                 ++len_applied;
                 break;
         }
     }
 
-    bsi_info("Applied %ld config cmds", len_applied);
+    bsi_info("Applied %ld config commands", len_applied);
 }
 
 #undef len_config_loc

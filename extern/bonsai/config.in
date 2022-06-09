@@ -1,0 +1,11 @@
+output <name> mode <w>x<h> refresh <r>
+
+input pointer <name> accel_speed <f.f>
+input pointer <name> accel_profile <none|flat|adaptive>
+input pointer <name> scroll natural
+input keyboard <name> layout <layout>
+input keyboard <name> repeat_info <n> <n>
+
+workspace count max <n>
+
+wallpaper <abs_path>

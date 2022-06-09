@@ -1,12 +1,17 @@
 #include <assert.h>
+#include <libinput.h>
+#include <math.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <strings.h>
 #include <wayland-server-core.h>
 #include <wayland-server-protocol.h>
 #include <wayland-util.h>
 #include <wlr/backend/drm.h>
+#include <wlr/backend/libinput.h>
 #include <wlr/render/allocator.h>
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_compositor.h>
@@ -38,6 +43,7 @@
 #include <wlr/util/box.h>
 #include <wlr/util/log.h>
 
+#include "bonsai/config/atom.h"
 #include "bonsai/config/config.h"
 #include "bonsai/desktop/decoration.h"
 #include "bonsai/desktop/idle.h"
@@ -67,6 +73,7 @@ struct bsi_server*
 bsi_server_init(struct bsi_server* server, struct bsi_config* config)
 {
     server->config.all = config;
+    wl_list_init(&server->config.input);
     server->config.wallpaper = NULL;
     server->config.workspaces_max = 0;
 
@@ -496,7 +503,60 @@ handle_new_input(struct wl_listener* listener, void* data)
 
             wlr_cursor_attach_input_device(device->cursor, device->device);
 
-            bsi_info("Added new pointer input device");
+            if (wlr_input_device_is_libinput(device->device)) {
+                struct libinput_device* libinput_dev =
+                    wlr_libinput_get_device_handle(device->device);
+                bool has_config = false;
+                struct bsi_config_input* conf;
+                wl_list_for_each(conf, &server->config.input, link)
+                {
+                    if (strcasecmp(conf->device_name, device->device->name) ==
+                        0) {
+                        bsi_debug("Matched config for input device '%s'",
+                                  device->device->name);
+                        has_config = true;
+                        switch (conf->type) {
+                            case BSI_CONFIG_INPUT_POINTER_ACCEL_SPEED: {
+                                double speed =
+                                    (conf->accel_speed > 0.0)
+                                        ? fmax(conf->accel_speed, 1.0)
+                                        : fmax(conf->accel_speed, -1.0);
+                                libinput_device_config_accel_set_speed(
+                                    libinput_dev, speed);
+                                bsi_debug("Set accel_speed %.2f", speed);
+                                break;
+                            }
+                            case BSI_CONFIG_INPUT_POINTER_ACCEL_PROFILE:
+                                libinput_device_config_accel_set_profile(
+                                    libinput_dev, conf->accel_profile);
+                                bsi_debug("Set accel_profile %d",
+                                          conf->accel_profile);
+                                break;
+                            case BSI_CONFIG_INPUT_POINTER_SCROLL_NATURAL:
+                                libinput_device_config_scroll_set_natural_scroll_enabled(
+                                    libinput_dev, conf->natural_scroll);
+                                bsi_debug("Set natural scroll %d",
+                                          conf->natural_scroll);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+
+                if (!has_config)
+                    bsi_info("No matching config for input device '%s'",
+                             device->device->name);
+            } else {
+                bsi_info("Device '%s' doesn't use libinput backend, skipping",
+                         device->device->name);
+            }
+
+            bsi_info(
+                "Added new pointer input device '%s' (vendor %x, product %x)",
+                device->device->name,
+                device->device->vendor,
+                device->device->product);
             break;
         }
         case WLR_INPUT_DEVICE_KEYBOARD: {
@@ -516,16 +576,55 @@ handle_new_input(struct wl_listener* listener, void* data)
                                   &device->listen.destroy,
                                   handle_input_device_destroy);
 
+            bool has_config = false;
+            struct bsi_config_input* conf;
+            wl_list_for_each(conf, &server->config.input, link)
+            {
+                if (strcasecmp(conf->device_name, device->device->name) == 0) {
+                    bsi_debug("Matched config for input device '%s'",
+                              device->device->name);
+                    has_config = true;
+                    switch (conf->type) {
+                        case BSI_CONFIG_INPUT_KEYBOARD_LAYOUT:
+                            break;
+                        case BSI_CONFIG_INPUT_KEYBOARD_REPEAT_INFO:
+                            wlr_keyboard_set_repeat_info(
+                                device->device->keyboard,
+                                conf->repeat_rate,
+                                conf->delay);
+                            bsi_debug("Set repeat info { rate=%d, delay=%d }",
+                                      conf->repeat_rate,
+                                      conf->delay);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            if (!has_config)
+                bsi_info("No matching config for input device '%s'",
+                         device->device->name);
+
             bsi_input_device_keymap_set(
                 device, bsi_input_keyboard_rules, bsi_input_keyboard_rules_len);
-            wlr_keyboard_set_repeat_info(device->device->keyboard, 25, 600);
+
             wlr_seat_set_keyboard(server->wlr_seat, device->device->keyboard);
 
-            bsi_info("Added new keyboard input device");
+            bsi_info(
+                "Added new keyboard input device '%s' (vendor %x, product %x)",
+                device->device->name,
+                device->device->vendor,
+                device->device->product);
             break;
         }
         default:
-            bsi_info("Unsupported new input device: type %d", wlr_device->type);
+            bsi_info("Unsupported new input device '%s' (type %x, vendor %x, "
+                     "product %x)",
+                     wlr_device->name,
+                     wlr_device->type,
+                     wlr_device->vendor,
+                     wlr_device->product);
             break;
     }
 
