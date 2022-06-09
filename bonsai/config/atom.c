@@ -267,13 +267,13 @@ bool
 bsi_config_wallpaper_apply(struct bsi_config_atom* atom,
                            struct bsi_server* server)
 {
-    /* Syntax: wallpaper <path> */
+    /* Syntax: wallpaper <abs_path> */
     char** cmd = NULL;
     size_t len_cmd = bsi_util_split_delim((char*)atom->cmd, " ", &cmd);
     if (len_cmd != 3) {
         bsi_util_split_free(&cmd);
         bsi_error("Invalid wallpaper config syntax '%s', syntax is 'wallpaper "
-                  "<path>'",
+                  "<abs_path>'",
                   atom->cmd);
         return false;
     }
