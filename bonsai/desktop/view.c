@@ -43,9 +43,17 @@ bsi_views_add(struct bsi_server* server, struct bsi_view* view)
 void
 bsi_views_mru_focus(struct bsi_server* server)
 {
-    if (!wl_list_empty(&server->scene.views)) {
+    struct wlr_output* active_wout =
+        wlr_output_layout_output_at(server->wlr_output_layout,
+                                    server->wlr_cursor->x,
+                                    server->wlr_cursor->y);
+    struct bsi_output* active_out = bsi_outputs_find(server, active_wout);
+    struct bsi_workspace* active_ws = bsi_workspaces_get_active(active_out);
+    if (!wl_list_empty(&active_ws->views)) {
         struct bsi_view* mru =
-            wl_container_of(server->scene.views.prev, mru, link_server);
+            wl_container_of(active_ws->views.prev, mru, link_workspace);
+        wl_list_remove(&mru->link_workspace);
+        wl_list_insert(&active_ws->views, &mru->link_workspace);
         bsi_view_focus(mru);
     }
 }
@@ -65,7 +73,7 @@ void
 bsi_views_remove(struct bsi_view* view)
 {
     wl_list_remove(&view->link_server);
-    struct bsi_view* v;
+    // struct bsi_view* v;
     // wl_list_for_each(v, &view->server->scene.views, link_server)
     // {
     //     if (view->xdg_decoration_mode ==

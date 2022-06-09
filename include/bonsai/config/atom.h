@@ -46,7 +46,7 @@ struct bsi_config_atom
 {
     enum bsi_config_atom_type type;
     const struct bsi_config_atom_impl* impl;
-    const char* cmd;
+    char* cmd;
     struct wl_list link;
 };
 

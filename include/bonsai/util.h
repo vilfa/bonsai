@@ -70,7 +70,10 @@ bsi_util_split_argsp(char* first, char* in, const char* delim, char*** out);
  * @return size_t The size of the array, including the terminating element.
  */
 size_t
-bsi_util_split_delim(char* in, const char* delim, char*** out);
+bsi_util_split_delim(char* in,
+                     const char* delim,
+                     char*** out,
+                     bool ignore_quotes);
 
 /**
  * @brief Frees the array and only the array containing the pointers to strings.
@@ -80,3 +83,6 @@ bsi_util_split_delim(char* in, const char* delim, char*** out);
  */
 void
 bsi_util_split_free(char*** out);
+
+void
+bsi_util_strip_quotes(char* in);

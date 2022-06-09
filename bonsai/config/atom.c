@@ -46,17 +46,19 @@ bsi_config_output_apply(struct bsi_config_atom* atom, struct bsi_server* server)
     /* Syntax: output <name> mode <w>x<h> refresh <r> */
 
     char **cmd = NULL, **resl = NULL;
-    size_t len_cmd = bsi_util_split_delim((char*)atom->cmd, " ", &cmd);
+    size_t len_cmd = bsi_util_split_delim(atom->cmd, " ", &cmd, false);
 
     if (len_cmd != 7 || strcasecmp("output", cmd[0]) ||
         strcasecmp("mode", cmd[2]) || strcasecmp("refresh", cmd[4]))
         goto error;
 
     char* output_name = cmd[1];
+    bsi_util_strip_quotes(output_name);
+
     char* output_resl = cmd[3];
     char* output_refr = cmd[5];
 
-    size_t len_resl = bsi_util_split_delim(output_resl, "x", &resl);
+    size_t len_resl = bsi_util_split_delim(output_resl, "x", &resl, false);
 
     if (len_resl != 3)
         goto error;
@@ -143,7 +145,7 @@ bsi_config_input_apply(struct bsi_config_atom* atom, struct bsi_server* server)
      */
 
     char** cmd = NULL;
-    size_t len_cmd = bsi_util_split_delim((char*)atom->cmd, " ", &cmd);
+    size_t len_cmd = bsi_util_split_delim(atom->cmd, " ", &cmd, false);
     struct bsi_config_input* input_config = NULL;
 
     if (len_cmd < 3 || strcasecmp("input", cmd[0]))
@@ -155,6 +157,7 @@ bsi_config_input_apply(struct bsi_config_atom* atom, struct bsi_server* server)
         if (len_cmd != 6)
             goto error;
 
+        bsi_util_strip_quotes(cmd[2]);
         input_config->device_name = strdup(cmd[2]);
 
         if (strcasecmp("accel_speed", cmd[3]) == 0) {
@@ -189,6 +192,7 @@ bsi_config_input_apply(struct bsi_config_atom* atom, struct bsi_server* server)
         if (len_cmd != 6 && len_cmd != 7)
             goto error;
 
+        bsi_util_strip_quotes(cmd[2]);
         input_config->device_name = strdup(cmd[2]);
 
         if (strcasecmp("layout", cmd[3]) == 0) {
@@ -237,7 +241,7 @@ bsi_config_workspace_apply(struct bsi_config_atom* atom,
 {
     /* Syntax: workspace count max <n> */
     char** cmd = NULL;
-    size_t len_cmd = bsi_util_split_delim((char*)atom->cmd, " ", &cmd);
+    size_t len_cmd = bsi_util_split_delim(atom->cmd, " ", &cmd, false);
     if (len_cmd != 5 || strcasecmp("workspace", cmd[0]) ||
         strcasecmp("count", cmd[1]) || strcasecmp("max", cmd[2])) {
         goto error;
@@ -269,7 +273,7 @@ bsi_config_wallpaper_apply(struct bsi_config_atom* atom,
 {
     /* Syntax: wallpaper <abs_path> */
     char** cmd = NULL;
-    size_t len_cmd = bsi_util_split_delim((char*)atom->cmd, " ", &cmd);
+    size_t len_cmd = bsi_util_split_delim(atom->cmd, " ", &cmd, false);
     if (len_cmd != 3) {
         bsi_util_split_free(&cmd);
         bsi_error("Invalid wallpaper config syntax '%s', syntax is 'wallpaper "

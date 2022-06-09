@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -109,22 +110,95 @@ bsi_util_split_argsp(char* first, char* in, const char* delim, char*** out)
 }
 
 size_t
-bsi_util_split_delim(char* in, const char* delim, char*** out)
+bsi_util_split_delim(char* in,
+                     const char* delim,
+                     char*** out,
+                     bool ignore_quotes)
 {
     if (*out != NULL)
         return 0;
 
     *out = realloc(*out, sizeof(char**));
 
+    enum state
+    {
+        TOK_BEGIN,
+        TOK_QUOTED,
+        TOK_IN,
+        TOK_END,
+        DONE,
+    };
+
+    size_t end = strlen(in) + 1;
+    size_t cursor = 0;
     size_t len = 1;
-    char* tok = strtok(in, delim);
-    while (tok) {
-        (*out)[len - 1] = tok;
-        *out = realloc(*out, ++len * sizeof(char**));
-        tok = strtok(NULL, delim);
+    char* ltok = 0;
+    char qsign = 0;
+    enum state state = TOK_BEGIN;
+    while (cursor < end) {
+        switch (state) {
+            case TOK_BEGIN: {
+                if (in[cursor] == '\0') {
+                    state = DONE;
+                    ++end;
+                } else if ((in[cursor] == '\'' || in[cursor] == '"') &&
+                           !ignore_quotes) {
+                    ltok = in + cursor;
+                    qsign = in[cursor];
+                    state = TOK_QUOTED;
+                } else if (in[cursor] != *delim) {
+                    ltok = in + cursor;
+                    state = TOK_IN;
+                }
+                ++cursor;
+                break;
+            }
+            case TOK_QUOTED: {
+                if (in[cursor] == qsign) {
+                    state = TOK_IN;
+                }
+                ++cursor;
+                break;
+            }
+            case TOK_IN: {
+                if (in[cursor] == *delim) {
+                    state = TOK_END;
+                    in[cursor] = '\0';
+                } else if (in[cursor] == '\0') {
+                    state = TOK_END;
+                    ++end;
+                }
+                ++cursor;
+                break;
+            }
+            case TOK_END: {
+                (*out)[len - 1] = ltok;
+                ++len;
+                *out = realloc(*out, len * sizeof(char**));
+                state = TOK_BEGIN;
+                break;
+            }
+            case DONE: {
+                (*out)[len - 1] = NULL;
+                ++cursor;
+                break;
+            }
+        }
     }
 
-    (*out)[len - 1] = NULL;
+    char tokens[1024] = { 0 };
+    tokens[0] = '[';
+    for (size_t i = 0; i < len - 1; ++i) {
+        if (strlen(tokens) + strlen((*out)[i] + 1) > 1023) {
+            strncpy(tokens, (*out)[i], 1024 - strlen(tokens) - 1);
+            tokens[1023] = '\0';
+        }
+        sprintf(tokens, "%s%s,", tokens, (*out)[i]);
+    }
+    tokens[strlen(tokens) - 1] = ']';
+    tokens[strlen(tokens)] = '\0';
+
+    bsi_debug("Tokens { len=%ld, tokens=%s }", len, tokens);
 
     return len;
 }
@@ -133,4 +207,23 @@ void
 bsi_util_split_free(char*** out)
 {
     free(*out);
+}
+
+void
+bsi_util_strip_quotes(char* in)
+{
+    if (strlen(in) < 1)
+        return;
+
+    size_t first_non = strspn(in, "'\""),
+           last_non = strcspn(in + first_non, "'\"") + first_non,
+           len_non = last_non - first_non, len = strlen(in);
+
+    if (len_non == len)
+        return;
+
+    memset(in, 0, first_non);
+    memset(in + last_non, 0, len - last_non);
+    memmove(in, in + first_non, len_non);
+    memset(in + len_non, 0, len - len_non);
 }

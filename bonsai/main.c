@@ -42,8 +42,6 @@
 
 // TODO: Implement server decoration.
 
-// TODO: Dynamic output resolution setting.
-
 int
 main(void)
 {

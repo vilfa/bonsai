@@ -128,7 +128,8 @@ bsi_config_parse(struct bsi_config* config)
     while (getline(&line, &len, f) != -1) {
         for (size_t i = 0; i < len_keywords; ++i) {
             if (strncmp(keywords[i], line, strlen(keywords[i])) == 0) {
-                line[strcspn(line, "\r\n")] = 0;
+                line[strcspn(line, "\r\n")] = '\0';
+                line[len] = '\0';
                 struct bsi_config_atom* atom =
                     calloc(1, sizeof(struct bsi_config_atom));
                 bsi_config_atom_init(atom, i, impls[i], line);
