@@ -1,1 +1,3 @@
-option('user-configs', type : 'boolean', value : false)
+option('bsi-software-cursor', type : 'boolean', value : false)
+option('bsi-verbose', type : 'boolean', value : true)
+option('bsi-user-configs', type : 'boolean', value : true)

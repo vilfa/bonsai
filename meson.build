@@ -12,33 +12,36 @@ project(
 )
 
 add_project_arguments(
-    [
-        '-DWLR_USE_UNSTABLE',
-
-        '-Wno-unused-parameter',
-		'-Wno-unused-result',
-		'-Wno-missing-braces',
-		'-Wundef',
-		'-Wvla',
-    ],
+    '-DWLR_USE_UNSTABLE',
+    '-Wno-unused-parameter',
+    '-Wno-unused-result',
+    '-Wno-missing-braces',
+    '-Wundef',
+    '-Wvla',
     language : 'c',
 )
 
 cc = meson.get_compiler('c')
 
-### Location defaults
+### Defaults
 prefix = get_option('prefix')
 datadir = get_option('datadir')
 sysconfdir = get_option('sysconfdir')
 add_project_arguments(
-    [
-        '-DBSI_PREFIX="@0@"'.format(prefix),
-        '-DBSI_DATADIR="@0@"'.format(datadir),
-        '-DBSI_SYSCONFDIR="@0@"'.format(sysconfdir),
-        '-DBSI_USERCONFDIR=".config"',
-    ],
+    '-DBSI_PREFIX="@0@"'.format(prefix),
+    '-DBSI_DATADIR="@0@"'.format(datadir),
+    '-DBSI_SYSCONFDIR="@0@"'.format(sysconfdir),
+    '-DBSI_USERCONFDIR=".config"',
     language : 'c',
 )
+
+if get_option('bsi-software-cursor')
+    add_project_arguments('-DBSI_SOFTWARE_CURSOR', language : 'c')
+endif
+
+if get_option('bsi-verbose')
+    add_project_arguments('-DBSI_DEBUG', language : 'c')
+endif
 
 ### Dependencies
 dep_wlroots = dependency('wlroots', required : true)
@@ -53,6 +56,7 @@ dep_wayland_client = dependency('wayland-client', required : true)
 dep_wayland_cursor = dependency('wayland-cursor', required : true)
 dep_wayland_egl = dependency('wayland-egl', required : true)
 dep_wayland_protocols = dependency('wayland-protocols', required : true)
+dep_xdpw = dependency('xdg-desktop-portal', required : true)
 dep_pixman = dependency('pixman-1', required : true)
 dep_cairo = dependency('cairo', required : true)
 dep_math = cc.find_library('m', required : true)
@@ -85,6 +89,11 @@ if not ext_slurp.found() or not ext_grim.found() or not ext_wlclipboard.found()
     warning('slurp, grim & wl_clipboard are needed for screenshot support')
 endif
 
+ext_brghtctl = find_program('brightnessctl', required : false)
+if not ext_brghtctl.found()
+    warning('brightnessctl is needed for backlight control')
+endif
+
 ### Include dirs
 inc_default = include_directories('include')
 inc_protocols = include_directories('include/protocols')
@@ -100,18 +109,26 @@ install_data(
 )
 
 # Default configs
-install_data(
-    'extern/bonsai/config',
-    install_dir : join_paths(sysconfdir, 'bonsai')
-)
-install_data(
-    'extern/swaylock/config',
-    install_dir : join_paths(sysconfdir, 'swaylock')
-)
-install_data(
-    'extern/waybar/config',
-    'extern/waybar/style.css',
-    install_dir : join_paths(sysconfdir, 'waybar')
+config = configuration_data()
+config.set('default_output', 'WL-1')
+config.set('default_mode', '1280x720')
+config.set('default_refresh', '60')
+config.set('default_pointer', 'wayland-pointer-seat0')
+config.set('default_accel_speed', '0.0')
+config.set('default_accel_profile', 'flat')
+config.set('default_keyboard_layout', 'en_US')
+config.set('default_keyboard', 'wayland-keyboard-seat0')
+config.set('default_repeat_rate', '20')
+config.set('default_repeat_delay', '600')
+config.set('default_workspace', '3')
+config.set('default_wallpaper', 
+    join_paths(prefix, datadir, 'backgrounds', 'bonsai', 'Wallpaper-Default.jpg'))
+
+configure_file(
+    configuration : config,
+    input : 'extern/bonsai/config.in',
+    output : '@BASENAME@',
+    install_dir : join_paths(sysconfdir, 'bonsai'),
 )
 
 # Wallpapers
@@ -126,7 +143,7 @@ install_data(
 )
 
 # User configs
-if get_option('user-configs')
+if get_option('bsi-user-configs')
     run_command(
         'extern/install.sh',
         capture : true,

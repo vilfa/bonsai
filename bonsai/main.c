@@ -14,6 +14,7 @@
 #include <wlr/types/wlr_compositor.h>
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_data_device.h>
+#include <wlr/types/wlr_input_inhibitor.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_scene.h>
@@ -37,15 +38,16 @@
 // TODO: Maybe add multipurpose client for indicating things to the user (e.g.
 // took screenshot, switched to workspace).
 
-// TODO: Look into waybar and sway/workspace module implementation, and how to
-// make it work.
-
 // TODO: Implement server decoration.
 
 int
 main(void)
 {
+#ifdef BSI_DEBUG
     wlr_log_init(WLR_DEBUG, NULL);
+#else
+    wlr_log_init(WLR_INFO, NULL);
+#endif
 
     struct bsi_server server;
     struct bsi_config config;
@@ -64,6 +66,7 @@ main(void)
         exit(EXIT_FAILURE);
     }
 
+#ifdef BSI_SOFTWARE_CURSOR
     if (setenv("WLR_NO_HARDWARE_CURSORS", "1", true) != 0) {
         /* Workaround for https://github.com/swaywm/wlroots/issues/3189
          * Note: Make sure the default cursor theme is set correctly in
@@ -74,9 +77,10 @@ main(void)
         wl_display_destroy(server.wl_display);
         exit(EXIT_FAILURE);
     }
+#endif
 
     if (setenv("GDK_BACKEND", "wayland", true) != 0) {
-        /* If this is not set, waybar thinks it's running under X. */
+        /* If this is not set, waybar might think it's running under X. */
         bsi_errno("Failed to set GDK_BACKEND env var");
         wlr_backend_destroy(server.wlr_backend);
         wl_display_destroy(server.wl_display);

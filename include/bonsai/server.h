@@ -36,6 +36,7 @@ struct bsi_server
     struct wlr_idle* wlr_idle;
     struct wlr_idle_inhibit_manager_v1* wlr_idle_inhibit_manager;
     struct wlr_session_lock_manager_v1* wlr_session_lock_manager;
+    struct wlr_input_inhibit_manager* wlr_input_inhbit_manager;
 
     /*
      * Global state

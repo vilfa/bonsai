@@ -38,14 +38,9 @@ fi
 
 info "Installing configs..."
 
-cp -rv "$SRCDIR/extern/bonsai" "$CONFDIR"
-[[ $? ]] && err "Error installing config. Exiting." && exit 1
-
+# cp -rv "$SRCDIR/extern/bonsai" "$CONFDIR"
 cp -rv "$SRCDIR/extern/swaylock" "$CONFDIR"
-[[ $? ]] && err "Error installing config. Exiting." && exit 1
-
 cp -rv "$SRCDIR/extern/waybar" "$CONFDIR"
-[[ $? ]] && err "Error installing config. Exiting." && exit 1
 
 info "Installed configs."
 info "Done."

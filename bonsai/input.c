@@ -276,8 +276,6 @@ handle_pointer_button(struct wl_listener* listener, void* data)
 void
 handle_pointer_axis(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event axis from wlr_input_device");
-
     struct bsi_input_device* device =
         wl_container_of(listener, device, listen.axis);
     struct bsi_server* server = device->server;
@@ -339,8 +337,6 @@ handle_pointer_swipe_begin(struct wl_listener* listener, void* data)
 void
 handle_pointer_swipe_update(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event swipe_update from wlr_input_device");
-
     struct bsi_input_device* device =
         wl_container_of(listener, device, listen.swipe_update);
     struct bsi_server* server = device->server;
@@ -445,8 +441,6 @@ handle_pointer_pinch_begin(struct wl_listener* listener, void* data)
 void
 handle_pointer_pinch_update(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event pinch_update from wlr_input_device");
-
     struct bsi_input_device* device =
         wl_container_of(listener, device, listen.pinch_update);
     struct bsi_server* server = device->server;

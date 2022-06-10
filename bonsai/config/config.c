@@ -9,7 +9,8 @@
 #include "bonsai/log.h"
 #include "bonsai/server.h"
 
-#define len_config_loc 2
+#define len_fnames 2
+#define len_config_loc 4
 
 static const char* fnames[] = {
     "bonsai",
@@ -19,8 +20,8 @@ static const char* fnames[] = {
 static const char* fallback[] = {
     BSI_USERCONFDIR "/bonsai",
     BSI_USERCONFDIR "/bonsai/config",
-    BSI_SYSCONFDIR "/bonsai",
-    BSI_SYSCONFDIR "/bonsai/config",
+    BSI_PREFIX "/" BSI_SYSCONFDIR "/bonsai",
+    BSI_PREFIX "/" BSI_SYSCONFDIR "/bonsai/config",
 };
 
 #define len_keywords 4
@@ -71,7 +72,7 @@ bsi_config_find(struct bsi_config* config)
     if ((pconf = getenv("XDG_CONFIG_HOME"))) {
         char pfull[255] = { 0 };
 
-        for (size_t i = 0; i < len_config_loc; ++i) {
+        for (size_t i = 0; i < len_fnames; ++i) {
             snprintf(pfull, 255, "%s/%s", pconf, fnames[i]);
 
             if (access(pfull, F_OK | R_OK) != 0) {

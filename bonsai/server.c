@@ -23,6 +23,7 @@
 #include <wlr/types/wlr_gamma_control_v1.h>
 #include <wlr/types/wlr_idle.h>
 #include <wlr/types/wlr_idle_inhibit_v1.h>
+#include <wlr/types/wlr_input_inhibitor.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_output_damage.h>
 #include <wlr/types/wlr_output_layout.h>
@@ -234,6 +235,9 @@ bsi_server_init(struct bsi_server* server, struct bsi_config* config)
     const char* seat_name = "seat0";
     server->wlr_seat = wlr_seat_create(server->wl_display, seat_name);
     bsi_debug("Created seat '%s'", seat_name);
+
+    server->wlr_input_inhbit_manager =
+        wlr_input_inhibit_manager_create(server->wl_display);
 
     wl_list_init(&server->input.inputs);
     bsi_debug("Initialized bsi_inputs");

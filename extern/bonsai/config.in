@@ -1,0 +1,11 @@
+output @default_output@ mode @default_mode@ refresh @default_refresh@
+
+input pointer "@default_pointer@" accel_speed @default_accel_speed@
+input pointer "@default_pointer@" accel_profile @default_accel_profile@
+input pointer "@default_pointer@" scroll natural
+input keyboard "@default_keyboard@" layout @default_keyboard_layout@
+input keyboard "@default_keyboard@" repeat_info @default_repeat_rate@ @default_repeat_delay@
+
+workspace count max @default_workspace@
+
+wallpaper @default_wallpaper@

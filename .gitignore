@@ -54,6 +54,7 @@ dkms.conf
 
 # # # VisualStudioCode # # #
 **/.vscode
+**/.cache
 
 # Local History for Visual Studio Code
 .history/
@@ -62,7 +63,7 @@ dkms.conf
 *.vsix
 
 # # # Meson # # #
-**/builddir
+**/build*
 
 # # # Bonsai # # #
 **/log*
