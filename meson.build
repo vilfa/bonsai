@@ -124,3 +124,15 @@ install_data(
     'assets/LICENSE',
     install_dir : join_paths(datadir, 'backgrounds', 'bonsai')
 )
+
+# User configs
+if get_option('user-configs')
+    run_command(
+        'extern/install.sh',
+        capture : true,
+        check : true,
+        env : { 
+            'SRCDIR': '@0@'.format(meson.global_source_root()) 
+        }
+    )
+endif
