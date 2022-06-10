@@ -510,6 +510,11 @@ handle_new_input(struct wl_listener* listener, void* data)
             if (wlr_input_device_is_libinput(device->device)) {
                 struct libinput_device* libinput_dev =
                     wlr_libinput_get_device_handle(device->device);
+
+                /* Enable tap to click. */
+                libinput_device_config_tap_set_enabled(
+                    libinput_dev, LIBINPUT_CONFIG_TAP_ENABLED);
+
                 bool has_config = false;
                 struct bsi_config_input* conf;
                 wl_list_for_each(conf, &server->config.input, link)
