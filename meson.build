@@ -139,7 +139,14 @@ install_data(
     'assets/Wallpaper-4.jpg',
     'assets/Wallpaper-Default.jpg',
     'assets/LICENSE',
-    install_dir : join_paths(datadir, 'backgrounds', 'bonsai')
+    install_dir : join_paths(datadir, 'backgrounds', 'bonsai'),
+)
+
+# Fonts
+install_data(
+    'extern/fonts/Symbols-2048-em-Nerd-Font-Complete.ttf',
+    'extern/fonts/LICENSE',
+    install_dir : join_paths(datadir, 'fonts'),
 )
 
 # User configs
