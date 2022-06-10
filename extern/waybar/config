@@ -1,15 +1,7 @@
 {
     "layer": "top",
-    "modules-left": [
-        "sway/workspaces",
-        "sway/mode"
-    ],
-    "modules-center": [
-        "sway/window",
-    ],
     "modules-right": [
         "tray",
-        "sway/language",
         "network",
         "cpu",
         "memory",
@@ -19,42 +11,9 @@
         "backlight",
         "clock"
     ],
-    "sway/window": {
-        "max-length": 50
-    },
-    "sway/workspaces": {
-        "format": "{name} {icon}",
-        "on-click": "activate",
-        "all-outputs": false,
-        "active-only": false,
-        "format-icons": {
-            "1": "",
-            "2": "",
-            "3": "",
-            "4": "",
-            "5": "",
-            "urgent": "",
-            "active": "",
-            "default": ""
-        },
-        "persistent_workspaces": {
-            "1": [],
-            "2": [],
-            "3": [],
-            "4": [],
-            "5": []
-        }
-    },
     "tray": {
         "icon-size": 16,
         "spacing": 10
-    },
-    "sway/language": {
-        "format": "{short} ",
-        "show-passive-items": true,
-        "on-click": "gnome-control-center keyboard",
-        "tooltip": false,
-        "tooltip-format": ""
     },
     "network": {
         "format": "{ifname}",
@@ -69,12 +28,14 @@
     },
     "cpu": {
         "interval": 10,
-        "format": "{usage}% "
+        "format": "{usage}% ",
+        "on-click": "foot htop"
     },
     "memory": {
         "interval": 30,
         "format": "{used:0.1f}GiB ﬙",
-        "tooltip-format": "{used:0.2f}GiB/{total:0.2f}GiB"
+        "tooltip-format": "{used:0.2f}GiB/{total:0.2f}GiB",
+        "on-click": "foot htop"
     },
     "pulseaudio": {
         "format": "{volume}% {icon} | {format_source}",
@@ -96,8 +57,7 @@
                 ""
             ]
         },
-        "scroll-step": 2,
-        "on-click": "gnome-control-center sound"
+        "scroll-step": 2
     },
     "battery": {
         "format": "{capacity}% {icon}",
@@ -108,9 +68,9 @@
             "",
             ""
         ],
-        "on-click": "gnome-control-center power",
         "tooltip": false,
-        "tooltip-format": ""
+        "tooltip-format": "",
+        "on-click": "foot 'sudo powertop'"
     },
     "backlight": {
         "device": "intel_backlight",
@@ -122,15 +82,12 @@
         ],
         "on-scroll-up": "brightnessctl set 1%+",
         "on-scroll-down": "brightnessctl set 1%-",
-        "on-click": "gnome-control-center power",
         "tooltip": false,
         "tooltip-format": ""
     },
     "clock": {
         "format": "{:%d-%m-%Y %H:%M}",
-        "format-alt": "{:%a, %b %d %Y %H:%M}",
-        "tooltip-format": "",
-        "on-click": "gnome-calendar"
+        "format-alt": "{:%a, %b %d %Y %H:%M}"
     },
     "idle_inhibitor": {
         "format": "{icon}",

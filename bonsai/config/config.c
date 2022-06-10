@@ -1,4 +1,5 @@
 #define _POSIX_C_SOURCE 200809L
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <wayland-util.h>
@@ -16,8 +17,10 @@ static const char* fnames[] = {
 };
 
 static const char* fallback[] = {
-    ".config/bonsai",
-    ".config/bonsai/config",
+    BSI_USERCONFDIR "/bonsai",
+    BSI_USERCONFDIR "/bonsai/config",
+    BSI_SYSCONFDIR "/bonsai",
+    BSI_SYSCONFDIR "/bonsai/config",
 };
 
 #define len_keywords 4
@@ -92,7 +95,10 @@ bsi_config_find(struct bsi_config* config)
         }
 
         for (size_t i = 0; i < len_config_loc; ++i) {
-            snprintf(pfull, 255, "%s/%s", phome, fallback[i]);
+            if (fallback[i][0] != '/')
+                snprintf(pfull, 255, "%s/%s", phome, fallback[i]);
+            else
+                snprintf(pfull, 255, "%s", fallback[i]);
 
             if (access(pfull, F_OK | R_OK) != 0) {
                 bsi_info("No config exists in location '%s'", pfull);
@@ -118,7 +124,7 @@ bsi_config_parse(struct bsi_config* config)
     bsi_info("Found config file '%s'", config->path);
 
     FILE* f;
-    if (!(f = fopen(config->path, "r+"))) {
+    if (!(f = fopen(config->path, "r"))) {
         bsi_errno("Failed to open config file '%s'", config->path);
         exit(EXIT_FAILURE);
     }

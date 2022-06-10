@@ -47,8 +47,5 @@ executable(
     sources : bonsai_src,
     include_directories : bonsai_inc,
     dependencies : bonsai_dep,
-    c_args : [
-        '-DWLR_USE_UNSTABLE',
-        '-O0',
-        ]
-    )
+    install : true,
+)

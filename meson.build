@@ -1,7 +1,7 @@
 project(
     'bonsai', 'c',
     version : '0.1.0',
-    license : 'MIT',
+    license : 'GPL-3.0',
     meson_version : '>=0.61.0',
     default_options : [
         'c_std=c17',
@@ -11,7 +11,34 @@ project(
     ]
 )
 
+add_project_arguments(
+    [
+        '-DWLR_USE_UNSTABLE',
+
+        '-Wno-unused-parameter',
+		'-Wno-unused-result',
+		'-Wno-missing-braces',
+		'-Wundef',
+		'-Wvla',
+    ],
+    language : 'c',
+)
+
 cc = meson.get_compiler('c')
+
+### Location defaults
+prefix = get_option('prefix')
+datadir = get_option('datadir')
+sysconfdir = get_option('sysconfdir')
+add_project_arguments(
+    [
+        '-DBSI_PREFIX="@0@"'.format(prefix),
+        '-DBSI_DATADIR="@0@"'.format(datadir),
+        '-DBSI_SYSCONFDIR="@0@"'.format(sysconfdir),
+        '-DBSI_USERCONFDIR=".config"',
+    ],
+    language : 'c',
+)
 
 ### Dependencies
 dep_wlroots = dependency('wlroots', required : true)
@@ -64,3 +91,36 @@ inc_protocols = include_directories('include/protocols')
 
 ### Subdirs
 subdir('bonsai')
+
+### Installation
+# Session
+install_data(
+    'bonsai.desktop',
+    install_dir : join_paths(datadir, 'wayland-sessions')
+)
+
+# Default configs
+install_data(
+    'extern/bonsai/config',
+    install_dir : join_paths(sysconfdir, 'bonsai')
+)
+install_data(
+    'extern/swaylock/config',
+    install_dir : join_paths(sysconfdir, 'swaylock')
+)
+install_data(
+    'extern/waybar/config',
+    'extern/waybar/style.css',
+    install_dir : join_paths(sysconfdir, 'waybar')
+)
+
+# Wallpapers
+install_data(
+    'assets/Wallpaper-1.jpg',
+    'assets/Wallpaper-2.jpg',
+    'assets/Wallpaper-3.jpg',
+    'assets/Wallpaper-4.jpg',
+    'assets/Wallpaper-Default.jpg',
+    'assets/LICENSE',
+    install_dir : join_paths(datadir, 'backgrounds', 'bonsai')
+)
