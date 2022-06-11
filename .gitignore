@@ -66,4 +66,4 @@ dkms.conf
 **/build*
 
 # # # Bonsai # # #
-**/log*
+**/*log*

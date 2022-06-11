@@ -30,13 +30,6 @@ bsi_views_add(struct bsi_server* server, struct bsi_view* view)
     /* Initialize geometry state and arrange output. */
     wlr_xdg_surface_get_geometry(view->toplevel->base, &view->box);
     wlr_scene_node_coords(view->scene_node, &view->box.x, &view->box.y);
-    // struct bsi_view* v;
-    // wl_list_for_each(v, &server->scene.views, link_server)
-    // {
-    //     if (view->xdg_decoration_mode ==
-    //         WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE)
-    //         bsi_decoration_update(view->xdg_decoration);
-    // }
     bsi_layers_output_arrange(view->parent_workspace->output);
 }
 
@@ -52,6 +45,8 @@ bsi_views_mru_focus(struct bsi_server* server)
     if (!wl_list_empty(&active_ws->views)) {
         struct bsi_view* mru =
             wl_container_of(active_ws->views.prev, mru, link_workspace);
+        if (!mru->mapped)
+            return;
         wl_list_remove(&mru->link_workspace);
         wl_list_insert(&active_ws->views, &mru->link_workspace);
         bsi_view_focus(mru);
@@ -73,14 +68,6 @@ void
 bsi_views_remove(struct bsi_view* view)
 {
     wl_list_remove(&view->link_server);
-    // struct bsi_view* v;
-    // wl_list_for_each(v, &view->server->scene.views, link_server)
-    // {
-    //     if (view->xdg_decoration_mode ==
-    //         WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE)
-    //         bsi_decoration_update(view->xdg_decoration);
-    // }
-    bsi_layers_output_arrange(view->parent_workspace->output);
 }
 
 struct bsi_view*
@@ -153,6 +140,8 @@ bsi_view_focus(struct bsi_view* view)
     /* Move to front of server views. */
     bsi_views_remove(view);
     bsi_views_add(server, view);
+    bsi_layers_output_arrange(view->parent_workspace->output);
+
     /* Node to top & activate. */
     wlr_scene_node_raise_to_top(view->scene_node);
     wlr_xdg_toplevel_set_activated(view->toplevel, true);
@@ -285,6 +274,7 @@ bsi_view_set_minimized(struct bsi_view* view, bool minimized)
         bsi_view_restore_prev(view);
         bsi_views_remove(view);
         bsi_views_add(view->server, view);
+        bsi_layers_output_arrange(view->parent_workspace->output);
         wlr_scene_node_set_enabled(view->scene_node, true);
     } else {
         bsi_debug("Minimize view '%s'", view->toplevel->app_id);
@@ -292,6 +282,7 @@ bsi_view_set_minimized(struct bsi_view* view, bool minimized)
         bsi_views_remove(view);
         bsi_views_mru_focus(view->server);
         bsi_views_add(view->server, view);
+        bsi_layers_output_arrange(view->parent_workspace->output);
     }
 }
 
@@ -597,6 +588,7 @@ handle_xdg_surf_unmap(struct wl_listener* listener, void* data)
     view->mapped = false;
     bsi_views_remove(view);
     bsi_views_mru_focus(view->server);
+    bsi_layers_output_arrange(view->parent_workspace->output);
 }
 
 void

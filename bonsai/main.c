@@ -40,6 +40,8 @@
 
 // TODO: Implement server decoration.
 
+// TODO: Implement input inhibitor, right now, it's faked.
+
 int
 main(void)
 {
@@ -61,6 +63,13 @@ main(void)
 
     if (setenv("WAYLAND_DISPLAY", server.wl_socket, true) != 0) {
         bsi_errno("Failed to set WAYLAND_DISPLAY env var");
+        wlr_backend_destroy(server.wlr_backend);
+        wl_display_destroy(server.wl_display);
+        exit(EXIT_FAILURE);
+    }
+
+    if (setenv("XDG_CURRENT_DESKTOP", "wlroots", true) != 0) {
+        bsi_errno("Failed to set XDG_CURRENT_DESKTOP env var");
         wlr_backend_destroy(server.wlr_backend);
         wl_display_destroy(server.wl_display);
         exit(EXIT_FAILURE);

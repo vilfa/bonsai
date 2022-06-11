@@ -326,8 +326,6 @@ bsi_layer_arrange(struct bsi_output* output,
             layer_surf, wants_box.width, wants_box.height);
         wlr_scene_layer_surface_v1_configure(
             layer_toplevel->scene_node, &maxbounds_box, &wants_box);
-
-        bsi_views_output_arrange(output);
     }
 }
 
@@ -412,6 +410,8 @@ bsi_layers_output_arrange(struct bsi_output* output)
         wlr_scene_node_raise_to_top(&server->session.lock->tree->node);
         return;
     }
+
+    // bsi_views_output_arrange(output);
 
     /* Last, focus the topmost keyboard-interactive layer, if it exists. */
     struct wlr_keyboard* keyboard = wlr_seat_get_keyboard(server->wlr_seat);

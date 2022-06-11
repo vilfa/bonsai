@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <wayland-util.h>
 
 #include "bonsai/config/atom.h"
@@ -75,7 +76,13 @@ bsi_config_find(struct bsi_config* config)
         for (size_t i = 0; i < len_fnames; ++i) {
             snprintf(pfull, 255, "%s/%s", pconf, fnames[i]);
 
-            if (access(pfull, F_OK | R_OK) != 0) {
+            struct stat st;
+            if (stat(pfull, &st) != 0) {
+                bsi_info("No config exists in location '%s'", pfull);
+                memset(pfull, 0, 255);
+                continue;
+            }
+            if (access(pfull, F_OK | R_OK) != 0 || !S_ISREG(st.st_mode)) {
                 bsi_info("No config exists in location '%s'", pfull);
                 memset(pfull, 0, 255);
                 continue;
@@ -101,7 +108,13 @@ bsi_config_find(struct bsi_config* config)
             else
                 snprintf(pfull, 255, "%s", fallback[i]);
 
-            if (access(pfull, F_OK | R_OK) != 0) {
+            struct stat st;
+            if (stat(pfull, &st) != 0) {
+                bsi_info("No config exists in location '%s'", pfull);
+                memset(pfull, 0, 255);
+                continue;
+            }
+            if (access(pfull, F_OK | R_OK) != 0 || !S_ISREG(st.st_mode)) {
                 bsi_info("No config exists in location '%s'", pfull);
                 memset(pfull, 0, 255);
                 continue;
@@ -109,6 +122,7 @@ bsi_config_find(struct bsi_config* config)
 
             config->found = true;
             memcpy(config->path, pfull, 255);
+            break;
         }
     }
 }

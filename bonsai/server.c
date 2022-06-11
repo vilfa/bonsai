@@ -707,8 +707,6 @@ handle_output_layout_change(struct wl_listener* listener, void* data)
         }
 
         bsi_layers_output_arrange(output);
-        bsi_views_output_arrange(output);
-
         bsi_output_surface_damage(output, NULL, true);
     }
 
@@ -1068,7 +1066,12 @@ handle_xdg_request_activate(struct wl_listener* listener, void* data)
 
     struct wlr_xdg_surface* surface =
         wlr_xdg_surface_from_wlr_surface(event->surface);
-    struct bsi_view* view = surface->data;
+
+    if (surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL)
+        return;
+
+    struct wlr_scene_node* node = surface->toplevel->base->data;
+    struct bsi_view* view = node->data;
 
     if (view == NULL || !surface->mapped)
         return;
