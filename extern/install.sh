@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# This is meant to be run by Meson.
+# This is meant to be run by Meson when invoking install.
 
 ### Logging utils
 
@@ -36,11 +36,14 @@ else
     info "Set config install directory to '$CONFDIR'."
 fi
 
+### Install configs (swaylock, waybar, xdg-desktop-portal-wlr)
+
 info "Installing configs..."
 
 # cp -rv "$SRCDIR/extern/bonsai" "$CONFDIR"
 cp -rv "$SRCDIR/extern/swaylock" "$CONFDIR"
 cp -rv "$SRCDIR/extern/waybar" "$CONFDIR"
+cp -rv "$SRCDIR/extern/xdg-desktop-portal-wlr" "$CONFDIR"
 
 info "Installed configs."
 info "Done."

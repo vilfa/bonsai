@@ -42,6 +42,12 @@
 
 // TODO: Implement input inhibitor, right now, it's faked.
 
+// TODO: Gracefully handle multiple outputs.
+
+// TODO: Implement xwayland support.
+
+// TODO: Rework view.
+
 int
 main(void)
 {
