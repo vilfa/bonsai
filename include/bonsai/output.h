@@ -48,22 +48,6 @@ struct bsi_output
     struct wl_list link_server; // bsi_server
 };
 
-void
-outputs_add(struct bsi_server* server, struct bsi_output* output);
-
-void
-outputs_remove(struct bsi_output* output);
-
-/**
- * @brief Gets the bsi_output that contains the wlr_output
- *
- * @param server The server.
- * @param wlr_output The output.
- * @return struct bsi_output* The output container.
- */
-struct bsi_output*
-outputs_find(struct bsi_server* server, struct wlr_output* wlr_output);
-
 struct bsi_output*
 output_init(struct bsi_output* output,
             struct bsi_server* server,
@@ -82,6 +66,9 @@ output_get_next_workspace(struct bsi_output* output);
 
 struct bsi_workspace*
 output_get_prev_workspace(struct bsi_output* output);
+
+void
+output_layers_arrange(struct bsi_output* output);
 
 void
 output_destroy(struct bsi_output* output);

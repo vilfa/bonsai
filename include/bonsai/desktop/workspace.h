@@ -44,42 +44,6 @@ struct bsi_workspace_listener
                          // bsi_output::listen::workspace_active
 };
 
-/**
- * @brief Add a workspace to the workspaces. This will emit `active` events for
- * all workspaces that changed their active state.
- *
- * @param output The output.
- * @param workspace The workspace to add.
- */
-void
-workspaces_add(struct bsi_output* output, struct bsi_workspace* workspace);
-
-/**
- * @brief Remove a workspace from the workspaces. This will emit `active` events
- * for all workspaces that changed their active state.
- *
- * @param output The output.
- * @param workspace The workspace to remove.
- */
-void
-workspaces_remove(struct bsi_output* output, struct bsi_workspace* workspace);
-
-/**
- * @brief Get the active workspace.
- *
- * @param output The output.
- * @return struct bsi_workspace* The active workspace or NULL (shouldn't
- * happen).
- */
-struct bsi_workspace*
-workspaces_get_active(struct bsi_output* output);
-
-void
-workspaces_next(struct bsi_output* output);
-
-void
-workspaces_prev(struct bsi_output* output);
-
 struct bsi_workspace*
 workspace_init(struct bsi_workspace* workspace,
                struct bsi_server* server,

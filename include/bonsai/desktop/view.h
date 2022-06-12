@@ -1,12 +1,16 @@
 #pragma once
 
+#include <stdbool.h>
 #include <wayland-server-core.h>
 #include <wayland-util.h>
 #include <wlr/types/wlr_xdg_decoration_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
+#include <wlr/util/box.h>
+#include <wlr/xwayland.h>
 
 #include "bonsai/desktop/decoration.h"
 #include "bonsai/desktop/idle.h"
+#include "bonsai/desktop/view.h"
 #include "bonsai/desktop/workspace.h"
 #include "bonsai/input/cursor.h"
 
@@ -20,34 +24,89 @@ enum bsi_view_state
     BSI_VIEW_STATE_TILED_RIGHT = 1 << 5,
 };
 
+enum bsi_view_type
+{
+    BSI_VIEW_TYPE_XDG_SHELL,
+    BSI_VIEW_TYPE_XWAYLAND,
+};
+
+union bsi_xdg_toplevel_event
+{
+    struct wlr_xdg_toplevel_move_event* move;
+    struct wlr_xdg_toplevel_resize_event* resize;
+    struct wlr_xdg_toplevel_show_window_menu_event* show_window_menu;
+};
+
+struct bsi_view;
+struct bsi_view_impl
+{
+    void (*destroy)(struct bsi_view* view);
+    void (*focus)(struct bsi_view* view);
+    void (*cursor_interactive)(struct bsi_view* view,
+                               enum bsi_cursor_mode cursor_mode,
+                               union bsi_xdg_toplevel_event toplevel_event);
+    void (*set_maximized)(struct bsi_view* view, bool maximized);
+    void (*set_minimized)(struct bsi_view* view, bool minimized);
+    void (*set_fullscreen)(struct bsi_view* view, bool fullscreen);
+    void (*set_tiled_left)(struct bsi_view* view, bool tiled);
+    void (*set_tiled_right)(struct bsi_view* view, bool tiled);
+    void (*restore_prev)(struct bsi_view* view);
+    bool (*intersects)(struct bsi_view* view, struct wlr_box* box);
+    void (*get_correct)(struct bsi_view* view,
+                        struct wlr_box* box,
+                        struct wlr_box* correction);
+    void (*set_correct)(struct bsi_view* view, struct wlr_box* correction);
+    void (*request_activate)(struct bsi_view* view);
+};
+
 struct bsi_view
 {
+    enum bsi_view_type type;
+    const struct bsi_view_impl* impl;
+    struct wlr_scene_node* node;
+
     struct bsi_server* server;
-    struct wlr_xdg_toplevel* toplevel;
-    struct wlr_scene_node* scene_node;
-    struct bsi_workspace* parent_workspace;
+    struct bsi_workspace* workspace;
 
     bool mapped;
     enum bsi_view_state state;
-    enum wlr_xdg_toplevel_decoration_v1_mode xdg_decoration_mode;
-    struct bsi_xdg_decoration* xdg_decoration;
+    enum wlr_xdg_toplevel_decoration_v1_mode decoration_mode;
+    struct bsi_xdg_decoration* decoration;
 
-    struct bsi_idle_inhibitor*
-        fullscreen_inhibitor; /* !NULL only when state ==
-                                 BSI_VIEW_STATE_FULLSCREEN */
+    struct wlr_box geom;
 
-    /* Note, that when the window goes fullscreen, minimized or maximized,
-     * this will hold the last state of the window that should be restored when
-     * restoring the window mode to normal. The helper function
-     * bsi_view_restore_prev() does just that. */
-    struct wlr_box box;
+    union
+    {
+        struct wlr_xdg_toplevel* wlr_xdg_toplevel;
+#ifdef BSI_XWAYLAND
+        struct wlr_xwayland_surface* wlr_xwayland_surface;
+#endif
+    };
 
     struct
     {
+        struct bsi_idle_inhibitor* fullscreen;
+    } inhibit;
+
+    struct
+    {
+        struct wl_listener workspace_active;
+    } listen;
+
+    struct wl_list link_server;     // bsi_server::scene::views
+    struct wl_list link_fullscreen; // bsi_server::scene::views_fullscreen
+    struct wl_list link_workspace;  // bsi_workspace::views
+};
+
+struct bsi_xdg_shell_view
+{
+    struct bsi_view view;
+    struct
+    {
         /* wlr_xdg_surface */
-        struct wl_listener destroy;
         struct wl_listener map;
         struct wl_listener unmap;
+        struct wl_listener destroy;
         /* wlr_xdg_toplevel */
         struct wl_listener request_maximize;
         struct wl_listener request_fullscreen;
@@ -55,49 +114,35 @@ struct bsi_view
         struct wl_listener request_move;
         struct wl_listener request_resize;
         struct wl_listener request_show_window_menu;
-        /* bsi_workspaces */
-        struct wl_listener workspace_active;
     } listen;
-
-    struct wl_list link_server;     // bsi_server::scene::views
-    struct wl_list link_fullscreen; // bsi_server::scene::views_fullscreen;
-    struct wl_list link_workspace;  // bsi_workspace::views
 };
 
-union bsi_view_toplevel_event
+#ifdef BSI_XWAYLAND
+struct bsi_xwayland_view
 {
-    struct wlr_xdg_toplevel_move_event* move;
-    struct wlr_xdg_toplevel_resize_event* resize;
-    struct wlr_xdg_toplevel_show_window_menu_event* show_window_menu;
+    struct bsi_view view;
+    struct
+    {
+        /* wlr_xwayland_surface */
+        struct wl_signal map;
+        struct wl_signal unmap;
+        struct wl_signal destroy;
+        struct wl_signal request_configure;
+        struct wl_signal request_move;
+        struct wl_signal request_resize;
+        struct wl_signal request_minimize;
+        struct wl_signal request_maximize;
+        struct wl_signal request_fullscreen;
+        struct wl_signal request_activate;
+    } listen;
 };
-
-/**
- * @brief Adds a view to the server views.
- *
- * @param server The server.
- * @param view The view to add.
- */
-void
-views_add(struct bsi_server* server, struct bsi_view* view);
-
-/**
- * @brief Focuses the most recently used view, if any exists.
- *
- * @param server The server.
- */
-void
-views_mru_focus(struct bsi_server* server);
-
-struct bsi_view*
-views_get_focused(struct bsi_server* server);
-
-void
-views_remove(struct bsi_view* view);
+#endif
 
 struct bsi_view*
 view_init(struct bsi_view* view,
-          struct bsi_server* server,
-          struct wlr_xdg_toplevel* toplevel);
+          enum bsi_view_type type,
+          const struct bsi_view_impl* impl,
+          struct bsi_server* server);
 
 void
 view_destroy(struct bsi_view* view);
@@ -106,9 +151,9 @@ void
 view_focus(struct bsi_view* view);
 
 void
-view_interactive_begin(struct bsi_view* view,
-                       enum bsi_cursor_mode cursor_mode,
-                       union bsi_view_toplevel_event toplevel_event);
+view_cursor_interactive(struct bsi_view* view,
+                        enum bsi_cursor_mode cursor_mode,
+                        union bsi_xdg_toplevel_event toplevel_event);
 
 void
 view_set_maximized(struct bsi_view* view, bool maximized);
@@ -132,12 +177,12 @@ bool
 view_intersects(struct bsi_view* view, struct wlr_box* box);
 
 void
-view_intersection_correct_box(struct bsi_view* view,
-                              struct wlr_box* box,
-                              struct wlr_box* correction);
+view_get_correct(struct bsi_view* view,
+                 struct wlr_box* box,
+                 struct wlr_box* correction);
 
 void
-view_correct_with_box(struct bsi_view* view, struct wlr_box* correction);
+view_set_correct(struct bsi_view* view, struct wlr_box* correction);
 
 void
 view_request_activate(struct bsi_view* view);

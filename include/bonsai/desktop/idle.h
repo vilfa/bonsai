@@ -26,16 +26,6 @@ struct bsi_idle_inhibitor
     struct wl_list link_server; // bsi_server::idle
 };
 
-void
-idle_inhibitors_add(struct bsi_server* server,
-                    struct bsi_idle_inhibitor* inhibitor);
-
-void
-idle_inhibitors_remove(struct bsi_idle_inhibitor* inhibitor);
-
-void
-idle_inhibitors_update(struct bsi_server* server);
-
 struct bsi_idle_inhibitor*
 idle_inhibitor_init(struct bsi_idle_inhibitor* inhibitor,
                     struct wlr_idle_inhibitor_v1* wlr_inhibitor,

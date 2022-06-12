@@ -7,6 +7,8 @@
 #include <wlr/types/wlr_xdg_decoration_v1.h>
 
 #include "bonsai/config/config.h"
+#include "bonsai/desktop/decoration.h"
+#include "bonsai/desktop/layers.h"
 #include "bonsai/desktop/lock.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/desktop/workspace.h"
@@ -14,33 +16,28 @@
 #include "bonsai/input/cursor.h"
 #include "bonsai/output.h"
 
-#define bsi_server_extern_prog_len 2
 struct bsi_server
 {
-    /* Globals */
     const char* wl_socket;
     struct wl_display* wl_display;
     struct wlr_backend* wlr_backend;
     struct wlr_renderer* wlr_renderer;
     struct wlr_allocator* wlr_allocator;
     struct wlr_output_layout* wlr_output_layout;
-    struct wlr_output_manager_v1* wlr_output_manager;
     struct wlr_scene* wlr_scene;
     struct wlr_xdg_shell* wlr_xdg_shell;
     struct wlr_seat* wlr_seat;
     struct wlr_cursor* wlr_cursor;
-    struct wlr_xcursor_manager* wlr_xcursor_manager;
-    struct wlr_layer_shell_v1* wlr_layer_shell;
-    struct wlr_xdg_decoration_manager_v1* wlr_xdg_decoration_manager;
-    struct wlr_xdg_activation_v1* wlr_xdg_activation;
     struct wlr_idle* wlr_idle;
+    struct wlr_layer_shell_v1* wlr_layer_shell;
+    struct wlr_xdg_activation_v1* wlr_xdg_activation;
+    struct wlr_output_manager_v1* wlr_output_manager;
+    struct wlr_xcursor_manager* wlr_xcursor_manager;
+    struct wlr_xdg_decoration_manager_v1* wlr_xdg_decoration_manager;
     struct wlr_idle_inhibit_manager_v1* wlr_idle_inhibit_manager;
-    struct wlr_session_lock_manager_v1* wlr_session_lock_manager;
     struct wlr_input_inhibit_manager* wlr_input_inhbit_manager;
+    struct wlr_session_lock_manager_v1* wlr_session_lock_manager;
 
-    /*
-     * Global state
-     */
     struct
     {
         /* wlr_backend */
@@ -56,12 +53,9 @@ struct bsi_server
         struct wl_listener pointer_grab_end;
         struct wl_listener keyboard_grab_begin;
         struct wl_listener keyboard_grab_end;
-        struct wl_listener touch_grab_begin;
-        struct wl_listener touch_grab_end;
         struct wl_listener request_set_cursor;
         struct wl_listener request_set_selection;
         struct wl_listener request_set_primary_selection;
-        struct wl_listener request_start_drag;
         /* wlr_xdg_shell */
         struct wl_listener xdg_new_surface;
         /* wlr_layer_shell_v1 */
@@ -82,7 +76,9 @@ struct bsi_server
 
     struct
     {
-        bool extern_setup[bsi_server_extern_prog_len];
+#define len_extern_progs 2
+        bool setup[len_extern_progs];
+#undef len_extern_progs
         struct wl_list outputs;
     } output;
 
@@ -105,20 +101,12 @@ struct bsi_server
 
     struct
     {
-        struct bsi_config* all;
-        struct wl_list input;
+        struct bsi_config* config;
         char* wallpaper;
-        size_t workspaces_max;
+        size_t workspaces;
+        struct wl_list input;
     } config;
 
-    /* So, the way I imagine it, a workspace can be attached to a single output
-     * at one time, with each output being able to hold multiple workspaces.
-     * ---
-     * Each output will also have the four layers defined by
-     * zwlr_layer_shell_v1, so the layers are not dependent on the workspace,
-     * but on the output. */
-
-    /* Keeps track of the scene and all views. */
     struct bsi_workspace* active_workspace;
     struct
     {
@@ -133,7 +121,7 @@ struct bsi_server
         uint32_t cursor_image;
         uint32_t resize_edges;
         uint32_t swipe_fingers;
-        uint32_t swipe_timest; // TODO: Maybe use this for animation.
+        uint32_t swipe_timest;
         bool swipe_cancelled;
         struct bsi_view* grabbed_view;
         struct wlr_box grab_box;
@@ -153,9 +141,79 @@ struct bsi_server*
 server_init(struct bsi_server* server, struct bsi_config* config);
 
 void
-server_setup_extern(struct bsi_server* server);
+server_setup(struct bsi_server* server);
 
 void
 server_finish(struct bsi_server* server);
 
-#undef bsi_server_extern_prog_len
+/* Outputs */
+void
+outputs_add(struct bsi_server* server, struct bsi_output* output);
+
+void
+outputs_remove(struct bsi_output* output);
+
+struct bsi_output*
+outputs_find(struct bsi_server* server, struct wlr_output* wlr_output);
+
+/* Inputs */
+void
+inputs_add(struct bsi_server* server, struct bsi_input_device* device);
+
+void
+inputs_remove(struct bsi_input_device* device);
+
+/* Workspaces */
+void
+workspaces_add(struct bsi_output* output, struct bsi_workspace* workspace);
+
+void
+workspaces_remove(struct bsi_output* output, struct bsi_workspace* workspace);
+
+struct bsi_workspace*
+workspaces_get_active(struct bsi_output* output);
+
+void
+workspaces_next(struct bsi_output* output);
+
+void
+workspaces_prev(struct bsi_output* output);
+
+/* Views */
+void
+views_add(struct bsi_server* server, struct bsi_view* view);
+
+void
+views_remove(struct bsi_view* view);
+
+void
+views_focus_recent(struct bsi_server* server);
+
+struct bsi_view*
+views_get_focused(struct bsi_server* server);
+
+/* Layers */
+void
+layers_add(struct bsi_output* output, struct bsi_layer_surface_toplevel* layer);
+
+void
+layers_remove(struct bsi_layer_surface_toplevel* layer);
+
+/* Idle inhibitors */
+void
+idle_inhibitors_add(struct bsi_server* server,
+                    struct bsi_idle_inhibitor* inhibitor);
+
+void
+idle_inhibitors_remove(struct bsi_idle_inhibitor* inhibitor);
+
+void
+idle_inhibitors_update(struct bsi_server* server);
+
+/* Decorations */
+void
+decorations_add(struct bsi_server* server,
+                struct bsi_xdg_decoration* decoration);
+
+void
+decorations_remove(struct bsi_xdg_decoration* decoration);
