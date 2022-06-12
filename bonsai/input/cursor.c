@@ -139,20 +139,20 @@ cursor_process_view_move(struct bsi_server* server,
 
     if (view->state == BSI_VIEW_STATE_MAXIMIZED) {
         view_set_maximized(view, false);
-        view->box.x = server->wlr_cursor->x - (double)view->box.width / 2;
-        view->box.y = server->wlr_cursor->y - server->cursor.grab_sy;
-        server->cursor.grab_sx = (double)view->box.width / 2;
+        view->geom.x = server->wlr_cursor->x - (double)view->geom.width / 2;
+        view->geom.y = server->wlr_cursor->y - server->cursor.grab_sy;
+        server->cursor.grab_sx = (double)view->geom.width / 2;
         server->cursor.grab_sy = 0;
         bsi_debug("Unmaximize by move, surface coords are (%d, %d)",
-                  view->box.x,
-                  view->box.y);
+                  view->geom.x,
+                  view->geom.y);
     } else {
-        view->box.x = server->wlr_cursor->x - server->cursor.grab_sx;
-        view->box.y = server->wlr_cursor->y - server->cursor.grab_sy;
+        view->geom.x = server->wlr_cursor->x - server->cursor.grab_sx;
+        view->geom.y = server->wlr_cursor->y - server->cursor.grab_sy;
     }
 
-    bsi_debug("Moving view to coords (%d, %d)", view->box.x, view->box.y);
-    wlr_scene_node_set_position(view->scene_node, view->box.x, view->box.y);
+    bsi_debug("Moving view to coords (%d, %d)", view->geom.x, view->geom.y);
+    wlr_scene_node_set_position(view->node, view->geom.x, view->geom.y);
 }
 
 void
@@ -167,7 +167,7 @@ cursor_process_view_resize(struct bsi_server* server,
     if (view->state != BSI_VIEW_STATE_NORMAL)
         return;
 
-    wlr_xdg_toplevel_set_resizing(view->toplevel, true);
+    wlr_xdg_toplevel_set_resizing(view->wlr_xdg_toplevel, true);
 
     double rsiz_lx, rsiz_ly;
     int32_t new_left, new_right, new_top, new_bottom;
@@ -201,24 +201,24 @@ cursor_process_view_resize(struct bsi_server* server,
     }
 
     struct wlr_box box;
-    wlr_xdg_surface_get_geometry(view->toplevel->base, &box);
+    wlr_xdg_surface_get_geometry(view->wlr_xdg_toplevel->base, &box);
 
     /* Set new view position. Account for possible titlebars, etc. Clients will
      * not be limited when moving under layer surfaces above them.*/
-    view->box.x = new_left - box.x;
-    view->box.y = new_top - box.y;
-    view->box.width = box.width;
-    view->box.height = box.height;
-    wlr_scene_node_set_position(view->scene_node, view->box.x, view->box.y);
+    view->geom.x = new_left - box.x;
+    view->geom.y = new_top - box.y;
+    view->geom.width = box.width;
+    view->geom.height = box.height;
+    wlr_scene_node_set_position(view->node, view->geom.x, view->geom.y);
 
     /* Set new view size. */
     wlr_xdg_toplevel_set_size(
-        view->toplevel, new_right - new_left, new_bottom - new_top);
+        view->wlr_xdg_toplevel, new_right - new_left, new_bottom - new_top);
     // if (view->xdg_decoration_mode ==
     //     WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE)
     //     bsi_decoration_update(view->xdg_decoration);
 
-    wlr_xdg_toplevel_set_resizing(view->toplevel, false);
+    wlr_xdg_toplevel_set_resizing(view->wlr_xdg_toplevel, false);
 }
 
 void

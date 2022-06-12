@@ -4,8 +4,6 @@
 #include <wlr/types/wlr_scene.h>
 #include <wlr/types/wlr_xdg_decoration_v1.h>
 
-#include "bonsai/server.h"
-
 struct bsi_xdg_decoration
 {
     struct bsi_server* server;
@@ -23,13 +21,6 @@ struct bsi_xdg_decoration
 
     struct wl_list link_server; // bsi_server
 };
-
-void
-decorations_add(struct bsi_server* server,
-                struct bsi_xdg_decoration* decoration);
-
-void
-decorations_remove(struct bsi_xdg_decoration* decoration);
 
 struct bsi_xdg_decoration*
 decoration_init(struct bsi_xdg_decoration* decoration,

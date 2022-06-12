@@ -12,36 +12,6 @@
 #include "bonsai/server.h"
 #include "bonsai/util.h"
 
-void
-idle_inhibitors_add(struct bsi_server* server,
-                    struct bsi_idle_inhibitor* inhibitor)
-{
-    wl_list_insert(&server->idle.inhibitors, &inhibitor->link_server);
-}
-
-void
-idle_inhibitors_remove(struct bsi_idle_inhibitor* inhibitor)
-{
-    wl_list_remove(&inhibitor->link_server);
-}
-
-void
-idle_inhibitors_state_update(struct bsi_server* server)
-{
-    if (wl_list_empty(&server->idle.inhibitors))
-        return;
-
-    bool inhibit = false;
-    struct bsi_idle_inhibitor* idle;
-    wl_list_for_each(idle, &server->idle.inhibitors, link_server)
-    {
-        if ((inhibit = idle_inhibitor_active(idle)))
-            break;
-    }
-
-    wlr_idle_set_enabled(server->wlr_idle, NULL, !inhibit);
-}
-
 struct bsi_idle_inhibitor*
 idle_inhibitor_init(struct bsi_idle_inhibitor* inhibitor,
                     struct wlr_idle_inhibitor_v1* wlr_inhibitor,
@@ -72,9 +42,9 @@ idle_inhibitor_active(struct bsi_idle_inhibitor* inhibitor)
             /* Is acitve if view is visible. */
             assert(inhibitor->view);
             return inhibitor->view->state != BSI_VIEW_STATE_MINIMIZED &&
-                   inhibitor->view->parent_workspace ==
+                   inhibitor->view->workspace ==
                        inhibitor->server->active_workspace &&
-                   inhibitor->view->scene_node->state.enabled;
+                   inhibitor->view->node->state.enabled;
         case BSI_IDLE_INHIBIT_USER:
             /* Inhibitor is destroyed manually by the user. */
             assert(!inhibitor->view);
@@ -83,18 +53,16 @@ idle_inhibitor_active(struct bsi_idle_inhibitor* inhibitor)
             assert(inhibitor->view);
             assert(!inhibitor->inhibitor);
             return inhibitor->view->state == BSI_VIEW_STATE_FULLSCREEN &&
-                   inhibitor->view->parent_workspace ==
+                   inhibitor->view->workspace ==
                        inhibitor->server->active_workspace &&
-                   inhibitor->view->scene_node->state.enabled;
+                   inhibitor->view->node->state.enabled;
     }
     return false;
 }
 
-/*
- * Handlers
- */
-void
-handle_idle_inhibitor_destroy(struct wl_listener* listener, void* data)
+/* Handlers */
+static void
+handle_destroy(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event destroy from wlr_idle_inhibitor");
 
@@ -103,5 +71,55 @@ handle_idle_inhibitor_destroy(struct wl_listener* listener, void* data)
     struct bsi_server* server = inhibitor->server;
     idle_inhibitors_remove(inhibitor);
     idle_inhibitor_destroy(inhibitor);
-    idle_inhibitors_state_update(server);
+    idle_inhibitors_update(server);
+}
+
+/* Global server handlers. */
+void
+handle_idle_manager_new_inhibitor(struct wl_listener* listener, void* data)
+{
+    bsi_debug("Got event new_inhibitor from wlr_idle_inhibit_manager");
+
+    struct bsi_server* server =
+        wl_container_of(listener, server, listen.new_inhibitor);
+    struct wlr_idle_inhibitor_v1* idle_inhibitor = data;
+
+    /* Only xdg and layer shell surfaces can have inhbitors. */
+    if (!wlr_surface_is_xdg_surface(idle_inhibitor->surface) &&
+        !wlr_surface_is_layer_surface(idle_inhibitor->surface)) {
+        bsi_info("Refuse to set inhbitor for non- xdg or layer shell surface");
+        return;
+    }
+
+    struct bsi_idle_inhibitor* inhibitor =
+        calloc(1, sizeof(struct bsi_idle_inhibitor));
+
+    if (wlr_surface_is_xdg_surface(idle_inhibitor->surface)) {
+        struct wlr_xdg_surface* xdg_surface =
+            wlr_xdg_surface_from_wlr_surface(idle_inhibitor->surface);
+        struct bsi_view* view = xdg_surface->data;
+        idle_inhibitor_init(inhibitor,
+                            idle_inhibitor,
+                            server,
+                            view,
+                            BSI_IDLE_INHIBIT_APPLICATION);
+    } else if (wlr_surface_is_layer_surface(idle_inhibitor->surface)) {
+        idle_inhibitor_init(
+            inhibitor, idle_inhibitor, server, NULL, BSI_IDLE_INHIBIT_USER);
+    }
+
+    util_slot_connect(&idle_inhibitor->events.destroy,
+                      &inhibitor->listen.destroy,
+                      handle_destroy);
+    idle_inhibitors_add(server, inhibitor);
+
+    idle_inhibitors_update(server);
+}
+
+void
+handle_idle_activity_notify(struct wl_listener* listener, void* data)
+{
+    struct bsi_server* server =
+        wl_container_of(listener, server, listen.activity_notify);
+    idle_inhibitors_update(server);
 }

@@ -185,7 +185,7 @@ keyboard_mod_alt_handle(struct bsi_server* server, xkb_keysym_t sym)
     switch (sym) {
         case XKB_KEY_Tab: {
             bsi_debug("Got Alt+Tab -> cycle views");
-            views_mru_focus(server);
+            views_focus_recent(server);
             return true;
         }
     }

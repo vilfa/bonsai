@@ -9,8 +9,9 @@ bonsai_src = files(
     'input/keyboard.c',
     
     'desktop/view.c',
+    'desktop/xdg_shell.c',
     'desktop/workspace.c',
-    'desktop/layers.c',
+    'desktop/layer_shell.c',
     'desktop/decoration.c',
     'desktop/idle.c',
     'desktop/lock.c',

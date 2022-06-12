@@ -45,7 +45,7 @@ util_tryexec(char* const* argp, const size_t len_argp)
 {
     const char* binpaths[] = { "/usr/bin/", "/usr/local/bin/" };
     char fargp[50] = { 0 };
-    char* aargp[len_argp];
+    char* aargp[len_argp]; // NOLINT
     for (size_t i = 0; i < 2; ++i) {
         snprintf(fargp, 50, "%s%s", binpaths[i], argp[0]);
         aargp[0] = fargp;

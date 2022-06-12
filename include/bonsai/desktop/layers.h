@@ -98,18 +98,6 @@ struct bsi_layer_surface_subsurface
     struct wl_list link;
 };
 
-void
-layers_add(struct bsi_output* output, struct bsi_layer_surface_toplevel* layer);
-
-void
-layers_remove(struct bsi_layer_surface_toplevel* layer);
-
-void
-views_output_arrange(struct bsi_output* output);
-
-void
-layers_output_arrange(struct bsi_output* output);
-
 struct bsi_layer_surface_toplevel*
 layer_surface_toplevel_init(struct bsi_layer_surface_toplevel* toplevel,
                             struct wlr_layer_surface_v1* layer_surface,

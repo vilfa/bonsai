@@ -3,8 +3,11 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <wayland-server-core.h>
 #include <wayland-util.h>
+#include <wlr/backend.h>
+#include <wlr/backend/libinput.h>
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_idle.h>
 #include <wlr/types/wlr_keyboard.h>
@@ -23,18 +26,7 @@
 #include "bonsai/input/keyboard.h"
 #include "bonsai/log.h"
 #include "bonsai/server.h"
-
-void
-inputs_add(struct bsi_server* server, struct bsi_input_device* device)
-{
-    wl_list_insert(&server->input.inputs, &device->link_server);
-}
-
-void
-inputs_remove(struct bsi_input_device* device)
-{
-    wl_list_remove(&device->link_server);
-}
+#include "bonsai/util.h"
 
 struct bsi_input_device*
 input_device_init(struct bsi_input_device* input_device,
@@ -156,11 +148,9 @@ input_device_keymap_set(struct bsi_input_device* input_device,
     xkb_context_unref(xkb_context);
 }
 
-/**
- * Handlers
- */
-void
-handle_pointer_motion(struct wl_listener* listener, void* data)
+/* Handlers */
+static void
+handle_motion(struct wl_listener* listener, void* data)
 {
     struct bsi_input_device* device =
         wl_container_of(listener, device, listen.motion);
@@ -181,8 +171,8 @@ handle_pointer_motion(struct wl_listener* listener, void* data)
     cursor_process_motion(server, cursor_event);
 }
 
-void
-handle_pointer_motion_absolute(struct wl_listener* listener, void* data)
+static void
+handle_motion_absolute(struct wl_listener* listener, void* data)
 {
     struct bsi_input_device* device =
         wl_container_of(listener, device, listen.motion_absolute);
@@ -201,8 +191,8 @@ handle_pointer_motion_absolute(struct wl_listener* listener, void* data)
     cursor_process_motion(server, cursor_event);
 }
 
-void
-handle_pointer_button(struct wl_listener* listener, void* data)
+static void
+handle_button(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event button from wlr_input_device");
 
@@ -261,9 +251,9 @@ handle_pointer_button(struct wl_listener* listener, void* data)
                 struct bsi_view* view = scene_data;
                 struct wlr_cursor* cursor = view->server->wlr_cursor;
                 double sub_sx, sub_sy;
-                if (wlr_xdg_surface_surface_at(view->toplevel->base,
-                                               cursor->x - view->box.x,
-                                               cursor->y - view->box.y,
+                if (wlr_xdg_surface_surface_at(view->wlr_xdg_toplevel->base,
+                                               cursor->x - view->geom.x,
+                                               cursor->y - view->geom.y,
                                                &sub_sx,
                                                &sub_sy))
                     view_focus(view);
@@ -273,8 +263,8 @@ handle_pointer_button(struct wl_listener* listener, void* data)
     }
 }
 
-void
-handle_pointer_axis(struct wl_listener* listener, void* data)
+static void
+handle_axis(struct wl_listener* listener, void* data)
 {
     struct bsi_input_device* device =
         wl_container_of(listener, device, listen.axis);
@@ -297,8 +287,8 @@ handle_pointer_axis(struct wl_listener* listener, void* data)
     wlr_idle_notify_activity(server->wlr_idle, server->wlr_seat);
 }
 
-void
-handle_pointer_frame(struct wl_listener* listener, void* data)
+static void
+handle_frame(struct wl_listener* listener, void* data)
 {
     struct bsi_input_device* device =
         wl_container_of(listener, device, listen.frame);
@@ -309,8 +299,8 @@ handle_pointer_frame(struct wl_listener* listener, void* data)
     wlr_seat_pointer_notify_frame(seat);
 }
 
-void
-handle_pointer_swipe_begin(struct wl_listener* listener, void* data)
+static void
+handle_swipe_begin(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event swipe_begin from wlr_input_device");
 
@@ -334,8 +324,8 @@ handle_pointer_swipe_begin(struct wl_listener* listener, void* data)
     wlr_idle_notify_activity(server->wlr_idle, server->wlr_seat);
 }
 
-void
-handle_pointer_swipe_update(struct wl_listener* listener, void* data)
+static void
+handle_swipe_update(struct wl_listener* listener, void* data)
 {
     struct bsi_input_device* device =
         wl_container_of(listener, device, listen.swipe_update);
@@ -356,8 +346,8 @@ handle_pointer_swipe_update(struct wl_listener* listener, void* data)
     cursor_process_swipe(server, cursor_event);
 }
 
-void
-handle_pointer_swipe_end(struct wl_listener* listener, void* data)
+static void
+handle_swipe_end(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event swipe_end from wlr_input_device");
 
@@ -420,8 +410,8 @@ handle_pointer_swipe_end(struct wl_listener* listener, void* data)
     server->cursor.swipe_cancelled = false;
 }
 
-void
-handle_pointer_pinch_begin(struct wl_listener* listener, void* data)
+static void
+handle_pinch_begin(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event pinch_begin from wlr_input_device");
 
@@ -438,8 +428,8 @@ handle_pointer_pinch_begin(struct wl_listener* listener, void* data)
     wlr_idle_notify_activity(device->server->wlr_idle, seat);
 }
 
-void
-handle_pointer_pinch_update(struct wl_listener* listener, void* data)
+static void
+handle_pinch_update(struct wl_listener* listener, void* data)
 {
     struct bsi_input_device* device =
         wl_container_of(listener, device, listen.pinch_update);
@@ -452,8 +442,8 @@ handle_pointer_pinch_update(struct wl_listener* listener, void* data)
     struct wlr_pointer_pinch_update_event* event = data;
 }
 
-void
-handle_pointer_pinch_end(struct wl_listener* listener, void* data)
+static void
+handle_pinch_end(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event pinch_end from wlr_input_device");
 
@@ -468,8 +458,8 @@ handle_pointer_pinch_end(struct wl_listener* listener, void* data)
     struct wlr_pointer_pinch_end_event* event = data;
 }
 
-void
-handle_pointer_hold_begin(struct wl_listener* listener, void* data)
+static void
+handle_hold_begin(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event hold_begin from wlr_input_device");
 
@@ -486,8 +476,8 @@ handle_pointer_hold_begin(struct wl_listener* listener, void* data)
     wlr_idle_notify_activity(device->server->wlr_idle, seat);
 }
 
-void
-handle_pointer_hold_end(struct wl_listener* listener, void* data)
+static void
+handle_hold_end(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event hold_end from wlr_input_device");
 
@@ -502,8 +492,8 @@ handle_pointer_hold_end(struct wl_listener* listener, void* data)
     struct wlr_pointer_hold_end_event* event = data;
 }
 
-void
-handle_keyboard_key(struct wl_listener* listener, void* data)
+static void
+handle_key(struct wl_listener* listener, void* data)
 {
     struct bsi_input_device* device =
         wl_container_of(listener, device, listen.key);
@@ -525,8 +515,8 @@ handle_keyboard_key(struct wl_listener* listener, void* data)
     }
 }
 
-void
-handle_keyboard_modifiers(struct wl_listener* listener, void* data)
+static void
+handle_modifiers(struct wl_listener* listener, void* data)
 {
     struct bsi_input_device* device =
         wl_container_of(listener, device, listen.modifiers);
@@ -544,8 +534,8 @@ handle_keyboard_modifiers(struct wl_listener* listener, void* data)
     wlr_seat_keyboard_notify_modifiers(seat, &dev->keyboard->modifiers);
 }
 
-void
-handle_input_device_destroy(struct wl_listener* listener, void* data)
+static void
+handle_destroy(struct wl_listener* listener, void* data)
 {
     bsi_debug("Got event destroy from wlr_input_device");
 
@@ -566,4 +556,221 @@ handle_input_device_destroy(struct wl_listener* listener, void* data)
 
     inputs_remove(device);
     input_device_destroy(device);
+}
+
+void
+handle_new_input(struct wl_listener* listener, void* data)
+{
+    bsi_debug("Got event new_input from wlr_backend");
+
+    struct bsi_server* server =
+        wl_container_of(listener, server, listen.new_input);
+    struct wlr_input_device* wlr_device = data;
+
+    switch (wlr_device->type) {
+        case WLR_INPUT_DEVICE_POINTER: {
+            struct bsi_input_device* device =
+                calloc(1, sizeof(struct bsi_input_device));
+            input_device_init(
+                device, BSI_INPUT_DEVICE_POINTER, server, wlr_device);
+            inputs_add(server, device);
+
+            util_slot_connect(&device->cursor->events.motion,
+                              &device->listen.motion,
+                              handle_motion);
+            util_slot_connect(&device->cursor->events.motion_absolute,
+                              &device->listen.motion_absolute,
+                              handle_motion_absolute);
+            util_slot_connect(&device->cursor->events.button,
+                              &device->listen.button,
+                              handle_button);
+            util_slot_connect(&device->cursor->events.axis,
+                              &device->listen.axis,
+                              handle_axis);
+            util_slot_connect(&device->cursor->events.frame,
+                              &device->listen.frame,
+                              handle_frame);
+            util_slot_connect(&device->cursor->events.swipe_begin,
+                              &device->listen.swipe_begin,
+                              handle_swipe_begin);
+            util_slot_connect(&device->cursor->events.swipe_update,
+                              &device->listen.swipe_update,
+                              handle_swipe_update);
+            util_slot_connect(&device->cursor->events.swipe_end,
+                              &device->listen.swipe_end,
+                              handle_swipe_end);
+            util_slot_connect(&device->cursor->events.pinch_begin,
+                              &device->listen.pinch_begin,
+                              handle_pinch_begin);
+            util_slot_connect(&device->cursor->events.pinch_update,
+                              &device->listen.pinch_update,
+                              handle_pinch_update);
+            util_slot_connect(&device->cursor->events.pinch_end,
+                              &device->listen.pinch_end,
+                              handle_pinch_end);
+            util_slot_connect(&device->cursor->events.hold_begin,
+                              &device->listen.hold_begin,
+                              handle_hold_begin);
+            util_slot_connect(&device->cursor->events.hold_end,
+                              &device->listen.hold_end,
+                              handle_hold_end);
+            util_slot_connect(&device->device->events.destroy,
+                              &device->listen.destroy,
+                              handle_destroy);
+
+            wlr_cursor_attach_input_device(device->cursor, device->device);
+
+            if (wlr_input_device_is_libinput(device->device)) {
+                struct libinput_device* libinput_dev =
+                    wlr_libinput_get_device_handle(device->device);
+
+                /* Enable tap to click. */
+                libinput_device_config_tap_set_enabled(
+                    libinput_dev, LIBINPUT_CONFIG_TAP_ENABLED);
+
+                bool has_config = false;
+                struct bsi_config_input* conf;
+                wl_list_for_each(conf, &server->config.input, link)
+                {
+                    if (strcasecmp(conf->device_name, device->device->name) ==
+                        0) {
+                        bsi_debug("Matched config for input device '%s'",
+                                  device->device->name);
+                        has_config = true;
+                        switch (conf->type) {
+                            case BSI_CONFIG_INPUT_POINTER_ACCEL_SPEED: {
+                                double speed =
+                                    (conf->accel_speed > 0.0)
+                                        ? fmax(conf->accel_speed, 1.0)
+                                        : fmax(conf->accel_speed, -1.0);
+                                libinput_device_config_accel_set_speed(
+                                    libinput_dev, speed);
+                                bsi_debug("Set accel_speed %.2f", speed);
+                                break;
+                            }
+                            case BSI_CONFIG_INPUT_POINTER_ACCEL_PROFILE:
+                                libinput_device_config_accel_set_profile(
+                                    libinput_dev, conf->accel_profile);
+                                bsi_debug("Set accel_profile %d",
+                                          conf->accel_profile);
+                                break;
+                            case BSI_CONFIG_INPUT_POINTER_SCROLL_NATURAL:
+                                libinput_device_config_scroll_set_natural_scroll_enabled(
+                                    libinput_dev, conf->natural_scroll);
+                                bsi_debug("Set natural scroll %d",
+                                          conf->natural_scroll);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+
+                if (!has_config)
+                    bsi_info("No matching config for input device '%s'",
+                             device->device->name);
+            } else {
+                bsi_info("Device '%s' doesn't use libinput backend, skipping",
+                         device->device->name);
+            }
+
+            bsi_info(
+                "Added new pointer input device '%s' (vendor %x, product %x)",
+                device->device->name,
+                device->device->vendor,
+                device->device->product);
+            break;
+        }
+        case WLR_INPUT_DEVICE_KEYBOARD: {
+            struct bsi_input_device* device =
+                calloc(1, sizeof(struct bsi_input_device));
+            input_device_init(
+                device, BSI_INPUT_DEVICE_KEYBOARD, server, wlr_device);
+            inputs_add(server, device);
+
+            util_slot_connect(&device->device->keyboard->events.key,
+                              &device->listen.key,
+                              handle_key);
+            util_slot_connect(&device->device->keyboard->events.modifiers,
+                              &device->listen.modifiers,
+                              handle_modifiers);
+            util_slot_connect(&device->device->events.destroy,
+                              &device->listen.destroy,
+                              handle_destroy);
+
+            bool has_config = false;
+            struct bsi_config_input* conf;
+            wl_list_for_each(conf, &server->config.input, link)
+            {
+                if (strcasecmp(conf->device_name, device->device->name) == 0) {
+                    bsi_debug("Matched config for input device '%s'",
+                              device->device->name);
+                    has_config = true;
+                    switch (conf->type) {
+                        case BSI_CONFIG_INPUT_KEYBOARD_LAYOUT:
+                            break;
+                        case BSI_CONFIG_INPUT_KEYBOARD_REPEAT_INFO:
+                            wlr_keyboard_set_repeat_info(
+                                device->device->keyboard,
+                                conf->repeat_rate,
+                                conf->delay);
+                            bsi_debug("Set repeat info { rate=%d, delay=%d }",
+                                      conf->repeat_rate,
+                                      conf->delay);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            if (!has_config)
+                bsi_info("No matching config for input device '%s'",
+                         device->device->name);
+
+            input_device_keymap_set(
+                device, bsi_input_keyboard_rules, bsi_input_keyboard_rules_len);
+
+            wlr_seat_set_keyboard(server->wlr_seat, device->device->keyboard);
+
+            bsi_info(
+                "Added new keyboard input device '%s' (vendor %x, product %x)",
+                device->device->name,
+                device->device->vendor,
+                device->device->product);
+            break;
+        }
+        default:
+            bsi_info("Unsupported new input device '%s' (type %x, vendor %x, "
+                     "product %x)",
+                     wlr_device->name,
+                     wlr_device->type,
+                     wlr_device->vendor,
+                     wlr_device->product);
+            break;
+    }
+
+    uint32_t capabilities = 0;
+    size_t len_keyboards = 0, len_pointers = 0;
+    struct bsi_input_device* device;
+    wl_list_for_each(device, &server->input.inputs, link_server)
+    {
+        switch (device->type) {
+            case BSI_INPUT_DEVICE_POINTER:
+                ++len_pointers;
+                capabilities |= WL_SEAT_CAPABILITY_POINTER;
+                bsi_debug("Seat has capability: WL_SEAT_CAPABILITY_POINTER");
+                break;
+            case BSI_INPUT_DEVICE_KEYBOARD:
+                ++len_keyboards;
+                capabilities |= WL_SEAT_CAPABILITY_KEYBOARD;
+                bsi_debug("Seat has capability: WL_SEAT_CAPABILITY_KEYBOARD");
+                break;
+        }
+    }
+
+    bsi_debug("Server now has %ld input pointer devices", len_pointers);
+    bsi_debug("Server now has %ld input keyboard devices", len_keyboards);
+
+    wlr_seat_set_capabilities(server->wlr_seat, capabilities);
 }

@@ -13,126 +13,6 @@
 #include "bonsai/server.h"
 #include "bonsai/util.h"
 
-void
-workspaces_add(struct bsi_output* output, struct bsi_workspace* workspace)
-{
-    if (wl_list_length(&output->workspaces) > 0) {
-        struct bsi_workspace* workspace_active = workspaces_get_active(output);
-        workspace_set_active(workspace_active, false);
-        workspace_set_active(workspace, true);
-    }
-
-    wl_list_insert(&output->workspaces, &workspace->link_output);
-
-    wl_list_insert(&output->server->listen.workspace,
-                   &workspace->foreign_listeners[0].link); // bsi_server
-    wl_list_insert(&output->listen.workspace,
-                   &workspace->foreign_listeners[1].link); // bsi_output
-
-    /* To whom it may concern... */
-    util_slot_connect(&workspace->signal.active,
-                      &workspace->foreign_listeners[0].active, // bsi_server
-                      handle_server_workspace_active);
-    util_slot_connect(&workspace->signal.active,
-                      &workspace->foreign_listeners[1].active, // bsi_output
-                      handle_output_workspace_active);
-
-    workspace_set_active(workspace, true);
-}
-
-void
-workspaces_remove(struct bsi_output* output, struct bsi_workspace* workspace)
-{
-    /* Cannot remove the last workspace */
-    if (wl_list_length(&output->workspaces) == 1)
-        return;
-
-    /* Get the workspace adjacent to this one. */
-    struct wl_list* workspace_adj_link;
-    if (wl_list_length(&output->workspaces) > (int)workspace->id) {
-        workspace_adj_link = output->workspaces.next;
-    } else {
-        workspace_adj_link = output->workspaces.prev;
-    }
-
-    struct bsi_workspace* workspace_adj =
-        wl_container_of(workspace_adj_link, workspace_adj, link_output);
-
-    /* Move all the views to adjacent workspace. */
-    if (!wl_list_empty(&workspace->views)) {
-        struct bsi_view *view, *view_tmp;
-        wl_list_for_each_safe(view, view_tmp, &workspace->views, link_workspace)
-        {
-            workspace_view_move(workspace, workspace_adj, view);
-        }
-    }
-
-    /* Take care of the workspaces state. */
-    workspace_set_active(workspace, false);
-    workspace_set_active(workspace_adj, true);
-    wl_list_remove(&workspace->foreign_listeners[0].link); // bsi_server
-    wl_list_remove(&workspace->foreign_listeners[1].link); // bsi_output
-    util_slot_disconnect(&workspace->foreign_listeners[0].active);
-    util_slot_disconnect(&workspace->foreign_listeners[1].active);
-    wl_list_remove(&workspace->link_output);
-}
-
-struct bsi_workspace*
-workspaces_get_active(struct bsi_output* output)
-{
-    struct bsi_workspace* workspace;
-    wl_list_for_each(workspace, &output->workspaces, link_output)
-    {
-        if (workspace->active)
-            return workspace;
-    }
-
-    /* Should not happen. */
-    return NULL;
-}
-
-void
-workspaces_next(struct bsi_output* output)
-{
-    bsi_info("Switch to next workspace");
-
-    int32_t len_ws = wl_list_length(&output->workspaces);
-    if (len_ws < (int32_t)output->server->config.workspaces_max &&
-        (int32_t)output->active_workspace->id == len_ws - 1) {
-        /* Attach a workspace to the output. */
-        char workspace_name[25];
-        struct bsi_workspace* workspace =
-            calloc(1, sizeof(struct bsi_workspace));
-        sprintf(workspace_name,
-                "Workspace %d",
-                wl_list_length(&output->workspaces) + 1);
-        workspace_init(workspace, output->server, output, workspace_name);
-        workspaces_add(output, workspace);
-
-        bsi_info(
-            "Created new workspace %ld/%s", workspace->id, workspace->name);
-        bsi_info("Attached %ld/%s to output %ld/%s",
-                 workspace->id,
-                 workspace->name,
-                 output->id,
-                 output->output->name);
-    } else {
-        struct bsi_workspace* next_workspace =
-            output_get_next_workspace(output);
-        workspace_set_active(output->active_workspace, false);
-        workspace_set_active(next_workspace, true);
-    }
-}
-
-void
-workspaces_prev(struct bsi_output* output)
-{
-    bsi_info("Switch to previous workspace");
-    struct bsi_workspace* prev_workspace = output_get_prev_workspace(output);
-    workspace_set_active(output->active_workspace, false);
-    workspace_set_active(prev_workspace, true);
-}
-
 struct bsi_workspace*
 workspace_init(struct bsi_workspace* workspace,
                struct bsi_server* server,
@@ -187,7 +67,7 @@ workspace_view_add(struct bsi_workspace* workspace, struct bsi_view* view)
     util_slot_connect(&workspace->signal.active,
                       &view->listen.workspace_active,
                       handle_view_workspace_active);
-    view->parent_workspace = workspace;
+    view->workspace = workspace;
 }
 
 void
@@ -195,7 +75,7 @@ workspace_view_remove(struct bsi_workspace* workspace, struct bsi_view* view)
 {
     wl_list_remove(&view->link_workspace);
     util_slot_disconnect(&view->listen.workspace_active);
-    view->parent_workspace = NULL;
+    view->workspace = NULL;
 }
 
 void
@@ -246,9 +126,7 @@ workspace_views_show_all(struct bsi_workspace* workspace, bool show_all)
     }
 }
 
-/**
- * Handlers
- */
+/* Handlers */
 void
 handle_server_workspace_active(struct wl_listener* listener, void* data)
 {
@@ -287,9 +165,9 @@ handle_view_workspace_active(struct wl_listener* listener, void* data)
     struct bsi_workspace* workspace = data;
     struct bsi_view* view =
         wl_container_of(listener, view, listen.workspace_active);
-    wlr_scene_node_set_enabled(view->scene_node, workspace->active);
+    wlr_scene_node_set_enabled(view->node, workspace->active);
     bsi_debug("View with app_id '%s' of workspace %ld/%s is now %s",
-              view->toplevel->app_id,
+              view->wlr_xdg_toplevel->app_id,
               workspace_get_global_id(workspace),
               workspace->name,
               (workspace->active) ? "enabled" : "disabled");

@@ -10,6 +10,7 @@
 #include "bonsai/config/atom.h"
 #include "bonsai/log.h"
 #include "bonsai/output.h"
+#include "bonsai/server.h"
 #include "bonsai/util.h"
 
 struct bsi_config_atom*
@@ -251,10 +252,10 @@ config_workspace_apply(struct bsi_config_atom* atom, struct bsi_server* server)
     if (errno)
         goto error;
 
-    server->config.workspaces_max = workspaces_max;
+    server->config.workspaces = workspaces_max;
     util_split_free(&cmd);
 
-    bsi_info("Max workspace count is %ld", server->config.workspaces_max);
+    bsi_info("Max workspace count is %ld", server->config.workspaces);
 
     return true;
 

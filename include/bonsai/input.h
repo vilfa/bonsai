@@ -47,10 +47,6 @@ struct bsi_input_device
     struct wl_list link_server; // bsi_server
 };
 
-/**
- * @brief Identifies all currently supported xkb layouts.
- *
- */
 enum bsi_input_keyboard_layout
 {
     BSI_INPUT_KEYBOARD_LAYOUT_EN_US,
@@ -60,10 +56,6 @@ enum bsi_input_keyboard_layout
 
 #define bsi_input_keyboard_rules_len 3
 
-/**
- * @brief Holds all currently supported xkb layout rules.
- *
- */
 // ! For documentation on this illusive thing, see xkeyboard-config(7).
 // TODO: Make this configuration available from somewhere.
 static const struct xkb_rule_names bsi_input_keyboard_rules[] = {
@@ -89,12 +81,6 @@ static const struct xkb_rule_names bsi_input_keyboard_rules[] = {
         .options = "grp:win_space_toggle",
     },
 };
-
-void
-inputs_add(struct bsi_server* server, struct bsi_input_device* device);
-
-void
-inputs_remove(struct bsi_input_device* device);
 
 struct bsi_input_device*
 input_device_init(struct bsi_input_device* input_device,

@@ -44,8 +44,6 @@
 
 // TODO: Implement xwayland support.
 
-// TODO: Rework view.
-
 // TODO: Rework keyboard keymap settings.
 
 int
