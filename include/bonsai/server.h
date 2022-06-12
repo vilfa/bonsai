@@ -144,7 +144,10 @@ void
 server_setup(struct bsi_server* server);
 
 void
-server_finish(struct bsi_server* server);
+server_run(struct bsi_server* server);
+
+void
+server_destroy(struct bsi_server* server);
 
 /* Outputs */
 void
@@ -155,6 +158,9 @@ outputs_remove(struct bsi_output* output);
 
 struct bsi_output*
 outputs_find(struct bsi_server* server, struct wlr_output* wlr_output);
+
+void
+outputs_setup_extern(struct bsi_server* server);
 
 /* Inputs */
 void

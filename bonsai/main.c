@@ -1,4 +1,3 @@
-#define _POSIX_C_SOURCE 200809L
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -46,6 +45,8 @@
 
 // TODO: Rework keyboard keymap settings.
 
+// TODO: Add config option for touchpad tap.
+
 int
 main(void)
 {
@@ -60,58 +61,17 @@ main(void)
 
     config_init(&config, &server);
     config_parse(&config);
+
     server_init(&server, &config);
-
-    server.wl_socket = wl_display_add_socket_auto(server.wl_display);
-    bsi_debug("Created server socket '%s'", server.wl_socket);
-
-    if (setenv("WAYLAND_DISPLAY", server.wl_socket, true) != 0) {
-        bsi_errno("Failed to set WAYLAND_DISPLAY env var");
-        wlr_backend_destroy(server.wlr_backend);
-        wl_display_destroy(server.wl_display);
-        exit(EXIT_FAILURE);
-    }
-
-    if (setenv("XDG_CURRENT_DESKTOP", "wlroots", true) != 0) {
-        bsi_errno("Failed to set XDG_CURRENT_DESKTOP env var");
-        wlr_backend_destroy(server.wlr_backend);
-        wl_display_destroy(server.wl_display);
-        exit(EXIT_FAILURE);
-    }
-
-#ifdef BSI_SOFTWARE_CURSOR
-    if (setenv("WLR_NO_HARDWARE_CURSORS", "1", true) != 0) {
-        /* Workaround for https://github.com/swaywm/wlroots/issues/3189
-         * Note: Make sure the default cursor theme is set correctly in
-         * `/usr/share/icons/default/index.theme` or
-         * `$XDG_CONFIG_HOME/.icons/default/index.theme` */
-        bsi_errno("Failed to set WLR_NO_HARDWARE_CURSORS env var");
-        wlr_backend_destroy(server.wlr_backend);
-        wl_display_destroy(server.wl_display);
-        exit(EXIT_FAILURE);
-    }
-#endif
-
-    if (setenv("GDK_BACKEND", "wayland", true) != 0) {
-        /* If this is not set, waybar might think it's running under X. */
-        bsi_errno("Failed to set GDK_BACKEND env var");
-        wlr_backend_destroy(server.wlr_backend);
-        wl_display_destroy(server.wl_display);
-        exit(EXIT_FAILURE);
-    }
-
-    if (!wlr_backend_start(server.wlr_backend)) {
-        bsi_error("Failed to start backend");
-        wlr_backend_destroy(server.wlr_backend);
-        wl_display_destroy(server.wl_display);
-        exit(EXIT_FAILURE);
-    }
-
-    bsi_info("Running compositor on socket '%s'", server.wl_socket);
-    wl_display_run(server.wl_display);
+    server_setup(&server);
+    server_run(&server);
 
     wl_display_destroy_clients(server.wl_display);
     wl_display_destroy(server.wl_display);
+
+    wlr_backend_destroy(server.wlr_backend);
+    config_destroy(&config);
+    server_destroy(&server);
 
     return EXIT_SUCCESS;
 }

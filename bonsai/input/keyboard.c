@@ -19,6 +19,7 @@
 #include <xkbcommon/xkbcommon-keysyms.h>
 #include <xkbcommon/xkbcommon.h>
 
+#include "bonsai/config/config.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/desktop/workspace.h"
 #include "bonsai/input.h"
@@ -345,7 +346,8 @@ keyboard_mod_super_shift_handle(struct bsi_server* server, xkb_keysym_t sym)
         case XKB_KEY_Q:
             bsi_info("Got Super+Shift+Q -> exit");
             wlr_backend_destroy(server->wlr_backend);
-            server_finish(server);
+            config_destroy(server->config.config);
+            server_destroy(server);
             exit(EXIT_SUCCESS);
     }
     return false;

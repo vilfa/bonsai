@@ -119,7 +119,7 @@ config_output_apply(struct bsi_config_atom* atom, struct bsi_server* server)
     }
 
     if (!found)
-        bsi_errno("No output matching name '%s' found", output_name);
+        bsi_error("No output matching name '%s' found", output_name);
 
     return false;
 

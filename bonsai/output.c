@@ -437,7 +437,7 @@ handle_destroy(struct wl_listener* listener, void* data)
 
     if (wl_list_length(&server->output.outputs) == 0) {
         bsi_debug("Out of outputs, exiting");
-        server_finish(server);
+        server_destroy(server);
         exit(EXIT_SUCCESS);
     }
 }
@@ -566,7 +566,7 @@ handle_new_output(struct wl_listener* listener, void* data)
 
     /* This if is kinda useless. */
     if (output->new) {
-        server_setup(server);
+        outputs_setup_extern(server);
         output->new = false;
     }
 }

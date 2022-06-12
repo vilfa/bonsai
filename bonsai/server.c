@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L
 #include <assert.h>
 #include <libinput.h>
 #include <math.h>
@@ -274,37 +275,64 @@ server_init(struct bsi_server* server, struct bsi_config* config)
     return server;
 }
 
-static char* server_extern_progs[] = {
-    [BSI_SERVER_EXTERN_PROG_WALLPAPER] = "swaybg",
-    [BSI_SERVER_EXTERN_PROG_BAR] = "waybar",
-};
-
 void
 server_setup(struct bsi_server* server)
 {
-    for (size_t i = 0; i < BSI_SERVER_EXTERN_PROG_MAX; ++i) {
-        if (!server->output.setup[i]) {
-            const char* exep = server_extern_progs[i];
-            char* argsp;
-            if (i == BSI_SERVER_EXTERN_PROG_WALLPAPER) {
-                char swaybg_image[255] = { 0 };
-                snprintf(
-                    swaybg_image, 255, "--image=%s", server->config.wallpaper);
-                argsp = swaybg_image;
-            } else {
-                argsp = "";
-            }
-            char** argp = NULL;
-            size_t len_argp = util_split_argsp((char*)exep, argsp, " ", &argp);
-            util_tryexec(argp, len_argp);
-            util_split_free(&argp);
-            server->output.setup[i] = true;
-        }
+    server->wl_socket = wl_display_add_socket_auto(server->wl_display);
+    bsi_debug("Created server socket '%s'", server->wl_socket);
+
+    if (setenv("WAYLAND_DISPLAY", server->wl_socket, true) != 0) {
+        bsi_errno("Failed to set WAYLAND_DISPLAY env var");
+        wlr_backend_destroy(server->wlr_backend);
+        wl_display_destroy(server->wl_display);
+        exit(EXIT_FAILURE);
+    }
+
+    if (setenv("XDG_CURRENT_DESKTOP", "wlroots", true) != 0) {
+        bsi_errno("Failed to set XDG_CURRENT_DESKTOP env var");
+        wlr_backend_destroy(server->wlr_backend);
+        wl_display_destroy(server->wl_display);
+        exit(EXIT_FAILURE);
+    }
+
+#ifdef BSI_SOFTWARE_CURSOR
+    if (setenv("WLR_NO_HARDWARE_CURSORS", "1", true) != 0) {
+        /* Workaround for https://github.com/swaywm/wlroots/issues/3189
+         * Note: Make sure the default cursor theme is set correctly in
+         * `/usr/share/icons/default/index.theme` or
+         * `$XDG_CONFIG_HOME/.icons/default/index.theme` */
+        bsi_errno("Failed to set WLR_NO_HARDWARE_CURSORS env var");
+        wlr_backend_destroy(server->wlr_backend);
+        wl_display_destroy(server->wl_display);
+        exit(EXIT_FAILURE);
+    }
+#endif
+
+    if (setenv("GDK_BACKEND", "wayland", true) != 0) {
+        /* If this is not set, waybar might think it's running under X. */
+        bsi_errno("Failed to set GDK_BACKEND env var");
+        wlr_backend_destroy(server->wlr_backend);
+        wl_display_destroy(server->wl_display);
+        exit(EXIT_FAILURE);
     }
 }
 
 void
-server_finish(struct bsi_server* server)
+server_run(struct bsi_server* server)
+{
+    if (!wlr_backend_start(server->wlr_backend)) {
+        bsi_error("Failed to start backend");
+        wlr_backend_destroy(server->wlr_backend);
+        wl_display_destroy(server->wl_display);
+        exit(EXIT_FAILURE);
+    }
+
+    bsi_info("Running compositor on socket '%s'", server->wl_socket);
+    wl_display_run(server->wl_display);
+}
+
+void
+server_destroy(struct bsi_server* server)
 {
     bsi_debug("Server finish");
 
@@ -319,7 +347,6 @@ server_finish(struct bsi_server* server)
     wl_list_remove(&server->listen.request_set_selection.link);
     wl_list_remove(&server->listen.request_set_primary_selection.link);
     wl_list_remove(&server->listen.xdg_new_surface.link);
-    config_destroy(server->config.config);
 }
 
 /* Outputs */
@@ -348,6 +375,35 @@ outputs_find(struct bsi_server* server, struct wlr_output* wlr_output)
     }
 
     return NULL;
+}
+
+static char* server_extern_progs[] = {
+    [BSI_SERVER_EXTERN_PROG_WALLPAPER] = "swaybg",
+    [BSI_SERVER_EXTERN_PROG_BAR] = "waybar",
+};
+
+void
+outputs_setup_extern(struct bsi_server* server)
+{
+    for (size_t i = 0; i < BSI_SERVER_EXTERN_PROG_MAX; ++i) {
+        if (!server->output.setup[i]) {
+            const char* exep = server_extern_progs[i];
+            char* argsp;
+            if (i == BSI_SERVER_EXTERN_PROG_WALLPAPER) {
+                char swaybg_image[255] = { 0 };
+                snprintf(
+                    swaybg_image, 255, "--image=%s", server->config.wallpaper);
+                argsp = swaybg_image;
+            } else {
+                argsp = "";
+            }
+            char** argp = NULL;
+            size_t len_argp = util_split_argsp((char*)exep, argsp, " ", &argp);
+            util_tryexec(argp, len_argp);
+            util_split_free(&argp);
+            server->output.setup[i] = true;
+        }
+    }
 }
 
 /* Inputs */
