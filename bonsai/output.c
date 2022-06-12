@@ -23,19 +23,19 @@
 #include "pixman.h"
 
 void
-bsi_outputs_add(struct bsi_server* server, struct bsi_output* output)
+outputs_add(struct bsi_server* server, struct bsi_output* output)
 {
     wl_list_insert(&server->output.outputs, &output->link_server);
 }
 
 void
-bsi_outputs_remove(struct bsi_output* output)
+outputs_remove(struct bsi_output* output)
 {
     wl_list_remove(&output->link_server);
 }
 
 struct bsi_output*
-bsi_outputs_find(struct bsi_server* server, struct wlr_output* wlr_output)
+outputs_find(struct bsi_server* server, struct wlr_output* wlr_output)
 {
     assert(wl_list_length(&server->output.outputs));
 
@@ -50,9 +50,9 @@ bsi_outputs_find(struct bsi_server* server, struct wlr_output* wlr_output)
 }
 
 struct bsi_output*
-bsi_output_init(struct bsi_output* output,
-                struct bsi_server* server,
-                struct wlr_output* wlr_output)
+output_init(struct bsi_output* output,
+            struct bsi_server* server,
+            struct wlr_output* wlr_output)
 {
     output->id = wl_list_length(&server->output.outputs);
     output->server = server;
@@ -62,7 +62,7 @@ bsi_output_init(struct bsi_output* output,
     /* Set the usable size of the output. */
     struct wlr_box box = { 0 };
     wlr_output_effective_resolution(wlr_output, &box.width, &box.height);
-    bsi_output_set_usable_box(output, &box);
+    output_set_usable_box(output, &box);
     /* Initialize damage. Initialize output configuration. */
     output->damage = wlr_output_damage_create(wlr_output);
     /* Initialize workspaces. */
@@ -74,14 +74,14 @@ bsi_output_init(struct bsi_output* output,
     /* Initialize workspace listeners. */
     wl_list_init(&output->listen.workspace);
 
-    struct timespec now = bsi_util_timespec_get();
+    struct timespec now = util_timespec_get();
     output->last_frame = now;
 
     return output;
 }
 
 void
-bsi_output_set_usable_box(struct bsi_output* output, struct wlr_box* box)
+output_set_usable_box(struct bsi_output* output, struct wlr_box* box)
 {
     bsi_debug("Set output usable box to [%d, %d, %d, %d]",
               box->x,
@@ -95,9 +95,9 @@ bsi_output_set_usable_box(struct bsi_output* output, struct wlr_box* box)
 }
 
 void
-bsi_output_surface_damage(struct bsi_output* output,
-                          struct wlr_surface* wlr_surface,
-                          bool entire_output)
+output_surface_damage(struct bsi_output* output,
+                      struct wlr_surface* wlr_surface,
+                      bool entire_output)
 {
     if (entire_output) {
         wlr_output_damage_add_whole(output->damage);
@@ -109,7 +109,7 @@ bsi_output_surface_damage(struct bsi_output* output,
 }
 
 struct bsi_workspace*
-bsi_output_get_next_workspace(struct bsi_output* output)
+output_get_next_workspace(struct bsi_output* output)
 {
     struct bsi_workspace* curr;
     wl_list_for_each(curr, &output->workspaces, link_output)
@@ -121,7 +121,7 @@ bsi_output_get_next_workspace(struct bsi_output* output)
 }
 
 struct bsi_workspace*
-bsi_output_get_prev_workspace(struct bsi_output* output)
+output_get_prev_workspace(struct bsi_output* output)
 {
     struct bsi_workspace* curr;
     wl_list_for_each_reverse(curr, &output->workspaces, link_output)
@@ -133,7 +133,7 @@ bsi_output_get_prev_workspace(struct bsi_output* output)
 }
 
 void
-bsi_output_destroy(struct bsi_output* output)
+output_destroy(struct bsi_output* output)
 {
     bsi_info("Destroying output %ld/%s", output->id, output->output->name);
 
@@ -154,7 +154,7 @@ bsi_output_destroy(struct bsi_output* output)
                                         server->wlr_cursor->y)
                 ->data;
         struct bsi_workspace* next_output_wspace =
-            bsi_workspaces_get_active(next_output);
+            workspaces_get_active(next_output);
 
         struct wl_list* curr_output_wspaces = &output->workspaces;
         struct bsi_workspace *wspace, *wspace_tmp;
@@ -164,9 +164,9 @@ bsi_output_destroy(struct bsi_output* output)
             struct bsi_view* view;
             wl_list_for_each(view, &wspace->views, link_server)
             {
-                bsi_workspace_view_move(wspace, next_output_wspace, view);
+                workspace_view_move(wspace, next_output_wspace, view);
             }
-            bsi_workspace_destroy(wspace);
+            workspace_destroy(wspace);
         }
     } else {
         /* Destroy everything, there are no more outputs. */
@@ -185,7 +185,7 @@ bsi_output_destroy(struct bsi_output* output)
              * destroy event. Note that a workspace might be freed before the
              * views, kind of depends on scheduling. */
 
-            bsi_workspace_destroy(ws);
+            workspace_destroy(ws);
         }
     }
 
@@ -203,7 +203,7 @@ bsi_output_destroy(struct bsi_output* output)
                 union bsi_layer_surface surf = { .toplevel = toplevel };
                 if (!server->session.shutting_down)
                     wlr_layer_surface_v1_destroy(toplevel->layer_surface);
-                bsi_layer_surface_destroy(surf, BSI_LAYER_SURFACE_TOPLEVEL);
+                layer_surface_destroy(surf, BSI_LAYER_SURFACE_TOPLEVEL);
             }
         }
     }
@@ -225,7 +225,7 @@ handle_output_frame(struct wl_listener* listener, void* data)
         wlr_scene_get_scene_output(wlr_scene, output->output);
     wlr_scene_output_commit(wlr_scene_output);
 
-    struct timespec now = bsi_util_timespec_get();
+    struct timespec now = util_timespec_get();
     wlr_scene_output_send_frame_done(wlr_scene_output, &now);
 }
 
@@ -244,12 +244,12 @@ handle_output_destroy(struct wl_listener* listener, void* data)
     }
 
     wlr_output_layout_remove(server->wlr_output_layout, output->output);
-    bsi_outputs_remove(output);
-    bsi_output_destroy(output);
+    outputs_remove(output);
+    output_destroy(output);
 
     if (wl_list_length(&server->output.outputs) == 0) {
         bsi_debug("Out of outputs, exiting");
-        bsi_server_finish(server);
+        server_finish(server);
         exit(EXIT_SUCCESS);
     }
 }

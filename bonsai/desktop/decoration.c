@@ -23,22 +23,22 @@
 #include "bonsai/server.h"
 
 void
-bsi_decorations_add(struct bsi_server* server, struct bsi_xdg_decoration* deco)
+decorations_add(struct bsi_server* server, struct bsi_xdg_decoration* deco)
 {
     wl_list_insert(&server->scene.xdg_decorations, &deco->link_server);
 }
 
 void
-bsi_decorations_remove(struct bsi_xdg_decoration* deco)
+decorations_remove(struct bsi_xdg_decoration* deco)
 {
     wl_list_remove(&deco->link_server);
 }
 
 struct bsi_xdg_decoration*
-bsi_decoration_init(struct bsi_xdg_decoration* deco,
-                    struct bsi_server* server,
-                    struct bsi_view* view,
-                    struct wlr_xdg_toplevel_decoration_v1* wlr_deco)
+decoration_init(struct bsi_xdg_decoration* deco,
+                struct bsi_server* server,
+                struct bsi_view* view,
+                struct wlr_xdg_toplevel_decoration_v1* wlr_deco)
 {
     deco->server = server;
     deco->view = view;
@@ -51,7 +51,7 @@ bsi_decoration_init(struct bsi_xdg_decoration* deco,
 }
 
 void
-bsi_decoration_update(struct bsi_xdg_decoration* decoration)
+decoration_update(struct bsi_xdg_decoration* decoration)
 {
     struct bsi_view* view = decoration->view;
     bsi_debug("Update decoration for view '%s'", view->toplevel->app_id);
@@ -62,7 +62,7 @@ bsi_decoration_update(struct bsi_xdg_decoration* decoration)
     wlr_scene_node_lower_to_bottom(&decoration->scene_rect->node);
     const float color_inactive[4] = { 0.2f, 0.2f, 0.2f, 1.0f };
     const float color_active[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    bool focused = bsi_views_get_focused(view->server) == view;
+    bool focused = views_get_focused(view->server) == view;
     wlr_scene_rect_set_color(decoration->scene_rect,
                              focused ? color_active : color_inactive);
     // wlr_scene_node_for_each_buffer(
@@ -70,7 +70,7 @@ bsi_decoration_update(struct bsi_xdg_decoration* decoration)
 }
 
 void
-bsi_decoration_destroy(struct bsi_xdg_decoration* deco)
+decoration_destroy(struct bsi_xdg_decoration* deco)
 {
     wl_list_remove(&deco->listen.destroy.link);
     wl_list_remove(&deco->listen.request_mode.link);
@@ -78,10 +78,10 @@ bsi_decoration_destroy(struct bsi_xdg_decoration* deco)
 }
 
 void
-bsi_decoration_iter(struct wlr_scene_buffer* buffer,
-                    int sx,
-                    int sy,
-                    void* user_data)
+decoration_iter(struct wlr_scene_buffer* buffer,
+                int sx,
+                int sy,
+                void* user_data)
 {
     bsi_info("Hello decoration buffer");
     struct bsi_xdg_decoration* deco = user_data;
@@ -140,8 +140,8 @@ handle_xdg_decoration_destroy(struct wl_listener* listener, void* data)
     bsi_debug("Got event destroy from wlr_server_decoration");
     struct bsi_xdg_decoration* server_deco =
         wl_container_of(listener, server_deco, listen.destroy);
-    bsi_decorations_remove(server_deco);
-    bsi_decoration_destroy(server_deco);
+    decorations_remove(server_deco);
+    decoration_destroy(server_deco);
 }
 
 void

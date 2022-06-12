@@ -51,44 +51,41 @@ struct bsi_config_atom
 };
 
 struct bsi_config_atom*
-bsi_config_atom_init(struct bsi_config_atom* atom,
-                     enum bsi_config_atom_type type,
-                     const struct bsi_config_atom_impl* impl,
-                     const char* config);
+config_atom_init(struct bsi_config_atom* atom,
+                 enum bsi_config_atom_type type,
+                 const struct bsi_config_atom_impl* impl,
+                 const char* config);
 
 void
-bsi_config_atom_destroy(struct bsi_config_atom* atom);
+config_atom_destroy(struct bsi_config_atom* atom);
 
 void
-bsi_config_input_destroy(struct bsi_config_input* conf);
+config_input_destroy(struct bsi_config_input* conf);
 
 bool
-bsi_config_output_apply(struct bsi_config_atom* atom,
-                        struct bsi_server* server);
+config_output_apply(struct bsi_config_atom* atom, struct bsi_server* server);
 
 bool
-bsi_config_input_apply(struct bsi_config_atom* atom, struct bsi_server* server);
+config_input_apply(struct bsi_config_atom* atom, struct bsi_server* server);
 
 bool
-bsi_config_workspace_apply(struct bsi_config_atom* atom,
-                           struct bsi_server* server);
+config_workspace_apply(struct bsi_config_atom* atom, struct bsi_server* server);
 
 bool
-bsi_config_wallpaper_apply(struct bsi_config_atom* atom,
-                           struct bsi_server* server);
+config_wallpaper_apply(struct bsi_config_atom* atom, struct bsi_server* server);
 
 static const struct bsi_config_atom_impl output_impl = {
-    .apply = bsi_config_output_apply,
+    .apply = config_output_apply,
 };
 
 static const struct bsi_config_atom_impl input_impl = {
-    .apply = bsi_config_input_apply,
+    .apply = config_input_apply,
 };
 
 static const struct bsi_config_atom_impl workspace_impl = {
-    .apply = bsi_config_workspace_apply,
+    .apply = config_workspace_apply,
 };
 
 static const struct bsi_config_atom_impl wallpaper_impl = {
-    .apply = bsi_config_wallpaper_apply,
+    .apply = config_wallpaper_apply,
 };

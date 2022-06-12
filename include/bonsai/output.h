@@ -49,10 +49,10 @@ struct bsi_output
 };
 
 void
-bsi_outputs_add(struct bsi_server* server, struct bsi_output* output);
+outputs_add(struct bsi_server* server, struct bsi_output* output);
 
 void
-bsi_outputs_remove(struct bsi_output* output);
+outputs_remove(struct bsi_output* output);
 
 /**
  * @brief Gets the bsi_output that contains the wlr_output
@@ -62,26 +62,26 @@ bsi_outputs_remove(struct bsi_output* output);
  * @return struct bsi_output* The output container.
  */
 struct bsi_output*
-bsi_outputs_find(struct bsi_server* server, struct wlr_output* wlr_output);
+outputs_find(struct bsi_server* server, struct wlr_output* wlr_output);
 
 struct bsi_output*
-bsi_output_init(struct bsi_output* output,
-                struct bsi_server* server,
-                struct wlr_output* wlr_output);
+output_init(struct bsi_output* output,
+            struct bsi_server* server,
+            struct wlr_output* wlr_output);
 
 void
-bsi_output_set_usable_box(struct bsi_output* output, struct wlr_box* box);
+output_set_usable_box(struct bsi_output* output, struct wlr_box* box);
 
 void
-bsi_output_surface_damage(struct bsi_output* output,
-                          struct wlr_surface* wlr_surface,
-                          bool entire_output);
+output_surface_damage(struct bsi_output* output,
+                      struct wlr_surface* wlr_surface,
+                      bool entire_output);
 
 struct bsi_workspace*
-bsi_output_get_next_workspace(struct bsi_output* output);
+output_get_next_workspace(struct bsi_output* output);
 
 struct bsi_workspace*
-bsi_output_get_prev_workspace(struct bsi_output* output);
+output_get_prev_workspace(struct bsi_output* output);
 
 void
-bsi_output_destroy(struct bsi_output* output);
+output_destroy(struct bsi_output* output);

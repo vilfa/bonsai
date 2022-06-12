@@ -32,8 +32,7 @@ static const char* bsi_cursor_image_map[] = {
 };
 
 void
-bsi_cursor_image_set(struct bsi_server* server,
-                     enum bsi_cursor_image cursor_image)
+cursor_image_set(struct bsi_server* server, enum bsi_cursor_image cursor_image)
 {
     server->cursor.cursor_image = cursor_image;
     wlr_xcursor_manager_set_cursor_image(server->wlr_xcursor_manager,
@@ -42,12 +41,12 @@ bsi_cursor_image_set(struct bsi_server* server,
 }
 
 void*
-bsi_cursor_scene_data_at(struct bsi_server* server,
-                         struct wlr_scene_surface** scene_surface_at,
-                         struct wlr_surface** surface_at,
-                         const char** surface_role,
-                         double* sx,
-                         double* sy)
+cursor_scene_data_at(struct bsi_server* server,
+                     struct wlr_scene_surface** scene_surface_at,
+                     struct wlr_surface** surface_at,
+                     const char** surface_role,
+                     double* sx,
+                     double* sy)
 {
     /* Search the server root node for the node at the coordinates
      * given by the cursor event. This is not necessarily the topmost node! */
@@ -82,13 +81,13 @@ bsi_cursor_scene_data_at(struct bsi_server* server,
 }
 
 void
-bsi_cursor_process_motion(struct bsi_server* server,
-                          union bsi_cursor_event cursor_event)
+cursor_process_motion(struct bsi_server* server,
+                      union bsi_cursor_event cursor_event)
 {
     if (server->cursor.cursor_mode == BSI_CURSOR_MOVE) {
-        bsi_cursor_process_view_move(server, cursor_event);
+        cursor_process_view_move(server, cursor_event);
     } else if (server->cursor.cursor_mode == BSI_CURSOR_RESIZE) {
-        bsi_cursor_process_view_resize(server, cursor_event);
+        cursor_process_view_resize(server, cursor_event);
     } else {
         /* The cursor is in normal mode, so find the view under the cursor, and
          * send the event to the client that owns it. */
@@ -97,14 +96,14 @@ bsi_cursor_process_motion(struct bsi_server* server,
         struct wlr_surface* surface_at = NULL; /* Surface under cursor. */
         const char* surface_role = NULL;
 
-        void* scene_data = bsi_cursor_scene_data_at(
+        void* scene_data = cursor_scene_data_at(
             server, &scene_surface_at, &surface_at, &surface_role, &sx, &sy);
 
         if (scene_data == NULL) {
             /* The cursor is in an empty area, set the deafult cursor image.
              * This makes the cursor image appear when moving around the empty
              * desktop. */
-            bsi_cursor_image_set(server, BSI_CURSOR_IMAGE_NORMAL);
+            cursor_image_set(server, BSI_CURSOR_IMAGE_NORMAL);
             return;
         }
 
@@ -124,8 +123,8 @@ bsi_cursor_process_motion(struct bsi_server* server,
 }
 
 void
-bsi_cursor_process_view_move(struct bsi_server* server,
-                             union bsi_cursor_event cursor_event)
+cursor_process_view_move(struct bsi_server* server,
+                         union bsi_cursor_event cursor_event)
 {
     struct bsi_view* view = server->cursor.grabbed_view;
     struct wlr_pointer_motion_event* event = cursor_event.motion;
@@ -136,10 +135,10 @@ bsi_cursor_process_view_move(struct bsi_server* server,
         view->state & BSI_VIEW_STATE_FULLSCREEN)
         return;
 
-    bsi_cursor_image_set(server, BSI_CURSOR_IMAGE_MOVE);
+    cursor_image_set(server, BSI_CURSOR_IMAGE_MOVE);
 
     if (view->state == BSI_VIEW_STATE_MAXIMIZED) {
-        bsi_view_set_maximized(view, false);
+        view_set_maximized(view, false);
         view->box.x = server->wlr_cursor->x - (double)view->box.width / 2;
         view->box.y = server->wlr_cursor->y - server->cursor.grab_sy;
         server->cursor.grab_sx = (double)view->box.width / 2;
@@ -157,8 +156,8 @@ bsi_cursor_process_view_move(struct bsi_server* server,
 }
 
 void
-bsi_cursor_process_view_resize(struct bsi_server* server,
-                               union bsi_cursor_event cursor_event)
+cursor_process_view_resize(struct bsi_server* server,
+                           union bsi_cursor_event cursor_event)
 {
     struct bsi_view* view = server->cursor.grabbed_view;
     struct wlr_pointer_motion_event* event = cursor_event.motion;
@@ -223,8 +222,8 @@ bsi_cursor_process_view_resize(struct bsi_server* server,
 }
 
 void
-bsi_cursor_process_swipe(struct bsi_server* server,
-                         union bsi_cursor_event cursor_event)
+cursor_process_swipe(struct bsi_server* server,
+                     union bsi_cursor_event cursor_event)
 {
     if (server->cursor.cursor_mode != BSI_CURSOR_SWIPE)
         return;

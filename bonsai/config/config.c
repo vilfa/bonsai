@@ -42,7 +42,7 @@ static const struct bsi_config_atom_impl* impls[] = {
 };
 
 struct bsi_config*
-bsi_config_init(struct bsi_config* config, struct bsi_server* server)
+config_init(struct bsi_config* config, struct bsi_server* server)
 {
     config->server = server;
     wl_list_init(&config->atoms);
@@ -52,22 +52,22 @@ bsi_config_init(struct bsi_config* config, struct bsi_server* server)
 }
 
 void
-bsi_config_destroy(struct bsi_config* config)
+config_destroy(struct bsi_config* config)
 {
     struct bsi_config_atom *atom, *atom_tmp;
     wl_list_for_each_safe(atom, atom_tmp, &config->atoms, link)
     {
-        bsi_config_atom_destroy(atom);
+        config_atom_destroy(atom);
     }
     struct bsi_config_input *conf, *conf_tmp;
     wl_list_for_each_safe(conf, conf_tmp, &config->server->config.input, link)
     {
-        bsi_config_input_destroy(conf);
+        config_input_destroy(conf);
     }
 }
 
 void
-bsi_config_find(struct bsi_config* config)
+config_find(struct bsi_config* config)
 {
     char* pconf;
     if ((pconf = getenv("XDG_CONFIG_HOME"))) {
@@ -128,9 +128,9 @@ bsi_config_find(struct bsi_config* config)
 }
 
 void
-bsi_config_parse(struct bsi_config* config)
+config_parse(struct bsi_config* config)
 {
-    bsi_config_find(config);
+    config_find(config);
     if (!config->found) {
         bsi_info("No config found, using defaults");
         return;
@@ -153,7 +153,7 @@ bsi_config_parse(struct bsi_config* config)
                 line[len] = '\0';
                 struct bsi_config_atom* atom =
                     calloc(1, sizeof(struct bsi_config_atom));
-                bsi_config_atom_init(atom, i, impls[i], line);
+                config_atom_init(atom, i, impls[i], line);
                 wl_list_insert(&config->atoms, &atom->link);
                 free(line);
                 line = NULL;
@@ -166,7 +166,7 @@ bsi_config_parse(struct bsi_config* config)
 }
 
 void
-bsi_config_apply(struct bsi_config* config)
+config_apply(struct bsi_config* config)
 {
     if (wl_list_empty(&config->atoms)) {
         bsi_info("Server config is empty, using defaults");

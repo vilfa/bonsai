@@ -13,10 +13,10 @@
 #include "bonsai/util.h"
 
 struct bsi_config_atom*
-bsi_config_atom_init(struct bsi_config_atom* atom,
-                     enum bsi_config_atom_type type,
-                     const struct bsi_config_atom_impl* impl,
-                     const char* config)
+config_atom_init(struct bsi_config_atom* atom,
+                 enum bsi_config_atom_type type,
+                 const struct bsi_config_atom_impl* impl,
+                 const char* config)
 {
     atom->type = type;
     atom->impl = impl;
@@ -25,14 +25,14 @@ bsi_config_atom_init(struct bsi_config_atom* atom,
 }
 
 void
-bsi_config_atom_destroy(struct bsi_config_atom* atom)
+config_atom_destroy(struct bsi_config_atom* atom)
 {
     free((void*)atom->cmd);
     free(atom);
 }
 
 void
-bsi_config_input_destroy(struct bsi_config_input* conf)
+config_input_destroy(struct bsi_config_input* conf)
 {
     free(conf->device_name);
     if (conf->layout)
@@ -41,24 +41,24 @@ bsi_config_input_destroy(struct bsi_config_input* conf)
 }
 
 bool
-bsi_config_output_apply(struct bsi_config_atom* atom, struct bsi_server* server)
+config_output_apply(struct bsi_config_atom* atom, struct bsi_server* server)
 {
     /* Syntax: output <name> mode <w>x<h> refresh <r> */
 
     char **cmd = NULL, **resl = NULL;
-    size_t len_cmd = bsi_util_split_delim(atom->cmd, " ", &cmd, false);
+    size_t len_cmd = util_split_delim(atom->cmd, " ", &cmd, false);
 
     if (len_cmd != 7 || strcasecmp("output", cmd[0]) ||
         strcasecmp("mode", cmd[2]) || strcasecmp("refresh", cmd[4]))
         goto error;
 
     char* output_name = cmd[1];
-    bsi_util_strip_quotes(output_name);
+    util_strip_quotes(output_name);
 
     char* output_resl = cmd[3];
     char* output_refr = cmd[5];
 
-    size_t len_resl = bsi_util_split_delim(output_resl, "x", &resl, false);
+    size_t len_resl = util_split_delim(output_resl, "x", &resl, false);
 
     if (len_resl != 3)
         goto error;
@@ -124,9 +124,9 @@ bsi_config_output_apply(struct bsi_config_atom* atom, struct bsi_server* server)
 
 error:
     if (cmd)
-        bsi_util_split_free(&cmd);
+        util_split_free(&cmd);
     if (resl)
-        bsi_util_split_free(&resl);
+        util_split_free(&resl);
     bsi_error("Invalid output config syntax '%s', syntax is 'output <name> "
               "mode <w>x<h> refresh <r>'",
               atom->cmd);
@@ -134,7 +134,7 @@ error:
 }
 
 bool
-bsi_config_input_apply(struct bsi_config_atom* atom, struct bsi_server* server)
+config_input_apply(struct bsi_config_atom* atom, struct bsi_server* server)
 {
     /* Syntax:
      *  input pointer <name> accel_speed <f.f>
@@ -145,7 +145,7 @@ bsi_config_input_apply(struct bsi_config_atom* atom, struct bsi_server* server)
      */
 
     char** cmd = NULL;
-    size_t len_cmd = bsi_util_split_delim(atom->cmd, " ", &cmd, false);
+    size_t len_cmd = util_split_delim(atom->cmd, " ", &cmd, false);
     struct bsi_config_input* input_config = NULL;
 
     if (len_cmd < 3 || strcasecmp("input", cmd[0]))
@@ -157,7 +157,7 @@ bsi_config_input_apply(struct bsi_config_atom* atom, struct bsi_server* server)
         if (len_cmd != 6)
             goto error;
 
-        bsi_util_strip_quotes(cmd[2]);
+        util_strip_quotes(cmd[2]);
         input_config->device_name = strdup(cmd[2]);
 
         if (strcasecmp("accel_speed", cmd[3]) == 0) {
@@ -192,7 +192,7 @@ bsi_config_input_apply(struct bsi_config_atom* atom, struct bsi_server* server)
         if (len_cmd != 6 && len_cmd != 7)
             goto error;
 
-        bsi_util_strip_quotes(cmd[2]);
+        util_strip_quotes(cmd[2]);
         input_config->device_name = strdup(cmd[2]);
 
         if (strcasecmp("layout", cmd[3]) == 0) {
@@ -224,7 +224,7 @@ error:
         free(input_config->device_name);
     if (input_config)
         free(input_config);
-    bsi_util_split_free(&cmd);
+    util_split_free(&cmd);
     bsi_error("Invalid input config syntax '%s', syntax is one of: \n"
               "\tinput pointer <name> accel_speed <f.f>\n"
               "\tinput pointer <name> accel_profile <none|flat|adaptive>\n"
@@ -236,12 +236,11 @@ error:
 }
 
 bool
-bsi_config_workspace_apply(struct bsi_config_atom* atom,
-                           struct bsi_server* server)
+config_workspace_apply(struct bsi_config_atom* atom, struct bsi_server* server)
 {
     /* Syntax: workspace count max <n> */
     char** cmd = NULL;
-    size_t len_cmd = bsi_util_split_delim(atom->cmd, " ", &cmd, false);
+    size_t len_cmd = util_split_delim(atom->cmd, " ", &cmd, false);
     if (len_cmd != 5 || strcasecmp("workspace", cmd[0]) ||
         strcasecmp("count", cmd[1]) || strcasecmp("max", cmd[2])) {
         goto error;
@@ -253,14 +252,14 @@ bsi_config_workspace_apply(struct bsi_config_atom* atom,
         goto error;
 
     server->config.workspaces_max = workspaces_max;
-    bsi_util_split_free(&cmd);
+    util_split_free(&cmd);
 
     bsi_info("Max workspace count is %ld", server->config.workspaces_max);
 
     return true;
 
 error:
-    bsi_util_split_free(&cmd);
+    util_split_free(&cmd);
     bsi_error("Invalid workspace limit syntax '%s', syntax is 'workspace "
               "count max <n>'",
               atom->cmd);
@@ -268,14 +267,13 @@ error:
 }
 
 bool
-bsi_config_wallpaper_apply(struct bsi_config_atom* atom,
-                           struct bsi_server* server)
+config_wallpaper_apply(struct bsi_config_atom* atom, struct bsi_server* server)
 {
     /* Syntax: wallpaper <abs_path> */
     char** cmd = NULL;
-    size_t len_cmd = bsi_util_split_delim(atom->cmd, " ", &cmd, false);
+    size_t len_cmd = util_split_delim(atom->cmd, " ", &cmd, false);
     if (len_cmd != 3) {
-        bsi_util_split_free(&cmd);
+        util_split_free(&cmd);
         bsi_error("Invalid wallpaper config syntax '%s', syntax is 'wallpaper "
                   "<abs_path>'",
                   atom->cmd);
@@ -283,7 +281,7 @@ bsi_config_wallpaper_apply(struct bsi_config_atom* atom,
     }
 
     server->config.wallpaper = cmd[1];
-    bsi_util_split_free(&cmd);
+    util_split_free(&cmd);
 
     bsi_info("Wallpaper path is '%s'", server->config.wallpaper);
 

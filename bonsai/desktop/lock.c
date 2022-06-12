@@ -12,9 +12,9 @@
 #include "bonsai/util.h"
 
 struct bsi_session_lock*
-bsi_session_lock_init(struct bsi_session_lock* lock,
-                      struct bsi_server* server,
-                      struct wlr_session_lock_v1* wlr_lock)
+session_lock_init(struct bsi_session_lock* lock,
+                  struct bsi_server* server,
+                  struct wlr_session_lock_v1* wlr_lock)
 {
     lock->lock = wlr_lock;
     lock->server = server;
@@ -24,7 +24,7 @@ bsi_session_lock_init(struct bsi_session_lock* lock,
 }
 
 void
-bsi_session_lock_destroy(struct bsi_session_lock* lock)
+session_lock_destroy(struct bsi_session_lock* lock)
 {
     wl_list_remove(&lock->listen.new_surface.link);
     wl_list_remove(&lock->listen.unlock.link);
@@ -33,10 +33,9 @@ bsi_session_lock_destroy(struct bsi_session_lock* lock)
 }
 
 struct bsi_session_lock_surface*
-bsi_session_lock_surface_init(
-    struct bsi_session_lock_surface* surface,
-    struct bsi_session_lock* lock,
-    struct wlr_session_lock_surface_v1* wlr_lock_surface)
+session_lock_surface_init(struct bsi_session_lock_surface* surface,
+                          struct bsi_session_lock* lock,
+                          struct wlr_session_lock_surface_v1* wlr_lock_surface)
 {
     surface->lock_surface = wlr_lock_surface;
     surface->lock = lock;
@@ -45,7 +44,7 @@ bsi_session_lock_surface_init(
 }
 
 void
-bsi_session_lock_surface_destroy(struct bsi_session_lock_surface* surface)
+session_lock_surface_destroy(struct bsi_session_lock_surface* surface)
 {
     wl_list_remove(&surface->listen.map.link);
     wl_list_remove(&surface->listen.destroy.link);
@@ -71,23 +70,23 @@ handle_session_lock_new_surface(struct wl_listener* listener, void* data)
 
     struct bsi_session_lock_surface* lock_surface =
         calloc(1, sizeof(struct bsi_session_lock_surface));
-    bsi_session_lock_surface_init(lock_surface, lock, surface);
+    session_lock_surface_init(lock_surface, lock, surface);
 
-    bsi_util_slot_connect(&surface->events.map,
-                          &lock_surface->listen.map,
-                          handle_lock_surface_map);
-    bsi_util_slot_connect(&surface->events.destroy,
-                          &lock_surface->listen.destroy,
-                          handle_lock_surface_destroy);
-    bsi_util_slot_connect(&surface->surface->events.commit,
-                          &lock_surface->listen.surface_commit,
-                          handle_lock_surface_surface_commit);
-    bsi_util_slot_connect(&surface->output->events.mode,
-                          &lock_surface->listen.mode,
-                          handle_lock_surface_output_mode);
-    bsi_util_slot_connect(&surface->output->events.commit,
-                          &lock_surface->listen.output_commit,
-                          handle_lock_surface_output_commit);
+    util_slot_connect(&surface->events.map,
+                      &lock_surface->listen.map,
+                      handle_lock_surface_map);
+    util_slot_connect(&surface->events.destroy,
+                      &lock_surface->listen.destroy,
+                      handle_lock_surface_destroy);
+    util_slot_connect(&surface->surface->events.commit,
+                      &lock_surface->listen.surface_commit,
+                      handle_lock_surface_surface_commit);
+    util_slot_connect(&surface->output->events.mode,
+                      &lock_surface->listen.mode,
+                      handle_lock_surface_output_mode);
+    util_slot_connect(&surface->output->events.commit,
+                      &lock_surface->listen.output_commit,
+                      handle_lock_surface_output_commit);
 
     wl_list_insert(&lock->surfaces, &lock_surface->link_session_lock);
 
@@ -99,7 +98,7 @@ handle_session_lock_new_surface(struct wl_listener* listener, void* data)
     struct bsi_output* output;
     wl_list_for_each(output, &server->output.outputs, link_server)
     {
-        bsi_output_surface_damage(output, NULL, true);
+        output_surface_damage(output, NULL, true);
     }
 }
 
@@ -118,7 +117,7 @@ handle_session_lock_unlock(struct wl_listener* listener, void* data)
     struct bsi_output* output;
     wl_list_for_each(output, &server->output.outputs, link_server)
     {
-        bsi_output_surface_damage(output, NULL, true);
+        output_surface_damage(output, NULL, true);
     }
 }
 
@@ -132,12 +131,12 @@ handle_session_lock_destroy(struct wl_listener* listener, void* data)
     struct bsi_server* server = lock->server;
 
     server->session.lock = NULL;
-    bsi_session_lock_destroy(lock);
+    session_lock_destroy(lock);
 
     struct bsi_output* output;
     wl_list_for_each(output, &server->output.outputs, link_server)
     {
-        bsi_output_surface_damage(output, NULL, true);
+        output_surface_damage(output, NULL, true);
     }
 }
 
@@ -174,7 +173,7 @@ handle_lock_surface_map(struct wl_listener* listener, void* data)
     struct bsi_output* output;
     wl_list_for_each(output, &server->output.outputs, link_server)
     {
-        bsi_output_surface_damage(output, NULL, true);
+        output_surface_damage(output, NULL, true);
     }
 }
 
@@ -185,7 +184,7 @@ handle_lock_surface_destroy(struct wl_listener* listener, void* data)
         wl_container_of(listener, lock_surface, listen.destroy);
 
     wl_list_remove(&lock_surface->link_session_lock);
-    bsi_session_lock_surface_destroy(lock_surface);
+    session_lock_surface_destroy(lock_surface);
 }
 
 void
@@ -198,7 +197,7 @@ handle_lock_surface_surface_commit(struct wl_listener* listener, void* data)
     struct bsi_output* output;
     wl_list_for_each(output, &server->output.outputs, link_server)
     {
-        bsi_output_surface_damage(output, NULL, true);
+        output_surface_damage(output, NULL, true);
     }
 }
 

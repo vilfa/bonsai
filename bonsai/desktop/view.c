@@ -24,24 +24,24 @@
 #include "bonsai/server.h"
 
 void
-bsi_views_add(struct bsi_server* server, struct bsi_view* view)
+views_add(struct bsi_server* server, struct bsi_view* view)
 {
     wl_list_insert(&server->scene.views, &view->link_server);
     /* Initialize geometry state and arrange output. */
     wlr_xdg_surface_get_geometry(view->toplevel->base, &view->box);
     wlr_scene_node_coords(view->scene_node, &view->box.x, &view->box.y);
-    bsi_layers_output_arrange(view->parent_workspace->output);
+    layers_output_arrange(view->parent_workspace->output);
 }
 
 void
-bsi_views_mru_focus(struct bsi_server* server)
+views_mru_focus(struct bsi_server* server)
 {
     struct wlr_output* active_wout =
         wlr_output_layout_output_at(server->wlr_output_layout,
                                     server->wlr_cursor->x,
                                     server->wlr_cursor->y);
-    struct bsi_output* active_out = bsi_outputs_find(server, active_wout);
-    struct bsi_workspace* active_ws = bsi_workspaces_get_active(active_out);
+    struct bsi_output* active_out = outputs_find(server, active_wout);
+    struct bsi_workspace* active_ws = workspaces_get_active(active_out);
     if (!wl_list_empty(&active_ws->views)) {
         struct bsi_view* mru =
             wl_container_of(active_ws->views.prev, mru, link_workspace);
@@ -49,12 +49,12 @@ bsi_views_mru_focus(struct bsi_server* server)
             return;
         wl_list_remove(&mru->link_workspace);
         wl_list_insert(&active_ws->views, &mru->link_workspace);
-        bsi_view_focus(mru);
+        view_focus(mru);
     }
 }
 
 struct bsi_view*
-bsi_views_get_focused(struct bsi_server* server)
+views_get_focused(struct bsi_server* server)
 {
     if (!wl_list_empty(&server->scene.views)) {
         struct bsi_view* focused =
@@ -65,15 +65,15 @@ bsi_views_get_focused(struct bsi_server* server)
 }
 
 void
-bsi_views_remove(struct bsi_view* view)
+views_remove(struct bsi_view* view)
 {
     wl_list_remove(&view->link_server);
 }
 
 struct bsi_view*
-bsi_view_init(struct bsi_view* view,
-              struct bsi_server* server,
-              struct wlr_xdg_toplevel* toplevel)
+view_init(struct bsi_view* view,
+          struct bsi_server* server,
+          struct wlr_xdg_toplevel* toplevel)
 {
     view->server = server;
     view->toplevel = toplevel;
@@ -96,7 +96,7 @@ bsi_view_init(struct bsi_view* view,
 }
 
 void
-bsi_view_destroy(struct bsi_view* view)
+view_destroy(struct bsi_view* view)
 {
     /* wlr_xdg_surface */
     wl_list_remove(&view->listen.destroy.link);
@@ -113,7 +113,7 @@ bsi_view_destroy(struct bsi_view* view)
 }
 
 void
-bsi_view_focus(struct bsi_view* view)
+view_focus(struct bsi_view* view)
 {
     struct bsi_server* server = view->server;
     struct wlr_seat* seat = server->wlr_seat;
@@ -138,9 +138,9 @@ bsi_view_focus(struct bsi_view* view)
     }
 
     /* Move to front of server views. */
-    bsi_views_remove(view);
-    bsi_views_add(server, view);
-    bsi_layers_output_arrange(view->parent_workspace->output);
+    views_remove(view);
+    views_add(server, view);
+    layers_output_arrange(view->parent_workspace->output);
 
     /* Node to top & activate. */
     wlr_scene_node_raise_to_top(view->scene_node);
@@ -154,13 +154,13 @@ bsi_view_focus(struct bsi_view* view)
                                    keyboard->num_keycodes,
                                    &keyboard->modifiers);
 
-    bsi_layers_output_arrange(view->parent_workspace->output);
+    layers_output_arrange(view->parent_workspace->output);
 }
 
 void
-bsi_view_interactive_begin(struct bsi_view* view,
-                           enum bsi_cursor_mode cursor_mode,
-                           union bsi_view_toplevel_event toplevel_event)
+view_interactive_begin(struct bsi_view* view,
+                       enum bsi_cursor_mode cursor_mode,
+                       union bsi_view_toplevel_event toplevel_event)
 {
     /* Sets up an interactive move or resize operation. The compositor consumes
      * these events. */
@@ -226,7 +226,7 @@ bsi_view_interactive_begin(struct bsi_view* view,
 }
 
 void
-bsi_view_set_maximized(struct bsi_view* view, bool maximized)
+view_set_maximized(struct bsi_view* view, bool maximized)
 {
     enum bsi_view_state new_state =
         (maximized) ? BSI_VIEW_STATE_MAXIMIZED : BSI_VIEW_STATE_NORMAL;
@@ -238,7 +238,7 @@ bsi_view_set_maximized(struct bsi_view* view, bool maximized)
 
     if (view->state == BSI_VIEW_STATE_NORMAL) {
         bsi_debug("Unmaximize view '%s', restore prev", view->toplevel->app_id);
-        bsi_view_restore_prev(view);
+        view_restore_prev(view);
     } else {
         bsi_debug("Maximize view '%s'", view->toplevel->app_id);
 
@@ -259,7 +259,7 @@ bsi_view_set_maximized(struct bsi_view* view, bool maximized)
 }
 
 void
-bsi_view_set_minimized(struct bsi_view* view, bool minimized)
+view_set_minimized(struct bsi_view* view, bool minimized)
 {
     enum bsi_view_state new_state =
         (minimized) ? BSI_VIEW_STATE_MINIMIZED : BSI_VIEW_STATE_NORMAL;
@@ -271,23 +271,23 @@ bsi_view_set_minimized(struct bsi_view* view, bool minimized)
 
     if (view->state == BSI_VIEW_STATE_NORMAL) {
         bsi_debug("Unimimize view '%s', restore prev", view->toplevel->app_id);
-        bsi_view_restore_prev(view);
-        bsi_views_remove(view);
-        bsi_views_add(view->server, view);
-        bsi_layers_output_arrange(view->parent_workspace->output);
+        view_restore_prev(view);
+        views_remove(view);
+        views_add(view->server, view);
+        layers_output_arrange(view->parent_workspace->output);
         wlr_scene_node_set_enabled(view->scene_node, true);
     } else {
         bsi_debug("Minimize view '%s'", view->toplevel->app_id);
         wlr_scene_node_set_enabled(view->scene_node, false);
-        bsi_views_remove(view);
-        bsi_views_mru_focus(view->server);
-        bsi_views_add(view->server, view);
-        bsi_layers_output_arrange(view->parent_workspace->output);
+        views_remove(view);
+        views_mru_focus(view->server);
+        views_add(view->server, view);
+        layers_output_arrange(view->parent_workspace->output);
     }
 }
 
 void
-bsi_view_set_fullscreen(struct bsi_view* view, bool fullscreen)
+view_set_fullscreen(struct bsi_view* view, bool fullscreen)
 {
     enum bsi_view_state new_state =
         (fullscreen) ? BSI_VIEW_STATE_FULLSCREEN : BSI_VIEW_STATE_NORMAL;
@@ -304,17 +304,17 @@ bsi_view_set_fullscreen(struct bsi_view* view, bool fullscreen)
         wl_list_remove(&view->link_fullscreen);
 
         /* Remove fullscreen idle inhibitor. */
-        bsi_idle_inhibitors_remove(view->fullscreen_inhibitor);
-        bsi_idle_inhibitor_destroy(view->fullscreen_inhibitor);
+        idle_inhibitors_remove(view->fullscreen_inhibitor);
+        idle_inhibitor_destroy(view->fullscreen_inhibitor);
         view->fullscreen_inhibitor = NULL;
-        bsi_idle_inhibitors_state_update(view->server);
+        idle_inhibitors_update(view->server);
 
         /* Restore previous (incl. decoration mode). */
         wlr_xdg_toplevel_decoration_v1_set_mode(
             view->xdg_decoration->xdg_decoration,
             /* view->xdg_decoration_mode */ // TODO
             WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_CLIENT_SIDE);
-        bsi_view_restore_prev(view);
+        view_restore_prev(view);
     } else {
         bsi_debug("Fullscreen view '%s'", view->toplevel->app_id);
 
@@ -329,11 +329,11 @@ bsi_view_set_fullscreen(struct bsi_view* view, bool fullscreen)
         /* Add fullscreen idle inhibitor. */
         struct bsi_idle_inhibitor* idle =
             calloc(1, sizeof(struct bsi_idle_inhibitor));
-        bsi_idle_inhibitor_init(
+        idle_inhibitor_init(
             idle, NULL, view->server, view, BSI_IDLE_INHIBIT_FULLSCREEN);
-        bsi_idle_inhibitors_add(view->server, idle);
+        idle_inhibitors_add(view->server, idle);
         view->fullscreen_inhibitor = idle;
-        bsi_idle_inhibitors_state_update(view->server);
+        idle_inhibitors_update(view->server);
 
         /* SSD, server doesn't display deco for fullscreen & fullscreen. */
         wlr_xdg_toplevel_decoration_v1_set_mode(
@@ -352,11 +352,11 @@ bsi_view_set_fullscreen(struct bsi_view* view, bool fullscreen)
         wlr_xdg_toplevel_set_fullscreen(view->toplevel, true);
     }
 
-    bsi_layers_output_arrange(view->parent_workspace->output);
+    layers_output_arrange(view->parent_workspace->output);
 }
 
 void
-bsi_view_set_tiled_left(struct bsi_view* view, bool tiled)
+view_set_tiled_left(struct bsi_view* view, bool tiled)
 {
     enum bsi_view_state new_state =
         (tiled) ? BSI_VIEW_STATE_TILED_LEFT : BSI_VIEW_STATE_NORMAL;
@@ -368,7 +368,7 @@ bsi_view_set_tiled_left(struct bsi_view* view, bool tiled)
 
     if (view->state == BSI_VIEW_STATE_NORMAL) {
         bsi_debug("Untile view '%s'", view->toplevel->app_id);
-        bsi_view_restore_prev(view);
+        view_restore_prev(view);
     } else {
         bsi_debug("Tile view '%s' left", view->toplevel->app_id);
 
@@ -388,7 +388,7 @@ bsi_view_set_tiled_left(struct bsi_view* view, bool tiled)
 }
 
 void
-bsi_view_set_tiled_right(struct bsi_view* view, bool tiled)
+view_set_tiled_right(struct bsi_view* view, bool tiled)
 {
     enum bsi_view_state new_state =
         (tiled) ? BSI_VIEW_STATE_TILED_RIGHT : BSI_VIEW_STATE_NORMAL;
@@ -400,7 +400,7 @@ bsi_view_set_tiled_right(struct bsi_view* view, bool tiled)
 
     if (view->state == BSI_VIEW_STATE_NORMAL) {
         bsi_debug("Untile view '%s'", view->toplevel->app_id);
-        bsi_view_restore_prev(view);
+        view_restore_prev(view);
     } else {
         bsi_debug("Tile view '%s' right", view->toplevel->app_id);
 
@@ -420,7 +420,7 @@ bsi_view_set_tiled_right(struct bsi_view* view, bool tiled)
 }
 
 void
-bsi_view_restore_prev(struct bsi_view* view)
+view_restore_prev(struct bsi_view* view)
 {
     switch (view->state) {
         case BSI_VIEW_STATE_NORMAL:
@@ -449,7 +449,7 @@ bsi_view_restore_prev(struct bsi_view* view)
 }
 
 bool
-bsi_view_intersects(struct bsi_view* view, struct wlr_box* box)
+view_intersects(struct bsi_view* view, struct wlr_box* box)
 {
     if (view->box.x < box->x ||
         view->box.x + view->box.width > box->x + box->width ||
@@ -461,9 +461,9 @@ bsi_view_intersects(struct bsi_view* view, struct wlr_box* box)
 }
 
 void
-bsi_view_intersection_correct_box(struct bsi_view* view,
-                                  struct wlr_box* box,
-                                  struct wlr_box* correction)
+view_intersection_correct_box(struct bsi_view* view,
+                              struct wlr_box* box,
+                              struct wlr_box* correction)
 {
     if (view->box.x <= box->x) {
         correction->x += box->x - view->box.x + 1;
@@ -490,7 +490,7 @@ bsi_view_intersection_correct_box(struct bsi_view* view,
 }
 
 void
-bsi_view_correct_with_box(struct bsi_view* view, struct wlr_box* correction)
+view_correct_with_box(struct bsi_view* view, struct wlr_box* correction)
 {
     view->box.x += correction->x;
     view->box.y += correction->y;
@@ -504,9 +504,9 @@ bsi_view_correct_with_box(struct bsi_view* view, struct wlr_box* correction)
 }
 
 void
-bsi_view_request_activate(struct bsi_view* view)
+view_request_activate(struct bsi_view* view)
 {
-    bsi_view_focus(view);
+    view_focus(view);
 }
 
 /**
@@ -523,8 +523,8 @@ handle_xdg_surf_destroy(struct wl_listener* listener, void* data)
 
     /* The view will already have been unmapped by the time it gets here, no
      * need to call remove. */
-    bsi_workspace_view_remove(workspace, view);
-    bsi_view_destroy(view);
+    workspace_view_remove(workspace, view);
+    view_destroy(view);
 
     bsi_info("Workspace %s now has %d views",
              workspace->name,
@@ -567,15 +567,15 @@ handle_xdg_surf_map(struct wl_listener* listener, void* data)
     if (requested->fullscreen)
         // TODO: Should there be code handling fullscreen_output_destroy, we
         // already handle moving views in workspace code
-        bsi_view_set_fullscreen(view, requested->fullscreen);
+        view_set_fullscreen(view, requested->fullscreen);
     else if (requested->maximized)
-        bsi_view_set_maximized(view, requested->maximized);
+        view_set_maximized(view, requested->maximized);
     else if (requested->minimized)
-        bsi_view_set_minimized(view, requested->minimized);
+        view_set_minimized(view, requested->minimized);
 
     view->mapped = true;
-    bsi_views_add(server, view);
-    bsi_view_focus(view);
+    views_add(server, view);
+    view_focus(view);
 }
 
 void
@@ -586,9 +586,9 @@ handle_xdg_surf_unmap(struct wl_listener* listener, void* data)
     struct bsi_view* view = wl_container_of(listener, view, listen.unmap);
 
     view->mapped = false;
-    bsi_views_remove(view);
-    bsi_views_mru_focus(view->server);
-    bsi_layers_output_arrange(view->parent_workspace->output);
+    views_remove(view);
+    views_mru_focus(view->server);
+    layers_output_arrange(view->parent_workspace->output);
 }
 
 void
@@ -605,7 +605,7 @@ handle_toplvl_request_maximize(struct wl_listener* listener, void* data)
     struct wlr_xdg_toplevel* toplevel = view->toplevel;
     struct wlr_xdg_toplevel_requested* requested = &toplevel->requested;
 
-    bsi_view_set_maximized(view, requested->maximized);
+    view_set_maximized(view, requested->maximized);
 }
 
 void
@@ -618,7 +618,7 @@ handle_toplvl_request_fullscreen(struct wl_listener* listener, void* data)
     struct wlr_xdg_toplevel* toplevel = view->toplevel;
     struct wlr_xdg_toplevel_requested* requested = &toplevel->requested;
 
-    bsi_view_set_fullscreen(view, requested->fullscreen);
+    view_set_fullscreen(view, requested->fullscreen);
 }
 
 void
@@ -632,7 +632,7 @@ handle_toplvl_request_minimize(struct wl_listener* listener, void* data)
     struct wlr_xdg_toplevel_requested* requested =
         &surface->toplevel->requested;
 
-    bsi_view_set_minimized(view, requested->minimized);
+    view_set_minimized(view, requested->minimized);
 }
 
 void
@@ -648,7 +648,7 @@ handle_toplvl_request_move(struct wl_listener* listener, void* data)
     union bsi_view_toplevel_event toplevel_event = { .move = event };
 
     if (wlr_seat_client_validate_event_serial(event->seat, event->serial))
-        bsi_view_interactive_begin(view, BSI_CURSOR_MOVE, toplevel_event);
+        view_interactive_begin(view, BSI_CURSOR_MOVE, toplevel_event);
 }
 
 void
@@ -664,7 +664,7 @@ handle_toplvl_request_resize(struct wl_listener* listener, void* data)
     union bsi_view_toplevel_event toplevel_event = { .resize = event };
 
     if (wlr_seat_client_validate_event_serial(event->seat, event->serial))
-        bsi_view_interactive_begin(view, BSI_CURSOR_RESIZE, toplevel_event);
+        view_interactive_begin(view, BSI_CURSOR_RESIZE, toplevel_event);
 }
 
 void

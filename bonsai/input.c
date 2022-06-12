@@ -25,22 +25,22 @@
 #include "bonsai/server.h"
 
 void
-bsi_inputs_add(struct bsi_server* server, struct bsi_input_device* device)
+inputs_add(struct bsi_server* server, struct bsi_input_device* device)
 {
     wl_list_insert(&server->input.inputs, &device->link_server);
 }
 
 void
-bsi_inputs_remove(struct bsi_input_device* device)
+inputs_remove(struct bsi_input_device* device)
 {
     wl_list_remove(&device->link_server);
 }
 
 struct bsi_input_device*
-bsi_input_device_init(struct bsi_input_device* input_device,
-                      enum bsi_input_device_type type,
-                      struct bsi_server* server,
-                      struct wlr_input_device* device)
+input_device_init(struct bsi_input_device* input_device,
+                  enum bsi_input_device_type type,
+                  struct bsi_server* server,
+                  struct wlr_input_device* device)
 {
     switch (type) {
         case BSI_INPUT_DEVICE_POINTER:
@@ -60,7 +60,7 @@ bsi_input_device_init(struct bsi_input_device* input_device,
 }
 
 void
-bsi_input_device_destroy(struct bsi_input_device* input_device)
+input_device_destroy(struct bsi_input_device* input_device)
 {
     switch (input_device->type) {
         case BSI_INPUT_DEVICE_POINTER:
@@ -88,9 +88,9 @@ bsi_input_device_destroy(struct bsi_input_device* input_device)
 }
 
 void
-bsi_input_device_keymap_set(struct bsi_input_device* input_device,
-                            const struct xkb_rule_names* xkb_rule_names,
-                            const size_t xkb_rule_names_len)
+input_device_keymap_set(struct bsi_input_device* input_device,
+                        const struct xkb_rule_names* xkb_rule_names,
+                        const size_t xkb_rule_names_len)
 {
     assert(input_device->type == BSI_INPUT_DEVICE_KEYBOARD);
 
@@ -178,7 +178,7 @@ handle_pointer_motion(struct wl_listener* listener, void* data)
         return;
 
     /* Secondly, check if we have any view stuff to do. */
-    bsi_cursor_process_motion(server, cursor_event);
+    cursor_process_motion(server, cursor_event);
 }
 
 void
@@ -198,7 +198,7 @@ handle_pointer_motion_absolute(struct wl_listener* listener, void* data)
         return;
 
     /* Secondly, check if we have any view stuff to do. */
-    bsi_cursor_process_motion(server, cursor_event);
+    cursor_process_motion(server, cursor_event);
 }
 
 void
@@ -229,7 +229,7 @@ handle_pointer_button(struct wl_listener* listener, void* data)
         case WLR_BUTTON_RELEASED:
             /* Exit interactive mode. */
             server->cursor.cursor_mode = BSI_CURSOR_NORMAL;
-            bsi_cursor_image_set(server, BSI_CURSOR_IMAGE_NORMAL);
+            cursor_image_set(server, BSI_CURSOR_IMAGE_NORMAL);
             break;
         case WLR_BUTTON_PRESSED: {
             /* Get the view under pointer, its surface, and surface relative
@@ -238,12 +238,12 @@ handle_pointer_button(struct wl_listener* listener, void* data)
             struct wlr_scene_surface* scene_surface_at = NULL;
             struct wlr_surface* surface_at = NULL;
             const char* surface_role = NULL;
-            void* scene_data = bsi_cursor_scene_data_at(server,
-                                                        &scene_surface_at,
-                                                        &surface_at,
-                                                        &surface_role,
-                                                        &sx,
-                                                        &sy);
+            void* scene_data = cursor_scene_data_at(server,
+                                                    &scene_surface_at,
+                                                    &surface_at,
+                                                    &surface_role,
+                                                    &sx,
+                                                    &sy);
 
             if (scene_data == NULL) {
                 wlr_seat_pointer_notify_clear_focus(seat);
@@ -253,9 +253,9 @@ handle_pointer_button(struct wl_listener* listener, void* data)
 
             /* Focus a client that was clicked. */
             if (wlr_surface_is_layer_surface(surface_at)) {
-                bsi_layer_surface_focus(scene_data);
+                layer_surface_focus(scene_data);
             } else if (wlr_surface_is_xdg_surface(surface_at)) {
-                bsi_view_focus(scene_data);
+                view_focus(scene_data);
             } else if (wlr_surface_is_subsurface(surface_at)) {
                 /* Client side decorations are wl_subsurfaces. */
                 struct bsi_view* view = scene_data;
@@ -266,7 +266,7 @@ handle_pointer_button(struct wl_listener* listener, void* data)
                                                cursor->y - view->box.y,
                                                &sub_sx,
                                                &sub_sy))
-                    bsi_view_focus(view);
+                    view_focus(view);
             }
             break;
         }
@@ -353,7 +353,7 @@ handle_pointer_swipe_update(struct wl_listener* listener, void* data)
               event->dy);
 
     union bsi_cursor_event cursor_event = { .swipe_update = event };
-    bsi_cursor_process_swipe(server, cursor_event);
+    cursor_process_swipe(server, cursor_event);
 }
 
 void
@@ -391,7 +391,7 @@ handle_pointer_swipe_end(struct wl_listener* listener, void* data)
         wlr_output_layout_output_at(server->wlr_output_layout,
                                     server->wlr_cursor->x,
                                     server->wlr_cursor->y);
-    struct bsi_output* output = bsi_outputs_find(server, wlr_output);
+    struct bsi_output* output = outputs_find(server, wlr_output);
     // struct bsi_workspace* active_workspace =
     // bsi_workspaces_get_active(output);
 
@@ -402,15 +402,15 @@ handle_pointer_swipe_end(struct wl_listener* listener, void* data)
     if (fabs(server->cursor.swipe_dx) > fabs(server->cursor.swipe_dy)) {
         /* Switch workspaces. We use inverted directions for natrual swiping. */
         if (server->cursor.swipe_dx > 0)
-            bsi_workspaces_prev(output);
+            workspaces_prev(output);
         else
-            bsi_workspaces_next(output);
+            workspaces_next(output);
     } else {
         /* Show/hide all views. */
         if (server->cursor.swipe_dy > 0)
-            bsi_workspace_views_show_all(server->active_workspace, false);
+            workspace_views_show_all(server->active_workspace, false);
         else
-            bsi_workspace_views_show_all(server->active_workspace, true);
+            workspace_views_show_all(server->active_workspace, true);
     }
 
     server->cursor.swipe_dx = 0.0;
@@ -513,7 +513,7 @@ handle_keyboard_key(struct wl_listener* listener, void* data)
 
     wlr_idle_notify_activity(device->server->wlr_idle, seat);
 
-    if (!bsi_keyboard_keybinds_process(device, event)) {
+    if (!keyboard_keybinds_process(device, event)) {
         /* A seat can only have one keyboard, but multiple keyboards can be
          * attached. Switch the seat to the correct underlying keyboard. Roots
          * handles this for us :). */
@@ -564,6 +564,6 @@ handle_input_device_destroy(struct wl_listener* listener, void* data)
             break;
     }
 
-    bsi_inputs_remove(device);
-    bsi_input_device_destroy(device);
+    inputs_remove(device);
+    input_device_destroy(device);
 }

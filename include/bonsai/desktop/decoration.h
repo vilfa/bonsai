@@ -25,26 +25,26 @@ struct bsi_xdg_decoration
 };
 
 void
-bsi_decorations_add(struct bsi_server* server,
-                    struct bsi_xdg_decoration* decoration);
+decorations_add(struct bsi_server* server,
+                struct bsi_xdg_decoration* decoration);
 
 void
-bsi_decorations_remove(struct bsi_xdg_decoration* decoration);
+decorations_remove(struct bsi_xdg_decoration* decoration);
 
 struct bsi_xdg_decoration*
-bsi_decoration_init(struct bsi_xdg_decoration* decoration,
-                    struct bsi_server* server,
-                    struct bsi_view* view,
-                    struct wlr_xdg_toplevel_decoration_v1* xdg_deco);
+decoration_init(struct bsi_xdg_decoration* decoration,
+                struct bsi_server* server,
+                struct bsi_view* view,
+                struct wlr_xdg_toplevel_decoration_v1* xdg_deco);
 
 void
-bsi_decoration_update(struct bsi_xdg_decoration* decoration);
+decoration_update(struct bsi_xdg_decoration* decoration);
 
 void
-bsi_decoration_iter(struct wlr_scene_buffer* buffer,
-                    int sx,
-                    int sy,
-                    void* user_data);
+decoration_iter(struct wlr_scene_buffer* buffer,
+                int sx,
+                int sy,
+                void* user_data);
 
 void
-bsi_decoration_destroy(struct bsi_xdg_decoration* deco);
+decoration_destroy(struct bsi_xdg_decoration* decoration);

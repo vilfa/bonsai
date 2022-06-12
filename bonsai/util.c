@@ -18,7 +18,7 @@ struct bsi_server;
 #include "bonsai/util.h"
 
 struct timespec
-bsi_util_timespec_get()
+util_timespec_get()
 {
     struct timespec ts;
     timespec_get(&ts, TIME_UTC);
@@ -26,22 +26,22 @@ bsi_util_timespec_get()
 }
 
 void
-bsi_util_slot_connect(struct wl_signal* signal_memb,
-                      struct wl_listener* listener_memb,
-                      wl_notify_func_t func)
+util_slot_connect(struct wl_signal* signal_memb,
+                  struct wl_listener* listener_memb,
+                  wl_notify_func_t func)
 {
     listener_memb->notify = func;
     wl_signal_add(signal_memb, listener_memb);
 }
 
 void
-bsi_util_slot_disconnect(struct wl_listener* listener_memb)
+util_slot_disconnect(struct wl_listener* listener_memb)
 {
     wl_list_remove(&listener_memb->link);
 }
 
 bool
-bsi_util_tryexec(char* const* argp, const size_t len_argp)
+util_tryexec(char* const* argp, const size_t len_argp)
 {
     const char* binpaths[] = { "/usr/bin/", "/usr/local/bin/" };
     char fargp[50] = { 0 };
@@ -54,9 +54,9 @@ bsi_util_tryexec(char* const* argp, const size_t len_argp)
         }
         bsi_info("Trying to exec '%s'", fargp);
         if (access(fargp, F_OK | X_OK) == 0) {
-            return bsi_util_forkexec(aargp, len_argp);
+            return util_forkexec(aargp, len_argp);
         } else {
-            bsi_errno("File '%s' F_OK | X_OK != 0", fargp);
+            bsi_error("File '%s' F_OK | X_OK != 0", fargp);
         }
         memset(fargp, 0, 50);
     }
@@ -64,7 +64,7 @@ bsi_util_tryexec(char* const* argp, const size_t len_argp)
 }
 
 bool
-bsi_util_forkexec(char* const* argp, const size_t len_argp)
+util_forkexec(char* const* argp, const size_t len_argp)
 {
     if (len_argp < 1)
         return false;
@@ -88,7 +88,7 @@ bsi_util_forkexec(char* const* argp, const size_t len_argp)
 }
 
 size_t
-bsi_util_split_argsp(char* first, char* in, const char* delim, char*** out)
+util_split_argsp(char* first, char* in, const char* delim, char*** out)
 {
     if (*out != NULL)
         return 0;
@@ -110,15 +110,10 @@ bsi_util_split_argsp(char* first, char* in, const char* delim, char*** out)
 }
 
 size_t
-bsi_util_split_delim(char* in,
-                     const char* delim,
-                     char*** out,
-                     bool ignore_quotes)
+util_split_delim(char* in, const char* delim, char*** out, bool ignore_quotes)
 {
     if (*out != NULL)
         return 0;
-
-    *out = realloc(*out, sizeof(char**));
 
     enum state
     {
@@ -129,12 +124,15 @@ bsi_util_split_delim(char* in,
         DONE,
     };
 
+    *out = realloc(*out, sizeof(char**));
+
     size_t end = strlen(in) + 1;
     size_t cursor = 0;
     size_t len = 1;
     char* ltok = 0;
     char qsign = 0;
     enum state state = TOK_BEGIN;
+
     while (cursor < end) {
         switch (state) {
             case TOK_BEGIN: {
@@ -204,13 +202,13 @@ bsi_util_split_delim(char* in,
 }
 
 void
-bsi_util_split_free(char*** out)
+util_split_free(char*** out)
 {
     free(*out);
 }
 
 void
-bsi_util_strip_quotes(char* in)
+util_strip_quotes(char* in)
 {
     if (strlen(in) < 1)
         return;

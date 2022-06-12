@@ -78,7 +78,7 @@ union bsi_view_toplevel_event
  * @param view The view to add.
  */
 void
-bsi_views_add(struct bsi_server* server, struct bsi_view* view);
+views_add(struct bsi_server* server, struct bsi_view* view);
 
 /**
  * @brief Focuses the most recently used view, if any exists.
@@ -86,89 +86,58 @@ bsi_views_add(struct bsi_server* server, struct bsi_view* view);
  * @param server The server.
  */
 void
-bsi_views_mru_focus(struct bsi_server* server);
+views_mru_focus(struct bsi_server* server);
 
 struct bsi_view*
-bsi_views_get_focused(struct bsi_server* server);
+views_get_focused(struct bsi_server* server);
 
-/**
- * @brief Removes a view from any of the server views.
- *
- * @param server The server.
- * @param view The view to remove.
- */
 void
-bsi_views_remove(struct bsi_view* view);
+views_remove(struct bsi_view* view);
 
-/**
- * @brief Initializes a preallocated `bsi_view` representing a scene node.
- *
- * @param view The view.
- * @param server The server.
- * @param toplevel The xdg toplevel wrapper.
- * @return struct bsi_view* Inititalized `bsi_view`.
- */
 struct bsi_view*
-bsi_view_init(struct bsi_view* view,
-              struct bsi_server* server,
-              struct wlr_xdg_toplevel* toplevel);
-
-/**
- * @brief Unlinks all listeners and frees the view.
- *
- * @param view The view to destroy.
- */
-void
-bsi_view_destroy(struct bsi_view* view);
-
-/**
- * @brief Focuses the view in the server scene graph.
- *
- * @param view The view.
- */
-void
-bsi_view_focus(struct bsi_view* view);
-
-/**
- * @brief Begins interaction with a surface in the view.
- *
- * @param view The view.
- * @param cursor_mode The cursor mode.
- * @param toplevel_event The xdg toplevel event.
- */
-void
-bsi_view_interactive_begin(struct bsi_view* view,
-                           enum bsi_cursor_mode cursor_mode,
-                           union bsi_view_toplevel_event toplevel_event);
+view_init(struct bsi_view* view,
+          struct bsi_server* server,
+          struct wlr_xdg_toplevel* toplevel);
 
 void
-bsi_view_set_maximized(struct bsi_view* view, bool maximized);
+view_destroy(struct bsi_view* view);
 
 void
-bsi_view_set_minimized(struct bsi_view* view, bool minimized);
+view_focus(struct bsi_view* view);
 
 void
-bsi_view_set_fullscreen(struct bsi_view* view, bool fullscreen);
+view_interactive_begin(struct bsi_view* view,
+                       enum bsi_cursor_mode cursor_mode,
+                       union bsi_view_toplevel_event toplevel_event);
 
 void
-bsi_view_set_tiled_left(struct bsi_view* view, bool tiled);
+view_set_maximized(struct bsi_view* view, bool maximized);
 
 void
-bsi_view_set_tiled_right(struct bsi_view* view, bool tiled);
+view_set_minimized(struct bsi_view* view, bool minimized);
 
 void
-bsi_view_restore_prev(struct bsi_view* view);
+view_set_fullscreen(struct bsi_view* view, bool fullscreen);
+
+void
+view_set_tiled_left(struct bsi_view* view, bool tiled);
+
+void
+view_set_tiled_right(struct bsi_view* view, bool tiled);
+
+void
+view_restore_prev(struct bsi_view* view);
 
 bool
-bsi_view_intersects(struct bsi_view* view, struct wlr_box* box);
+view_intersects(struct bsi_view* view, struct wlr_box* box);
 
 void
-bsi_view_intersection_correct_box(struct bsi_view* view,
-                                  struct wlr_box* box,
-                                  struct wlr_box* correction);
+view_intersection_correct_box(struct bsi_view* view,
+                              struct wlr_box* box,
+                              struct wlr_box* correction);
 
 void
-bsi_view_correct_with_box(struct bsi_view* view, struct wlr_box* correction);
+view_correct_with_box(struct bsi_view* view, struct wlr_box* correction);
 
 void
-bsi_view_request_activate(struct bsi_view* view);
+view_request_activate(struct bsi_view* view);

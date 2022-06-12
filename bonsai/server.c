@@ -71,14 +71,14 @@ static bool bsi_server_extern_progs_per_output[] = {
 };
 
 struct bsi_server*
-bsi_server_init(struct bsi_server* server, struct bsi_config* config)
+server_init(struct bsi_server* server, struct bsi_config* config)
 {
     server->config.all = config;
     wl_list_init(&server->config.input);
     server->config.wallpaper = NULL;
     server->config.workspaces_max = 0;
 
-    bsi_config_apply(config);
+    config_apply(config);
 
     wl_list_init(&server->output.outputs);
     bsi_debug("Initialized bsi_outputs");
@@ -87,12 +87,12 @@ bsi_server_init(struct bsi_server* server, struct bsi_config* config)
     bsi_debug("Created display");
 
     server->wlr_backend = wlr_backend_autocreate(server->wl_display);
-    bsi_util_slot_connect(&server->wlr_backend->events.new_output,
-                          &server->listen.new_output,
-                          handle_new_output);
-    bsi_util_slot_connect(&server->wlr_backend->events.new_input,
-                          &server->listen.new_input,
-                          handle_new_input);
+    util_slot_connect(&server->wlr_backend->events.new_output,
+                      &server->listen.new_output,
+                      handle_new_output);
+    util_slot_connect(&server->wlr_backend->events.new_input,
+                      &server->listen.new_input,
+                      handle_new_input);
     bsi_debug("Autocreated backend & attached handlers");
 
     server->wlr_renderer = wlr_renderer_autocreate(server->wlr_backend);
@@ -117,19 +117,19 @@ bsi_server_init(struct bsi_server* server, struct bsi_config* config)
               "wlr_data_device_manager & wlr_gamma_control_manager");
 
     server->wlr_output_layout = wlr_output_layout_create();
-    bsi_util_slot_connect(&server->wlr_output_layout->events.change,
-                          &server->listen.output_layout_change,
-                          handle_output_layout_change);
+    util_slot_connect(&server->wlr_output_layout->events.change,
+                      &server->listen.output_layout_change,
+                      handle_output_layout_change);
     bsi_debug("Created output layout");
 
     server->wlr_output_manager =
         wlr_output_manager_v1_create(server->wl_display);
-    bsi_util_slot_connect(&server->wlr_output_manager->events.apply,
-                          &server->listen.output_manager_apply,
-                          handle_output_manager_apply);
-    bsi_util_slot_connect(&server->wlr_output_manager->events.test,
-                          &server->listen.output_manager_test,
-                          handle_output_manager_test);
+    util_slot_connect(&server->wlr_output_manager->events.apply,
+                      &server->listen.output_manager_apply,
+                      handle_output_manager_apply);
+    util_slot_connect(&server->wlr_output_manager->events.test,
+                      &server->listen.output_manager_test,
+                      handle_output_manager_test);
     bsi_debug("Created wlr_output_manager_v1 & attached handlers");
 
     wlr_xdg_output_manager_v1_create(server->wl_display,
@@ -142,23 +142,23 @@ bsi_server_init(struct bsi_server* server, struct bsi_config* config)
     bsi_debug("Created wlr_scene & attached wlr_output_layout");
 
     server->wlr_xdg_shell = wlr_xdg_shell_create(server->wl_display, 2);
-    bsi_util_slot_connect(&server->wlr_xdg_shell->events.new_surface,
-                          &server->listen.xdg_new_surface,
-                          handle_xdgshell_new_surface);
+    util_slot_connect(&server->wlr_xdg_shell->events.new_surface,
+                      &server->listen.xdg_new_surface,
+                      handle_xdgshell_new_surface);
     bsi_debug("Created wlr_xdg_shell & attached handlers");
 
     server->wlr_xdg_decoration_manager =
         wlr_xdg_decoration_manager_v1_create(server->wl_display);
-    bsi_util_slot_connect(
+    util_slot_connect(
         &server->wlr_xdg_decoration_manager->events.new_toplevel_decoration,
         &server->listen.new_decoration,
         handle_xdg_deco_manager_new_decoration);
     bsi_debug("Created wlr_xdg_decoration_manager & attached handlers");
 
     server->wlr_layer_shell = wlr_layer_shell_v1_create(server->wl_display);
-    bsi_util_slot_connect(&server->wlr_layer_shell->events.new_surface,
-                          &server->listen.layer_new_surface,
-                          handle_layershell_new_surface);
+    util_slot_connect(&server->wlr_layer_shell->events.new_surface,
+                      &server->listen.layer_new_surface,
+                      handle_layershell_new_surface);
     bsi_debug("Created wlr_layer_shell_v1 & attached handlers");
 
     server->wlr_cursor = wlr_cursor_create();
@@ -189,28 +189,27 @@ bsi_server_init(struct bsi_server* server, struct bsi_config* config)
 
     server->wlr_xdg_activation =
         wlr_xdg_activation_v1_create(server->wl_display);
-    bsi_util_slot_connect(&server->wlr_xdg_activation->events.request_activate,
-                          &server->listen.request_activate,
-                          handle_xdg_request_activate);
+    util_slot_connect(&server->wlr_xdg_activation->events.request_activate,
+                      &server->listen.request_activate,
+                      handle_xdg_request_activate);
 
     server->wlr_idle = wlr_idle_create(server->wl_display);
-    bsi_util_slot_connect(&server->wlr_idle->events.activity_notify,
-                          &server->listen.activity_notify,
-                          handle_idle_activity_notify);
+    util_slot_connect(&server->wlr_idle->events.activity_notify,
+                      &server->listen.activity_notify,
+                      handle_idle_activity_notify);
     server->wlr_idle_inhibit_manager =
         wlr_idle_inhibit_v1_create(server->wl_display);
-    bsi_util_slot_connect(
-        &server->wlr_idle_inhibit_manager->events.new_inhibitor,
-        &server->listen.new_inhibitor,
-        handle_idle_manager_new_inhibitor);
+    util_slot_connect(&server->wlr_idle_inhibit_manager->events.new_inhibitor,
+                      &server->listen.new_inhibitor,
+                      handle_idle_manager_new_inhibitor);
     wl_list_init(&server->idle.inhibitors);
     bsi_debug("Created wlr_idle, wlr_idle_inhibit_manager & added handlers");
 
     server->wlr_session_lock_manager =
         wlr_session_lock_manager_v1_create(server->wl_display);
-    bsi_util_slot_connect(&server->wlr_session_lock_manager->events.new_lock,
-                          &server->listen.new_lock,
-                          handle_session_new_lock);
+    util_slot_connect(&server->wlr_session_lock_manager->events.new_lock,
+                      &server->listen.new_lock,
+                      handle_session_new_lock);
     server->session.locked = false;
     server->session.lock = NULL;
     bsi_debug("Created wlr_session_lock_manager & added handlers");
@@ -242,37 +241,36 @@ bsi_server_init(struct bsi_server* server, struct bsi_config* config)
     wl_list_init(&server->input.inputs);
     bsi_debug("Initialized bsi_inputs");
 
-    bsi_util_slot_connect(&server->wlr_seat->events.pointer_grab_begin,
-                          &server->listen.pointer_grab_begin,
-                          handle_pointer_grab_begin_notify);
-    bsi_util_slot_connect(&server->wlr_seat->events.pointer_grab_end,
-                          &server->listen.pointer_grab_end,
-                          handle_pointer_grab_end_notify);
-    bsi_util_slot_connect(&server->wlr_seat->events.keyboard_grab_begin,
-                          &server->listen.keyboard_grab_begin,
-                          handle_keyboard_grab_begin_notify);
-    bsi_util_slot_connect(&server->wlr_seat->events.keyboard_grab_end,
-                          &server->listen.keyboard_grab_end,
-                          handle_keyboard_grab_end_notify);
-    bsi_util_slot_connect(&server->wlr_seat->events.touch_grab_begin,
-                          &server->listen.touch_grab_begin,
-                          handle_touch_grab_begin_notify);
-    bsi_util_slot_connect(&server->wlr_seat->events.touch_grab_end,
-                          &server->listen.touch_grab_end,
-                          handle_touch_grab_end_notify);
-    bsi_util_slot_connect(&server->wlr_seat->events.request_set_cursor,
-                          &server->listen.request_set_cursor,
-                          handle_request_set_cursor_notify);
-    bsi_util_slot_connect(&server->wlr_seat->events.request_set_selection,
-                          &server->listen.request_set_selection,
-                          handle_request_set_selection_notify);
-    bsi_util_slot_connect(
-        &server->wlr_seat->events.request_set_primary_selection,
-        &server->listen.request_set_primary_selection,
-        handle_request_set_primary_selection_notify);
-    bsi_util_slot_connect(&server->wlr_seat->events.request_start_drag,
-                          &server->listen.request_start_drag,
-                          handle_request_start_drag_notify);
+    util_slot_connect(&server->wlr_seat->events.pointer_grab_begin,
+                      &server->listen.pointer_grab_begin,
+                      handle_pointer_grab_begin_notify);
+    util_slot_connect(&server->wlr_seat->events.pointer_grab_end,
+                      &server->listen.pointer_grab_end,
+                      handle_pointer_grab_end_notify);
+    util_slot_connect(&server->wlr_seat->events.keyboard_grab_begin,
+                      &server->listen.keyboard_grab_begin,
+                      handle_keyboard_grab_begin_notify);
+    util_slot_connect(&server->wlr_seat->events.keyboard_grab_end,
+                      &server->listen.keyboard_grab_end,
+                      handle_keyboard_grab_end_notify);
+    util_slot_connect(&server->wlr_seat->events.touch_grab_begin,
+                      &server->listen.touch_grab_begin,
+                      handle_touch_grab_begin_notify);
+    util_slot_connect(&server->wlr_seat->events.touch_grab_end,
+                      &server->listen.touch_grab_end,
+                      handle_touch_grab_end_notify);
+    util_slot_connect(&server->wlr_seat->events.request_set_cursor,
+                      &server->listen.request_set_cursor,
+                      handle_request_set_cursor_notify);
+    util_slot_connect(&server->wlr_seat->events.request_set_selection,
+                      &server->listen.request_set_selection,
+                      handle_request_set_selection_notify);
+    util_slot_connect(&server->wlr_seat->events.request_set_primary_selection,
+                      &server->listen.request_set_primary_selection,
+                      handle_request_set_primary_selection_notify);
+    util_slot_connect(&server->wlr_seat->events.request_start_drag,
+                      &server->listen.request_start_drag,
+                      handle_request_start_drag_notify);
     bsi_debug("Attached handlers for seat '%s'", seat_name);
 
     wl_list_init(&server->scene.views);
@@ -298,7 +296,7 @@ bsi_server_init(struct bsi_server* server, struct bsi_config* config)
 }
 
 void
-bsi_server_setup_extern(struct bsi_server* server)
+server_setup_extern(struct bsi_server* server)
 {
     for (size_t i = 0; i < BSI_SERVER_EXTERN_PROG_MAX; ++i) {
         if (!server->output.extern_setup[i] ||
@@ -314,17 +312,16 @@ bsi_server_setup_extern(struct bsi_server* server)
                 argsp = "";
             }
             char** argp = NULL;
-            size_t len_argp =
-                bsi_util_split_argsp((char*)exep, argsp, " ", &argp);
-            bsi_util_tryexec(argp, len_argp);
-            bsi_util_split_free(&argp);
+            size_t len_argp = util_split_argsp((char*)exep, argsp, " ", &argp);
+            util_tryexec(argp, len_argp);
+            util_split_free(&argp);
             server->output.extern_setup[i] = true;
         }
     }
 }
 
 void
-bsi_server_finish(struct bsi_server* server)
+server_finish(struct bsi_server* server)
 {
     server->session.shutting_down = true;
 
@@ -347,7 +344,7 @@ bsi_server_finish(struct bsi_server* server)
     /* wlr_xdg_shell */
     wl_list_remove(&server->listen.xdg_new_surface.link);
 
-    bsi_config_destroy(server->config.all);
+    config_destroy(server->config.all);
 }
 
 /**
@@ -369,7 +366,7 @@ handle_new_output(struct wl_listener* listener, void* data)
     /* Allocate output. */
     struct bsi_output* output = calloc(1, sizeof(struct bsi_output));
     output->output = wlr_output;
-    bsi_outputs_add(server, output);
+    outputs_add(server, output);
 
     /* Configure output. */
     bool has_config = false;
@@ -407,7 +404,7 @@ handle_new_output(struct wl_listener* listener, void* data)
         }
     }
 
-    bsi_output_init(output, server, wlr_output);
+    output_init(output, server, wlr_output);
 
     /* Attach a workspace to the output. */
     char workspace_name[25];
@@ -415,20 +412,20 @@ handle_new_output(struct wl_listener* listener, void* data)
     sprintf(workspace_name,
             "Workspace %d",
             wl_list_length(&output->workspaces) + 1);
-    bsi_workspace_init(workspace, server, output, workspace_name);
-    bsi_workspaces_add(output, workspace);
+    workspace_init(workspace, server, output, workspace_name);
+    workspaces_add(output, workspace);
 
     bsi_info("Attached %s to output %s", workspace->name, output->output->name);
 
-    bsi_util_slot_connect(&output->output->events.frame,
-                          &output->listen.frame,
-                          handle_output_frame);
-    bsi_util_slot_connect(&output->output->events.destroy,
-                          &output->listen.destroy,
-                          handle_output_destroy);
-    bsi_util_slot_connect(&output->damage->events.frame,
-                          &output->listen.damage_frame,
-                          handle_output_damage_frame);
+    util_slot_connect(&output->output->events.frame,
+                      &output->listen.frame,
+                      handle_output_frame);
+    util_slot_connect(&output->output->events.destroy,
+                      &output->listen.destroy,
+                      handle_output_destroy);
+    util_slot_connect(&output->damage->events.frame,
+                      &output->listen.damage_frame,
+                      handle_output_damage_frame);
 
     struct wlr_output_configuration_v1* config =
         wlr_output_configuration_v1_create();
@@ -440,7 +437,7 @@ handle_new_output(struct wl_listener* listener, void* data)
 
     /* This if is kinda useless. */
     if (output->new) {
-        bsi_server_setup_extern(server);
+        server_setup_extern(server);
         output->new = false;
     }
 }
@@ -458,52 +455,52 @@ handle_new_input(struct wl_listener* listener, void* data)
         case WLR_INPUT_DEVICE_POINTER: {
             struct bsi_input_device* device =
                 calloc(1, sizeof(struct bsi_input_device));
-            bsi_input_device_init(
+            input_device_init(
                 device, BSI_INPUT_DEVICE_POINTER, server, wlr_device);
-            bsi_inputs_add(server, device);
+            inputs_add(server, device);
 
-            bsi_util_slot_connect(&device->cursor->events.motion,
-                                  &device->listen.motion,
-                                  handle_pointer_motion);
-            bsi_util_slot_connect(&device->cursor->events.motion_absolute,
-                                  &device->listen.motion_absolute,
-                                  handle_pointer_motion_absolute);
-            bsi_util_slot_connect(&device->cursor->events.button,
-                                  &device->listen.button,
-                                  handle_pointer_button);
-            bsi_util_slot_connect(&device->cursor->events.axis,
-                                  &device->listen.axis,
-                                  handle_pointer_axis);
-            bsi_util_slot_connect(&device->cursor->events.frame,
-                                  &device->listen.frame,
-                                  handle_pointer_frame);
-            bsi_util_slot_connect(&device->cursor->events.swipe_begin,
-                                  &device->listen.swipe_begin,
-                                  handle_pointer_swipe_begin);
-            bsi_util_slot_connect(&device->cursor->events.swipe_update,
-                                  &device->listen.swipe_update,
-                                  handle_pointer_swipe_update);
-            bsi_util_slot_connect(&device->cursor->events.swipe_end,
-                                  &device->listen.swipe_end,
-                                  handle_pointer_swipe_end);
-            bsi_util_slot_connect(&device->cursor->events.pinch_begin,
-                                  &device->listen.pinch_begin,
-                                  handle_pointer_pinch_begin);
-            bsi_util_slot_connect(&device->cursor->events.pinch_update,
-                                  &device->listen.pinch_update,
-                                  handle_pointer_pinch_update);
-            bsi_util_slot_connect(&device->cursor->events.pinch_end,
-                                  &device->listen.pinch_end,
-                                  handle_pointer_pinch_end);
-            bsi_util_slot_connect(&device->cursor->events.hold_begin,
-                                  &device->listen.hold_begin,
-                                  handle_pointer_hold_begin);
-            bsi_util_slot_connect(&device->cursor->events.hold_end,
-                                  &device->listen.hold_end,
-                                  handle_pointer_hold_end);
-            bsi_util_slot_connect(&device->device->events.destroy,
-                                  &device->listen.destroy,
-                                  handle_input_device_destroy);
+            util_slot_connect(&device->cursor->events.motion,
+                              &device->listen.motion,
+                              handle_pointer_motion);
+            util_slot_connect(&device->cursor->events.motion_absolute,
+                              &device->listen.motion_absolute,
+                              handle_pointer_motion_absolute);
+            util_slot_connect(&device->cursor->events.button,
+                              &device->listen.button,
+                              handle_pointer_button);
+            util_slot_connect(&device->cursor->events.axis,
+                              &device->listen.axis,
+                              handle_pointer_axis);
+            util_slot_connect(&device->cursor->events.frame,
+                              &device->listen.frame,
+                              handle_pointer_frame);
+            util_slot_connect(&device->cursor->events.swipe_begin,
+                              &device->listen.swipe_begin,
+                              handle_pointer_swipe_begin);
+            util_slot_connect(&device->cursor->events.swipe_update,
+                              &device->listen.swipe_update,
+                              handle_pointer_swipe_update);
+            util_slot_connect(&device->cursor->events.swipe_end,
+                              &device->listen.swipe_end,
+                              handle_pointer_swipe_end);
+            util_slot_connect(&device->cursor->events.pinch_begin,
+                              &device->listen.pinch_begin,
+                              handle_pointer_pinch_begin);
+            util_slot_connect(&device->cursor->events.pinch_update,
+                              &device->listen.pinch_update,
+                              handle_pointer_pinch_update);
+            util_slot_connect(&device->cursor->events.pinch_end,
+                              &device->listen.pinch_end,
+                              handle_pointer_pinch_end);
+            util_slot_connect(&device->cursor->events.hold_begin,
+                              &device->listen.hold_begin,
+                              handle_pointer_hold_begin);
+            util_slot_connect(&device->cursor->events.hold_end,
+                              &device->listen.hold_end,
+                              handle_pointer_hold_end);
+            util_slot_connect(&device->device->events.destroy,
+                              &device->listen.destroy,
+                              handle_input_device_destroy);
 
             wlr_cursor_attach_input_device(device->cursor, device->device);
 
@@ -571,19 +568,19 @@ handle_new_input(struct wl_listener* listener, void* data)
         case WLR_INPUT_DEVICE_KEYBOARD: {
             struct bsi_input_device* device =
                 calloc(1, sizeof(struct bsi_input_device));
-            bsi_input_device_init(
+            input_device_init(
                 device, BSI_INPUT_DEVICE_KEYBOARD, server, wlr_device);
-            bsi_inputs_add(server, device);
+            inputs_add(server, device);
 
-            bsi_util_slot_connect(&device->device->keyboard->events.key,
-                                  &device->listen.key,
-                                  handle_keyboard_key);
-            bsi_util_slot_connect(&device->device->keyboard->events.modifiers,
-                                  &device->listen.modifiers,
-                                  handle_keyboard_modifiers);
-            bsi_util_slot_connect(&device->device->events.destroy,
-                                  &device->listen.destroy,
-                                  handle_input_device_destroy);
+            util_slot_connect(&device->device->keyboard->events.key,
+                              &device->listen.key,
+                              handle_keyboard_key);
+            util_slot_connect(&device->device->keyboard->events.modifiers,
+                              &device->listen.modifiers,
+                              handle_keyboard_modifiers);
+            util_slot_connect(&device->device->events.destroy,
+                              &device->listen.destroy,
+                              handle_input_device_destroy);
 
             bool has_config = false;
             struct bsi_config_input* conf;
@@ -615,7 +612,7 @@ handle_new_input(struct wl_listener* listener, void* data)
                 bsi_info("No matching config for input device '%s'",
                          device->device->name);
 
-            bsi_input_device_keymap_set(
+            input_device_keymap_set(
                 device, bsi_input_keyboard_rules, bsi_input_keyboard_rules_len);
 
             wlr_seat_set_keyboard(server->wlr_seat, device->device->keyboard);
@@ -694,7 +691,7 @@ handle_output_layout_change(struct wl_listener* listener, void* data)
         struct wlr_box usable_box = { 0 };
         wlr_output_effective_resolution(
             output->output, &usable_box.width, &usable_box.height);
-        bsi_output_set_usable_box(output, &usable_box);
+        output_set_usable_box(output, &usable_box);
 
         /* Reset the state of the layer shell layers, with regards to output box
          * exclusive configuration. */
@@ -706,8 +703,8 @@ handle_output_layout_change(struct wl_listener* listener, void* data)
             }
         }
 
-        bsi_layers_output_arrange(output);
-        bsi_output_surface_damage(output, NULL, true);
+        layers_output_arrange(output);
+        output_surface_damage(output, NULL, true);
     }
 
     wlr_output_manager_v1_set_configuration(server->wlr_output_manager, config);
@@ -899,40 +896,40 @@ handle_xdgshell_new_surface(struct wl_listener* listener, void* data)
                                         server->wlr_cursor->x,
                                         server->wlr_cursor->y)
                 ->data;
-        struct bsi_workspace* active_wspace = bsi_workspaces_get_active(output);
-        bsi_view_init(view, server, xdg_surface->toplevel);
+        struct bsi_workspace* active_wspace = workspaces_get_active(output);
+        view_init(view, server, xdg_surface->toplevel);
 
-        bsi_util_slot_connect(&view->toplevel->base->events.destroy,
-                              &view->listen.destroy,
-                              handle_xdg_surf_destroy);
-        bsi_util_slot_connect(&view->toplevel->base->events.map,
-                              &view->listen.map,
-                              handle_xdg_surf_map);
-        bsi_util_slot_connect(&view->toplevel->base->events.unmap,
-                              &view->listen.unmap,
-                              handle_xdg_surf_unmap);
+        util_slot_connect(&view->toplevel->base->events.destroy,
+                          &view->listen.destroy,
+                          handle_xdg_surf_destroy);
+        util_slot_connect(&view->toplevel->base->events.map,
+                          &view->listen.map,
+                          handle_xdg_surf_map);
+        util_slot_connect(&view->toplevel->base->events.unmap,
+                          &view->listen.unmap,
+                          handle_xdg_surf_unmap);
 
-        bsi_util_slot_connect(&view->toplevel->events.request_maximize,
-                              &view->listen.request_maximize,
-                              handle_toplvl_request_maximize);
-        bsi_util_slot_connect(&view->toplevel->events.request_fullscreen,
-                              &view->listen.request_fullscreen,
-                              handle_toplvl_request_fullscreen);
-        bsi_util_slot_connect(&view->toplevel->events.request_minimize,
-                              &view->listen.request_minimize,
-                              handle_toplvl_request_minimize);
-        bsi_util_slot_connect(&view->toplevel->events.request_move,
-                              &view->listen.request_move,
-                              handle_toplvl_request_move);
-        bsi_util_slot_connect(&view->toplevel->events.request_resize,
-                              &view->listen.request_resize,
-                              handle_toplvl_request_resize);
-        bsi_util_slot_connect(&view->toplevel->events.request_show_window_menu,
-                              &view->listen.request_show_window_menu,
-                              handle_toplvl_request_show_window_menu);
+        util_slot_connect(&view->toplevel->events.request_maximize,
+                          &view->listen.request_maximize,
+                          handle_toplvl_request_maximize);
+        util_slot_connect(&view->toplevel->events.request_fullscreen,
+                          &view->listen.request_fullscreen,
+                          handle_toplvl_request_fullscreen);
+        util_slot_connect(&view->toplevel->events.request_minimize,
+                          &view->listen.request_minimize,
+                          handle_toplvl_request_minimize);
+        util_slot_connect(&view->toplevel->events.request_move,
+                          &view->listen.request_move,
+                          handle_toplvl_request_move);
+        util_slot_connect(&view->toplevel->events.request_resize,
+                          &view->listen.request_resize,
+                          handle_toplvl_request_resize);
+        util_slot_connect(&view->toplevel->events.request_show_window_menu,
+                          &view->listen.request_show_window_menu,
+                          handle_toplvl_request_show_window_menu);
 
         /* Add wired up view to workspace on the active output. */
-        bsi_workspace_view_add(active_wspace, view);
+        workspace_view_add(active_wspace, view);
         bsi_info("Attached view to workspace %s", active_wspace->name);
         bsi_info("Workspace %s now has %d views",
                  active_wspace->name,
@@ -956,11 +953,11 @@ handle_layershell_new_surface(struct wl_listener* listener, void* data)
                                                     server->wlr_cursor->y)
                             ->data;
         struct bsi_workspace* active_wspace =
-            bsi_workspaces_get_active(active_output);
+            workspaces_get_active(active_output);
         layer_surface->output = active_wspace->output->output;
         layer_surface->output->data = active_output;
     } else {
-        active_output = bsi_outputs_find(server, layer_surface->output);
+        active_output = outputs_find(server, layer_surface->output);
         layer_surface->output->data = active_output;
     }
 
@@ -988,34 +985,34 @@ handle_layershell_new_surface(struct wl_listener* listener, void* data)
 
     struct bsi_layer_surface_toplevel* layer =
         calloc(1, sizeof(struct bsi_layer_surface_toplevel));
-    bsi_layer_surface_toplevel_init(layer, layer_surface, active_output);
-    bsi_util_slot_connect(&layer_surface->events.map,
-                          &layer->listen.map,
-                          handle_layershell_toplvl_map);
-    bsi_util_slot_connect(&layer_surface->events.unmap,
-                          &layer->listen.unmap,
-                          handle_layershell_toplvl_unmap);
-    bsi_util_slot_connect(&layer_surface->events.destroy,
-                          &layer->listen.destroy,
-                          handle_layershell_toplvl_destroy);
-    bsi_util_slot_connect(&layer_surface->events.new_popup,
-                          &layer->listen.new_popup,
-                          handle_layershell_toplvl_new_popup);
-    bsi_util_slot_connect(&layer_surface->surface->events.new_subsurface,
-                          &layer->listen.new_subsurface,
-                          handle_layershell_toplvl_new_subsurface);
-    bsi_util_slot_connect(&layer_surface->surface->events.commit,
-                          &layer->listen.commit,
-                          handle_layershell_toplvl_commit);
+    layer_surface_toplevel_init(layer, layer_surface, active_output);
+    util_slot_connect(&layer_surface->events.map,
+                      &layer->listen.map,
+                      handle_layershell_toplvl_map);
+    util_slot_connect(&layer_surface->events.unmap,
+                      &layer->listen.unmap,
+                      handle_layershell_toplvl_unmap);
+    util_slot_connect(&layer_surface->events.destroy,
+                      &layer->listen.destroy,
+                      handle_layershell_toplvl_destroy);
+    util_slot_connect(&layer_surface->events.new_popup,
+                      &layer->listen.new_popup,
+                      handle_layershell_toplvl_new_popup);
+    util_slot_connect(&layer_surface->surface->events.new_subsurface,
+                      &layer->listen.new_subsurface,
+                      handle_layershell_toplvl_new_subsurface);
+    util_slot_connect(&layer_surface->surface->events.commit,
+                      &layer->listen.commit,
+                      handle_layershell_toplvl_commit);
 
-    bsi_layers_add(active_output, layer);
+    layers_add(active_output, layer);
 
     /* Overwrite the current state with pending, so we can look up the
      * desired state when arrangeing the surfaces. Then restore state for
      * wlr.*/
     struct wlr_layer_surface_v1_state old = layer_surface->current;
     layer_surface->current = layer_surface->pending;
-    bsi_layers_output_arrange(active_output);
+    layers_output_arrange(active_output);
     layer_surface->current = old;
 }
 
@@ -1034,16 +1031,16 @@ handle_xdg_deco_manager_new_decoration(struct wl_listener* listener, void* data)
 
     struct bsi_xdg_decoration* xdg_deco =
         calloc(1, sizeof(struct bsi_xdg_decoration));
-    bsi_decoration_init(xdg_deco, server, view, toplevel_deco);
+    decoration_init(xdg_deco, server, view, toplevel_deco);
 
-    bsi_util_slot_connect(&toplevel_deco->events.destroy,
-                          &xdg_deco->listen.destroy,
-                          handle_xdg_decoration_destroy);
-    bsi_util_slot_connect(&toplevel_deco->events.request_mode,
-                          &xdg_deco->listen.request_mode,
-                          handle_xdg_decoration_request_mode);
+    util_slot_connect(&toplevel_deco->events.destroy,
+                      &xdg_deco->listen.destroy,
+                      handle_xdg_decoration_destroy);
+    util_slot_connect(&toplevel_deco->events.request_mode,
+                      &xdg_deco->listen.request_mode,
+                      handle_xdg_decoration_request_mode);
 
-    bsi_decorations_add(server, xdg_deco);
+    decorations_add(server, xdg_deco);
 
     // bsi_decoration_draw(xdg_deco);
 
@@ -1076,7 +1073,7 @@ handle_xdg_request_activate(struct wl_listener* listener, void* data)
     if (view == NULL || !surface->mapped)
         return;
 
-    bsi_view_request_activate(view);
+    view_request_activate(view);
 }
 
 void
@@ -1102,22 +1099,22 @@ handle_idle_manager_new_inhibitor(struct wl_listener* listener, void* data)
         struct wlr_xdg_surface* xdg_surface =
             wlr_xdg_surface_from_wlr_surface(idle_inhibitor->surface);
         struct bsi_view* view = xdg_surface->data;
-        bsi_idle_inhibitor_init(inhibitor,
-                                idle_inhibitor,
-                                server,
-                                view,
-                                BSI_IDLE_INHIBIT_APPLICATION);
+        idle_inhibitor_init(inhibitor,
+                            idle_inhibitor,
+                            server,
+                            view,
+                            BSI_IDLE_INHIBIT_APPLICATION);
     } else if (wlr_surface_is_layer_surface(idle_inhibitor->surface)) {
-        bsi_idle_inhibitor_init(
+        idle_inhibitor_init(
             inhibitor, idle_inhibitor, server, NULL, BSI_IDLE_INHIBIT_USER);
     }
 
-    bsi_util_slot_connect(&idle_inhibitor->events.destroy,
-                          &inhibitor->listen.destroy,
-                          handle_idle_inhibitor_destroy);
-    bsi_idle_inhibitors_add(server, inhibitor);
+    util_slot_connect(&idle_inhibitor->events.destroy,
+                      &inhibitor->listen.destroy,
+                      handle_idle_inhibitor_destroy);
+    idle_inhibitors_add(server, inhibitor);
 
-    bsi_idle_inhibitors_state_update(server);
+    idle_inhibitors_state_update(server);
 }
 
 void
@@ -1125,7 +1122,7 @@ handle_idle_activity_notify(struct wl_listener* listener, void* data)
 {
     struct bsi_server* server =
         wl_container_of(listener, server, listen.activity_notify);
-    bsi_idle_inhibitors_state_update(server);
+    idle_inhibitors_state_update(server);
 }
 
 void
@@ -1148,17 +1145,17 @@ handle_session_new_lock(struct wl_listener* listener, void* data)
 
     struct bsi_session_lock* session_lock =
         calloc(1, sizeof(struct bsi_session_lock));
-    bsi_session_lock_init(session_lock, server, lock);
+    session_lock_init(session_lock, server, lock);
 
-    bsi_util_slot_connect(&lock->events.new_surface,
-                          &session_lock->listen.new_surface,
-                          handle_session_lock_new_surface);
-    bsi_util_slot_connect(&lock->events.unlock,
-                          &session_lock->listen.unlock,
-                          handle_session_lock_unlock);
-    bsi_util_slot_connect(&lock->events.destroy,
-                          &session_lock->listen.destroy,
-                          handle_session_lock_destroy);
+    util_slot_connect(&lock->events.new_surface,
+                      &session_lock->listen.new_surface,
+                      handle_session_lock_new_surface);
+    util_slot_connect(&lock->events.unlock,
+                      &session_lock->listen.unlock,
+                      handle_session_lock_unlock);
+    util_slot_connect(&lock->events.destroy,
+                      &session_lock->listen.destroy,
+                      handle_session_lock_destroy);
 
     server->session.lock = session_lock;
 
@@ -1167,6 +1164,6 @@ handle_session_new_lock(struct wl_listener* listener, void* data)
     struct bsi_output* output;
     wl_list_for_each(output, &server->output.outputs, link_server)
     {
-        bsi_output_surface_damage(output, NULL, true);
+        output_surface_damage(output, NULL, true);
     }
 }

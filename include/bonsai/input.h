@@ -47,23 +47,6 @@ struct bsi_input_device
     struct wl_list link_server; // bsi_server
 };
 
-struct bsi_input_keyboard
-{
-    struct bsi_server* server;
-    struct wlr_input_device* device;
-
-    struct
-    {
-        /* wlr_input_device::keyboard */
-        struct wl_listener key;
-        struct wl_listener modifiers;
-        /* wlr_input_device::destroy */
-        struct wl_listener destroy;
-    } listen;
-
-    struct wl_list link_server; // bsi_server
-};
-
 /**
  * @brief Identifies all currently supported xkb layouts.
  *
@@ -108,21 +91,21 @@ static const struct xkb_rule_names bsi_input_keyboard_rules[] = {
 };
 
 void
-bsi_inputs_add(struct bsi_server* server, struct bsi_input_device* device);
+inputs_add(struct bsi_server* server, struct bsi_input_device* device);
 
 void
-bsi_inputs_remove(struct bsi_input_device* device);
+inputs_remove(struct bsi_input_device* device);
 
 struct bsi_input_device*
-bsi_input_device_init(struct bsi_input_device* input_device,
-                      enum bsi_input_device_type type,
-                      struct bsi_server* server,
-                      struct wlr_input_device* device);
+input_device_init(struct bsi_input_device* input_device,
+                  enum bsi_input_device_type type,
+                  struct bsi_server* server,
+                  struct wlr_input_device* device);
 
 void
-bsi_input_device_destroy(struct bsi_input_device* input_device);
+input_device_destroy(struct bsi_input_device* input_device);
 
 void
-bsi_input_device_keymap_set(struct bsi_input_device* input_device,
-                            const struct xkb_rule_names* xkb_rule_names,
-                            const size_t xkb_rule_names_len);
+input_device_keymap_set(struct bsi_input_device* input_device,
+                        const struct xkb_rule_names* xkb_rule_names,
+                        const size_t xkb_rule_names_len);

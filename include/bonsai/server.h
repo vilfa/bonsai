@@ -150,12 +150,12 @@ enum bsi_server_extern_prog
 };
 
 struct bsi_server*
-bsi_server_init(struct bsi_server* server, struct bsi_config* config);
+server_init(struct bsi_server* server, struct bsi_config* config);
 
 void
-bsi_server_setup_extern(struct bsi_server* server);
+server_setup_extern(struct bsi_server* server);
 
 void
-bsi_server_finish(struct bsi_server* server);
+server_finish(struct bsi_server* server);
 
 #undef bsi_server_extern_prog_len

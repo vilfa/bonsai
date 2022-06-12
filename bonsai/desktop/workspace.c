@@ -14,13 +14,12 @@
 #include "bonsai/util.h"
 
 void
-bsi_workspaces_add(struct bsi_output* output, struct bsi_workspace* workspace)
+workspaces_add(struct bsi_output* output, struct bsi_workspace* workspace)
 {
     if (wl_list_length(&output->workspaces) > 0) {
-        struct bsi_workspace* workspace_active =
-            bsi_workspaces_get_active(output);
-        bsi_workspace_set_active(workspace_active, false);
-        bsi_workspace_set_active(workspace, true);
+        struct bsi_workspace* workspace_active = workspaces_get_active(output);
+        workspace_set_active(workspace_active, false);
+        workspace_set_active(workspace, true);
     }
 
     wl_list_insert(&output->workspaces, &workspace->link_output);
@@ -31,19 +30,18 @@ bsi_workspaces_add(struct bsi_output* output, struct bsi_workspace* workspace)
                    &workspace->foreign_listeners[1].link); // bsi_output
 
     /* To whom it may concern... */
-    bsi_util_slot_connect(&workspace->signal.active,
-                          &workspace->foreign_listeners[0].active, // bsi_server
-                          handle_server_workspace_active);
-    bsi_util_slot_connect(&workspace->signal.active,
-                          &workspace->foreign_listeners[1].active, // bsi_output
-                          handle_output_workspace_active);
+    util_slot_connect(&workspace->signal.active,
+                      &workspace->foreign_listeners[0].active, // bsi_server
+                      handle_server_workspace_active);
+    util_slot_connect(&workspace->signal.active,
+                      &workspace->foreign_listeners[1].active, // bsi_output
+                      handle_output_workspace_active);
 
-    bsi_workspace_set_active(workspace, true);
+    workspace_set_active(workspace, true);
 }
 
 void
-bsi_workspaces_remove(struct bsi_output* output,
-                      struct bsi_workspace* workspace)
+workspaces_remove(struct bsi_output* output, struct bsi_workspace* workspace)
 {
     /* Cannot remove the last workspace */
     if (wl_list_length(&output->workspaces) == 1)
@@ -65,22 +63,22 @@ bsi_workspaces_remove(struct bsi_output* output,
         struct bsi_view *view, *view_tmp;
         wl_list_for_each_safe(view, view_tmp, &workspace->views, link_workspace)
         {
-            bsi_workspace_view_move(workspace, workspace_adj, view);
+            workspace_view_move(workspace, workspace_adj, view);
         }
     }
 
     /* Take care of the workspaces state. */
-    bsi_workspace_set_active(workspace, false);
-    bsi_workspace_set_active(workspace_adj, true);
+    workspace_set_active(workspace, false);
+    workspace_set_active(workspace_adj, true);
     wl_list_remove(&workspace->foreign_listeners[0].link); // bsi_server
     wl_list_remove(&workspace->foreign_listeners[1].link); // bsi_output
-    bsi_util_slot_disconnect(&workspace->foreign_listeners[0].active);
-    bsi_util_slot_disconnect(&workspace->foreign_listeners[1].active);
+    util_slot_disconnect(&workspace->foreign_listeners[0].active);
+    util_slot_disconnect(&workspace->foreign_listeners[1].active);
     wl_list_remove(&workspace->link_output);
 }
 
 struct bsi_workspace*
-bsi_workspaces_get_active(struct bsi_output* output)
+workspaces_get_active(struct bsi_output* output)
 {
     struct bsi_workspace* workspace;
     wl_list_for_each(workspace, &output->workspaces, link_output)
@@ -94,7 +92,7 @@ bsi_workspaces_get_active(struct bsi_output* output)
 }
 
 void
-bsi_workspaces_next(struct bsi_output* output)
+workspaces_next(struct bsi_output* output)
 {
     bsi_info("Switch to next workspace");
 
@@ -108,8 +106,8 @@ bsi_workspaces_next(struct bsi_output* output)
         sprintf(workspace_name,
                 "Workspace %d",
                 wl_list_length(&output->workspaces) + 1);
-        bsi_workspace_init(workspace, output->server, output, workspace_name);
-        bsi_workspaces_add(output, workspace);
+        workspace_init(workspace, output->server, output, workspace_name);
+        workspaces_add(output, workspace);
 
         bsi_info(
             "Created new workspace %ld/%s", workspace->id, workspace->name);
@@ -120,27 +118,26 @@ bsi_workspaces_next(struct bsi_output* output)
                  output->output->name);
     } else {
         struct bsi_workspace* next_workspace =
-            bsi_output_get_next_workspace(output);
-        bsi_workspace_set_active(output->active_workspace, false);
-        bsi_workspace_set_active(next_workspace, true);
+            output_get_next_workspace(output);
+        workspace_set_active(output->active_workspace, false);
+        workspace_set_active(next_workspace, true);
     }
 }
 
 void
-bsi_workspaces_prev(struct bsi_output* output)
+workspaces_prev(struct bsi_output* output)
 {
     bsi_info("Switch to previous workspace");
-    struct bsi_workspace* prev_workspace =
-        bsi_output_get_prev_workspace(output);
-    bsi_workspace_set_active(output->active_workspace, false);
-    bsi_workspace_set_active(prev_workspace, true);
+    struct bsi_workspace* prev_workspace = output_get_prev_workspace(output);
+    workspace_set_active(output->active_workspace, false);
+    workspace_set_active(prev_workspace, true);
 }
 
 struct bsi_workspace*
-bsi_workspace_init(struct bsi_workspace* workspace,
-                   struct bsi_server* server,
-                   struct bsi_output* output,
-                   const char* name)
+workspace_init(struct bsi_workspace* workspace,
+               struct bsi_server* server,
+               struct bsi_output* output,
+               const char* name)
 {
     workspace->server = server;
     workspace->output = output;
@@ -159,7 +156,7 @@ bsi_workspace_init(struct bsi_workspace* workspace,
 }
 
 void
-bsi_workspace_destroy(struct bsi_workspace* workspace)
+workspace_destroy(struct bsi_workspace* workspace)
 {
     free(workspace->foreign_listeners);
     free(workspace->name);
@@ -167,7 +164,7 @@ bsi_workspace_destroy(struct bsi_workspace* workspace)
 }
 
 size_t
-bsi_workspace_get_global_id(struct bsi_workspace* workspace)
+workspace_get_global_id(struct bsi_workspace* workspace)
 {
     struct bsi_output* bsi_output = workspace->output;
     if (bsi_output->id > 0)
@@ -177,42 +174,41 @@ bsi_workspace_get_global_id(struct bsi_workspace* workspace)
 }
 
 void
-bsi_workspace_set_active(struct bsi_workspace* workspace, bool active)
+workspace_set_active(struct bsi_workspace* workspace, bool active)
 {
     workspace->active = active;
     wl_signal_emit(&workspace->signal.active, workspace);
 }
 
 void
-bsi_workspace_view_add(struct bsi_workspace* workspace, struct bsi_view* view)
+workspace_view_add(struct bsi_workspace* workspace, struct bsi_view* view)
 {
     wl_list_insert(&workspace->views, &view->link_workspace);
-    bsi_util_slot_connect(&workspace->signal.active,
-                          &view->listen.workspace_active,
-                          handle_view_workspace_active);
+    util_slot_connect(&workspace->signal.active,
+                      &view->listen.workspace_active,
+                      handle_view_workspace_active);
     view->parent_workspace = workspace;
 }
 
 void
-bsi_workspace_view_remove(struct bsi_workspace* workspace,
-                          struct bsi_view* view)
+workspace_view_remove(struct bsi_workspace* workspace, struct bsi_view* view)
 {
     wl_list_remove(&view->link_workspace);
-    bsi_util_slot_disconnect(&view->listen.workspace_active);
+    util_slot_disconnect(&view->listen.workspace_active);
     view->parent_workspace = NULL;
 }
 
 void
-bsi_workspace_view_move(struct bsi_workspace* workspace_from,
-                        struct bsi_workspace* workspace_to,
-                        struct bsi_view* view)
+workspace_view_move(struct bsi_workspace* workspace_from,
+                    struct bsi_workspace* workspace_to,
+                    struct bsi_view* view)
 {
-    bsi_workspace_view_remove(workspace_from, view);
-    bsi_workspace_view_add(workspace_to, view);
+    workspace_view_remove(workspace_from, view);
+    workspace_view_add(workspace_to, view);
 }
 
 void
-bsi_workspace_views_show_all(struct bsi_workspace* workspace, bool show_all)
+workspace_views_show_all(struct bsi_workspace* workspace, bool show_all)
 {
     if (wl_list_empty(&workspace->views))
         return;
@@ -224,7 +220,7 @@ bsi_workspace_views_show_all(struct bsi_workspace* workspace, bool show_all)
         wl_list_for_each(view, &workspace->views, link_workspace)
         {
             if (view->state == BSI_VIEW_STATE_MINIMIZED)
-                bsi_view_set_minimized(view, false);
+                view_set_minimized(view, false);
         }
     } else {
         bsi_info("Hide all views of workspace '%s'", workspace->name);
@@ -235,15 +231,15 @@ bsi_workspace_views_show_all(struct bsi_workspace* workspace, bool show_all)
                 case BSI_VIEW_STATE_MINIMIZED:
                     break;
                 case BSI_VIEW_STATE_FULLSCREEN:
-                    bsi_view_set_fullscreen(view, false);
-                    bsi_view_set_minimized(view, true);
+                    view_set_fullscreen(view, false);
+                    view_set_minimized(view, true);
                     break;
                 case BSI_VIEW_STATE_MAXIMIZED:
-                    bsi_view_set_maximized(view, false);
-                    bsi_view_set_minimized(view, true);
+                    view_set_maximized(view, false);
+                    view_set_minimized(view, true);
                     break;
                 default:
-                    bsi_view_set_minimized(view, true);
+                    view_set_minimized(view, true);
                     break;
             }
         }
@@ -262,7 +258,7 @@ handle_server_workspace_active(struct wl_listener* listener, void* data)
     struct bsi_server* server = workspace->server;
     server->active_workspace = (workspace->active) ? workspace : NULL;
     bsi_info("Server workspace %ld/%s is now %s",
-             bsi_workspace_get_global_id(workspace),
+             workspace_get_global_id(workspace),
              workspace->name,
              (workspace->active) ? "active" : "inactive");
 }
@@ -276,7 +272,7 @@ handle_output_workspace_active(struct wl_listener* listener, void* data)
     struct bsi_output* output = workspace->output;
     output->active_workspace = (workspace->active) ? workspace : NULL;
     bsi_debug("Workspace %ld/%s for output %ld/%s is now %s",
-              bsi_workspace_get_global_id(workspace),
+              workspace_get_global_id(workspace),
               workspace->name,
               output->id,
               output->output->name,
@@ -294,7 +290,7 @@ handle_view_workspace_active(struct wl_listener* listener, void* data)
     wlr_scene_node_set_enabled(view->scene_node, workspace->active);
     bsi_debug("View with app_id '%s' of workspace %ld/%s is now %s",
               view->toplevel->app_id,
-              bsi_workspace_get_global_id(workspace),
+              workspace_get_global_id(workspace),
               workspace->name,
               (workspace->active) ? "enabled" : "disabled");
 }

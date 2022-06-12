@@ -44,18 +44,17 @@ struct bsi_session_lock_surface
 };
 
 struct bsi_session_lock*
-bsi_session_lock_init(struct bsi_session_lock* lock,
-                      struct bsi_server* server,
-                      struct wlr_session_lock_v1* wlr_lock);
+session_lock_init(struct bsi_session_lock* lock,
+                  struct bsi_server* server,
+                  struct wlr_session_lock_v1* wlr_lock);
 
 void
-bsi_session_lock_destroy(struct bsi_session_lock* lock);
+session_lock_destroy(struct bsi_session_lock* lock);
 
 struct bsi_session_lock_surface*
-bsi_session_lock_surface_init(
-    struct bsi_session_lock_surface* surface,
-    struct bsi_session_lock* lock,
-    struct wlr_session_lock_surface_v1* wlr_lock_surface);
+session_lock_surface_init(struct bsi_session_lock_surface* surface,
+                          struct bsi_session_lock* lock,
+                          struct wlr_session_lock_surface_v1* wlr_lock_surface);
 
 void
-bsi_session_lock_surface_destroy(struct bsi_session_lock_surface* surface);
+session_lock_surface_destroy(struct bsi_session_lock_surface* surface);

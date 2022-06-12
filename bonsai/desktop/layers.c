@@ -28,22 +28,21 @@
 #include "xdg-shell-protocol.h"
 
 void
-bsi_layers_add(struct bsi_output* output,
-               struct bsi_layer_surface_toplevel* layer)
+layers_add(struct bsi_output* output, struct bsi_layer_surface_toplevel* layer)
 {
     wl_list_insert(&output->layers[layer->at_layer], &layer->link_output);
 }
 
 void
-bsi_layers_remove(struct bsi_layer_surface_toplevel* layer)
+layers_remove(struct bsi_layer_surface_toplevel* layer)
 {
     wl_list_remove(&layer->link_output);
 }
 
 struct bsi_layer_surface_toplevel*
-bsi_layer_surface_toplevel_init(struct bsi_layer_surface_toplevel* toplevel,
-                                struct wlr_layer_surface_v1* layer_surface,
-                                struct bsi_output* output)
+layer_surface_toplevel_init(struct bsi_layer_surface_toplevel* toplevel,
+                            struct wlr_layer_surface_v1* layer_surface,
+                            struct bsi_output* output)
 {
     toplevel->layer_surface = layer_surface;
     toplevel->output = output;
@@ -61,10 +60,10 @@ bsi_layer_surface_toplevel_init(struct bsi_layer_surface_toplevel* toplevel,
 }
 
 struct bsi_layer_surface_popup*
-bsi_layer_surface_popup_init(struct bsi_layer_surface_popup* popup,
-                             struct wlr_xdg_popup* xdg_popup,
-                             enum bsi_layer_surface_type parent_type,
-                             union bsi_layer_surface parent)
+layer_surface_popup_init(struct bsi_layer_surface_popup* popup,
+                         struct wlr_xdg_popup* xdg_popup,
+                         enum bsi_layer_surface_type parent_type,
+                         union bsi_layer_surface parent)
 {
     popup->popup = xdg_popup;
     popup->parent_type = parent_type;
@@ -73,10 +72,9 @@ bsi_layer_surface_popup_init(struct bsi_layer_surface_popup* popup,
 }
 
 struct bsi_layer_surface_subsurface*
-bsi_layer_surface_subsurface_init(
-    struct bsi_layer_surface_subsurface* subsurface,
-    struct wlr_subsurface* wlr_subsurface,
-    struct bsi_layer_surface_toplevel* member_of)
+layer_surface_subsurface_init(struct bsi_layer_surface_subsurface* subsurface,
+                              struct wlr_subsurface* wlr_subsurface,
+                              struct bsi_layer_surface_toplevel* member_of)
 {
     subsurface->subsurface = wlr_subsurface;
     subsurface->member_of = member_of;
@@ -84,8 +82,8 @@ bsi_layer_surface_subsurface_init(
 }
 
 struct bsi_layer_surface_toplevel*
-bsi_layer_surface_get_toplevel_parent(union bsi_layer_surface layer_surface,
-                                      enum bsi_layer_surface_type type)
+layer_surface_get_toplevel_parent(union bsi_layer_surface layer_surface,
+                                  enum bsi_layer_surface_type type)
 {
     switch (type) {
         case BSI_LAYER_SURFACE_TOPLEVEL: {
@@ -113,7 +111,7 @@ bsi_layer_surface_get_toplevel_parent(union bsi_layer_surface layer_surface,
 }
 
 void
-bsi_layer_surface_focus(struct bsi_layer_surface_toplevel* toplevel)
+layer_surface_focus(struct bsi_layer_surface_toplevel* toplevel)
 {
     /* The `bsi_cursor_scene_data_at()` function always returns the topmost
      * scene node that any one surface belongs to, so we will always get a
@@ -143,8 +141,8 @@ bsi_layer_surface_focus(struct bsi_layer_surface_toplevel* toplevel)
 }
 
 void
-bsi_layer_surface_destroy(union bsi_layer_surface layer_surface,
-                          enum bsi_layer_surface_type type)
+layer_surface_destroy(union bsi_layer_surface layer_surface,
+                      enum bsi_layer_surface_type type)
 {
     switch (type) {
         case BSI_LAYER_SURFACE_TOPLEVEL: {
@@ -318,7 +316,7 @@ bsi_layer_arrange(struct bsi_output* output,
                         : 0;
                 usable_box.width -= wants_box.width;
             }
-            bsi_output_set_usable_box(output, &usable_box);
+            output_set_usable_box(output, &usable_box);
             layer_toplevel->exclusive_configured = true;
         }
 
@@ -332,15 +330,15 @@ bsi_layer_arrange(struct bsi_output* output,
 static void
 bsi_view_to_output_usable_box(struct bsi_output* output, struct bsi_view* view)
 {
-    if (bsi_view_intersects(view, &output->usable)) {
+    if (view_intersects(view, &output->usable)) {
         struct wlr_box correction = { 0 };
-        bsi_view_intersection_correct_box(view, &output->usable, &correction);
-        bsi_view_correct_with_box(view, &correction);
+        view_intersection_correct_box(view, &output->usable, &correction);
+        view_correct_with_box(view, &correction);
     }
 }
 
 void
-bsi_views_output_arrange(struct bsi_output* output)
+views_output_arrange(struct bsi_output* output)
 {
     struct bsi_workspace* workspace;
     wl_list_for_each(workspace, &output->workspaces, link_output)
@@ -354,7 +352,7 @@ bsi_views_output_arrange(struct bsi_output* output)
 }
 
 void
-bsi_layers_output_arrange(struct bsi_output* output)
+layers_output_arrange(struct bsi_output* output)
 {
     struct wlr_box usable_box = { 0 }; /* Output usable area. */
     wlr_output_effective_resolution(
@@ -472,7 +470,7 @@ handle_layershell_toplvl_map(struct wl_listener* listener, void* data)
 
     wlr_surface_send_enter(layer_toplevel->layer_surface->surface,
                            output->output);
-    bsi_output_surface_damage(output, NULL, true);
+    output_surface_damage(output, NULL, true);
 }
 
 void
@@ -493,7 +491,7 @@ handle_layershell_toplvl_unmap(struct wl_listener* listener, void* data)
         wlr_seat_pointer_notify_clear_focus(
             layer_toplevel->output->server->wlr_seat);
 
-    bsi_output_surface_damage(output, NULL, true);
+    output_surface_damage(output, NULL, true);
 }
 
 void
@@ -511,10 +509,10 @@ handle_layershell_toplvl_destroy(struct wl_listener* listener, void* data)
 
     /* Destroy the layer and rearrange this output. */
     union bsi_layer_surface layer_surface = { .toplevel = layer_toplevel };
-    bsi_layers_remove(layer_toplevel);
-    bsi_layer_surface_destroy(layer_surface, BSI_LAYER_SURFACE_TOPLEVEL);
-    bsi_layers_output_arrange(output);
-    bsi_output_surface_damage(output, NULL, true);
+    layers_remove(layer_toplevel);
+    layer_surface_destroy(layer_surface, BSI_LAYER_SURFACE_TOPLEVEL);
+    layers_output_arrange(output);
+    output_surface_damage(output, NULL, true);
 }
 
 void
@@ -529,24 +527,24 @@ handle_layershell_toplvl_new_popup(struct wl_listener* listener, void* data)
     union bsi_layer_surface layer_parent = { .toplevel = layer_toplevel };
     struct bsi_layer_surface_popup* layer_popup =
         calloc(1, sizeof(struct bsi_layer_surface_popup));
-    bsi_layer_surface_popup_init(
+    layer_surface_popup_init(
         layer_popup, xdg_popup, BSI_LAYER_SURFACE_TOPLEVEL, layer_parent);
 
-    bsi_util_slot_connect(&xdg_popup->base->events.map,
-                          &layer_popup->listen.map,
-                          handle_layershell_popup_map);
-    bsi_util_slot_connect(&xdg_popup->base->events.unmap,
-                          &layer_popup->listen.unmap,
-                          handle_layershell_popup_unmap);
-    bsi_util_slot_connect(&xdg_popup->base->events.destroy,
-                          &layer_popup->listen.destroy,
-                          handle_layershell_popup_destroy);
-    bsi_util_slot_connect(&xdg_popup->base->events.new_popup,
-                          &layer_popup->listen.new_popup,
-                          handle_layershell_popup_new_popup);
-    bsi_util_slot_connect(&xdg_popup->base->surface->events.commit,
-                          &layer_popup->listen.commit,
-                          handle_layershell_popup_commit);
+    util_slot_connect(&xdg_popup->base->events.map,
+                      &layer_popup->listen.map,
+                      handle_layershell_popup_map);
+    util_slot_connect(&xdg_popup->base->events.unmap,
+                      &layer_popup->listen.unmap,
+                      handle_layershell_popup_unmap);
+    util_slot_connect(&xdg_popup->base->events.destroy,
+                      &layer_popup->listen.destroy,
+                      handle_layershell_popup_destroy);
+    util_slot_connect(&xdg_popup->base->events.new_popup,
+                      &layer_popup->listen.new_popup,
+                      handle_layershell_popup_new_popup);
+    util_slot_connect(&xdg_popup->base->surface->events.commit,
+                      &layer_popup->listen.commit,
+                      handle_layershell_popup_commit);
 
     /* Unconstrain popup to its largest parent box. */
     struct wlr_box toplevel_parent_box = {
@@ -583,10 +581,10 @@ handle_layershell_toplvl_commit(struct wl_listener* listener, void* data)
             bsi_layer_move(layer_toplevel,
                            output,
                            layer_toplevel->layer_surface->current.layer);
-        bsi_layers_output_arrange(output);
+        layers_output_arrange(output);
     }
 
-    bsi_output_surface_damage(
+    output_surface_damage(
         layer_toplevel->output, layer_toplevel->layer_surface->surface, false);
 }
 
@@ -602,22 +600,22 @@ handle_layershell_toplvl_new_subsurface(struct wl_listener* listener,
 
     struct bsi_layer_surface_subsurface* layer_subsurface =
         calloc(1, sizeof(struct bsi_layer_surface_subsurface));
-    bsi_layer_surface_subsurface_init(
+    layer_surface_subsurface_init(
         layer_subsurface, wlr_subsurface, layer_toplevel);
     wl_list_insert(&layer_toplevel->subsurfaces, &layer_subsurface->link);
 
-    bsi_util_slot_connect(&wlr_subsurface->events.map,
-                          &layer_subsurface->listen.map,
-                          handle_layershell_subsurface_map);
-    bsi_util_slot_connect(&wlr_subsurface->events.unmap,
-                          &layer_subsurface->listen.unmap,
-                          handle_layershell_subsurface_unmap);
-    bsi_util_slot_connect(&wlr_subsurface->events.destroy,
-                          &layer_subsurface->listen.destroy,
-                          handle_layershell_subsurface_destroy);
-    bsi_util_slot_connect(&wlr_subsurface->surface->events.commit,
-                          &layer_subsurface->listen.commit,
-                          handle_layershell_subsurface_commit);
+    util_slot_connect(&wlr_subsurface->events.map,
+                      &layer_subsurface->listen.map,
+                      handle_layershell_subsurface_map);
+    util_slot_connect(&wlr_subsurface->events.unmap,
+                      &layer_subsurface->listen.unmap,
+                      handle_layershell_subsurface_unmap);
+    util_slot_connect(&wlr_subsurface->events.destroy,
+                      &layer_subsurface->listen.destroy,
+                      handle_layershell_subsurface_destroy);
+    util_slot_connect(&wlr_subsurface->surface->events.commit,
+                      &layer_subsurface->listen.commit,
+                      handle_layershell_subsurface_commit);
 }
 
 /*
@@ -634,13 +632,13 @@ handle_layershell_popup_map(struct wl_listener* listener, void* data)
         wl_container_of(listener, layer_popup, listen.map);
     union bsi_layer_surface layer_surface = { .popup = layer_popup };
     struct bsi_layer_surface_toplevel* toplevel_parent =
-        bsi_layer_surface_get_toplevel_parent(layer_surface,
-                                              BSI_LAYER_SURFACE_POPUP);
+        layer_surface_get_toplevel_parent(layer_surface,
+                                          BSI_LAYER_SURFACE_POPUP);
     struct bsi_output* output = toplevel_parent->output;
 
     wlr_surface_send_enter(layer_popup->popup->base->surface, output->output);
 
-    bsi_output_surface_damage(output, NULL, true);
+    output_surface_damage(output, NULL, true);
 }
 
 void
@@ -652,8 +650,8 @@ handle_layershell_popup_unmap(struct wl_listener* listener, void* data)
         wl_container_of(listener, layer_popup, listen.unmap);
     union bsi_layer_surface layer_surface = { .popup = layer_popup };
     struct bsi_layer_surface_toplevel* toplevel_parent =
-        bsi_layer_surface_get_toplevel_parent(layer_surface,
-                                              BSI_LAYER_SURFACE_POPUP);
+        layer_surface_get_toplevel_parent(layer_surface,
+                                          BSI_LAYER_SURFACE_POPUP);
     struct bsi_output* output = toplevel_parent->output;
     struct bsi_server* server = output->server;
 
@@ -664,7 +662,7 @@ handle_layershell_popup_unmap(struct wl_listener* listener, void* data)
                                            layer_popup->popup->base->surface))
         wlr_seat_pointer_notify_clear_focus(output->server->wlr_seat);
 
-    bsi_output_surface_damage(output, NULL, true);
+    output_surface_damage(output, NULL, true);
 }
 
 void
@@ -676,15 +674,15 @@ handle_layershell_popup_destroy(struct wl_listener* listener, void* data)
         wl_container_of(listener, layer_popup, listen.destroy);
     union bsi_layer_surface layer_surface = { .popup = layer_popup };
     struct bsi_layer_surface_toplevel* toplevel_parent =
-        bsi_layer_surface_get_toplevel_parent(layer_surface,
-                                              BSI_LAYER_SURFACE_POPUP);
+        layer_surface_get_toplevel_parent(layer_surface,
+                                          BSI_LAYER_SURFACE_POPUP);
     struct bsi_server* server = toplevel_parent->output->server;
 
     if (server->session.shutting_down)
         return;
 
-    bsi_layer_surface_destroy(layer_surface, BSI_LAYER_SURFACE_POPUP);
-    bsi_output_surface_damage(toplevel_parent->output, NULL, true);
+    layer_surface_destroy(layer_surface, BSI_LAYER_SURFACE_POPUP);
+    output_surface_damage(toplevel_parent->output, NULL, true);
 }
 
 void
@@ -699,30 +697,30 @@ handle_layershell_popup_new_popup(struct wl_listener* listener, void* data)
     union bsi_layer_surface layer_parent = { .popup = parent_popup };
     struct bsi_layer_surface_popup* layer_popup =
         calloc(1, sizeof(struct bsi_layer_surface_popup));
-    bsi_layer_surface_popup_init(
+    layer_surface_popup_init(
         layer_popup, xdg_popup, BSI_LAYER_SURFACE_POPUP, layer_parent);
 
-    bsi_util_slot_connect(&xdg_popup->base->events.map,
-                          &layer_popup->listen.map,
-                          handle_layershell_popup_map);
-    bsi_util_slot_connect(&xdg_popup->base->events.unmap,
-                          &layer_popup->listen.unmap,
-                          handle_layershell_popup_unmap);
-    bsi_util_slot_connect(&xdg_popup->base->events.destroy,
-                          &layer_popup->listen.destroy,
-                          handle_layershell_popup_destroy);
-    bsi_util_slot_connect(&xdg_popup->base->events.new_popup,
-                          &layer_popup->listen.new_popup,
-                          handle_layershell_popup_new_popup);
-    bsi_util_slot_connect(&xdg_popup->base->surface->events.commit,
-                          &layer_popup->listen.commit,
-                          handle_layershell_popup_commit);
+    util_slot_connect(&xdg_popup->base->events.map,
+                      &layer_popup->listen.map,
+                      handle_layershell_popup_map);
+    util_slot_connect(&xdg_popup->base->events.unmap,
+                      &layer_popup->listen.unmap,
+                      handle_layershell_popup_unmap);
+    util_slot_connect(&xdg_popup->base->events.destroy,
+                      &layer_popup->listen.destroy,
+                      handle_layershell_popup_destroy);
+    util_slot_connect(&xdg_popup->base->events.new_popup,
+                      &layer_popup->listen.new_popup,
+                      handle_layershell_popup_new_popup);
+    util_slot_connect(&xdg_popup->base->surface->events.commit,
+                      &layer_popup->listen.commit,
+                      handle_layershell_popup_commit);
 
     /* Unconstrain popup to its largest parent box. */
     union bsi_layer_surface layer_surface = { .popup = layer_popup };
     struct bsi_layer_surface_toplevel* toplevel_parent =
-        bsi_layer_surface_get_toplevel_parent(layer_surface,
-                                              BSI_LAYER_SURFACE_POPUP);
+        layer_surface_get_toplevel_parent(layer_surface,
+                                          BSI_LAYER_SURFACE_POPUP);
     struct wlr_box toplevel_parent_box = {
         .x = -toplevel_parent->box.x,
         .y = -toplevel_parent->box.y,
@@ -744,11 +742,11 @@ handle_layershell_popup_commit(struct wl_listener* listener, void* data)
         wl_container_of(listener, layer_popup, listen.commit);
     union bsi_layer_surface layer_surface = { .popup = layer_popup };
     struct bsi_layer_surface_toplevel* toplevel_parent =
-        bsi_layer_surface_get_toplevel_parent(layer_surface,
-                                              BSI_LAYER_SURFACE_POPUP);
+        layer_surface_get_toplevel_parent(layer_surface,
+                                          BSI_LAYER_SURFACE_POPUP);
     struct bsi_output* output = toplevel_parent->output;
 
-    bsi_output_surface_damage(output, layer_popup->popup->base->surface, false);
+    output_surface_damage(output, layer_popup->popup->base->surface, false);
 }
 
 /*
@@ -767,7 +765,7 @@ handle_layershell_subsurface_map(struct wl_listener* listener, void* data)
 
     wlr_surface_send_enter(layer_subsurface->subsurface->surface,
                            output->output);
-    bsi_output_surface_damage(output, NULL, true);
+    output_surface_damage(output, NULL, true);
 }
 
 void
@@ -787,7 +785,7 @@ handle_layershell_subsurface_unmap(struct wl_listener* listener, void* data)
             output->server->wlr_seat, layer_subsurface->subsurface->surface))
         wlr_seat_pointer_notify_clear_focus(output->server->wlr_seat);
 
-    bsi_output_surface_damage(output, NULL, true);
+    output_surface_damage(output, NULL, true);
 }
 
 void
@@ -799,16 +797,16 @@ handle_layershell_subsurface_destroy(struct wl_listener* listener, void* data)
         wl_container_of(listener, layer_subsurface, listen.destroy);
     union bsi_layer_surface layer_surface = { .subsurface = layer_subsurface };
     struct bsi_layer_surface_toplevel* toplevel_parent =
-        bsi_layer_surface_get_toplevel_parent(layer_surface,
-                                              BSI_LAYER_SURFACE_TOPLEVEL);
+        layer_surface_get_toplevel_parent(layer_surface,
+                                          BSI_LAYER_SURFACE_TOPLEVEL);
     struct bsi_server* server = toplevel_parent->output->server;
 
     if (server->session.shutting_down)
         return;
 
     wl_list_remove(&layer_subsurface->link);
-    bsi_layer_surface_destroy(layer_surface, BSI_LAYER_SURFACE_SUBSURFACE);
-    bsi_output_surface_damage(toplevel_parent->output, NULL, true);
+    layer_surface_destroy(layer_surface, BSI_LAYER_SURFACE_SUBSURFACE);
+    output_surface_damage(toplevel_parent->output, NULL, true);
 }
 
 /* wlr_surface -> subsurface::surface */
@@ -822,6 +820,5 @@ handle_layershell_subsurface_commit(struct wl_listener* listener, void* data)
         wl_container_of(listener, layer_subsurface, listen.commit);
     struct bsi_output* output = layer_subsurface->member_of->output;
 
-    bsi_output_surface_damage(
-        output, layer_subsurface->subsurface->surface, false);
+    output_surface_damage(output, layer_subsurface->subsurface->surface, false);
 }

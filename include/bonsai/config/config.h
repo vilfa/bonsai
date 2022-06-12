@@ -17,16 +17,16 @@ struct bsi_config
 };
 
 struct bsi_config*
-bsi_config_init(struct bsi_config* config, struct bsi_server* server);
+config_init(struct bsi_config* config, struct bsi_server* server);
 
 void
-bsi_config_destroy(struct bsi_config* config);
+config_destroy(struct bsi_config* config);
 
 void
-bsi_config_find(struct bsi_config* config);
+config_find(struct bsi_config* config);
 
 void
-bsi_config_parse(struct bsi_config* config);
+config_parse(struct bsi_config* config);
 
 void
-bsi_config_apply(struct bsi_config* config);
+config_apply(struct bsi_config* config);

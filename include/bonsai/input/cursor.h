@@ -28,10 +28,6 @@ enum bsi_cursor_image
     BSI_CURSOR_IMAGE_RESIZE_RIGHT,
 };
 
-/**
- * @brief Holds a single pointer event passed to various functions.
- *
- */
 union bsi_cursor_event
 {
     struct wlr_pointer_motion_event* motion;
@@ -49,8 +45,7 @@ union bsi_cursor_event
 };
 
 void
-bsi_cursor_image_set(struct bsi_server* server,
-                     enum bsi_cursor_image cursor_image);
+cursor_image_set(struct bsi_server* server, enum bsi_cursor_image cursor_image);
 
 /**
  * @brief Returns the `bsi_view` at the cursor event surface coordinates. Pass a
@@ -71,43 +66,25 @@ bsi_cursor_image_set(struct bsi_server* server,
  * @return struct bsi_view* The view under the cursor.
  */
 void*
-bsi_cursor_scene_data_at(struct bsi_server* server,
-                         struct wlr_scene_surface** scene_surface_at,
-                         struct wlr_surface** surface_at,
-                         const char** surface_role,
-                         double* sx,
-                         double* sy);
-
-/**
- * @brief Process the cursor motion.
- *
- * @param server The server.
- * @param event Cursor event being processed.
- */
-void
-bsi_cursor_process_motion(struct bsi_server* server,
-                          union bsi_cursor_event cursor_event);
-
-/**
- * @brief Process view movement with cursor.
- *
- * @param server The server.
- * @param event Cursor event being processed.
- */
-void
-bsi_cursor_process_view_move(struct bsi_server* server,
-                             union bsi_cursor_event cursor_event);
-
-/**
- * @brief
- *
- * @param server The server.
- * @param event Cursor event being processed.
- */
-void
-bsi_cursor_process_view_resize(struct bsi_server* server,
-                               union bsi_cursor_event cursor_event);
+cursor_scene_data_at(struct bsi_server* server,
+                     struct wlr_scene_surface** scene_surface_at,
+                     struct wlr_surface** surface_at,
+                     const char** surface_role,
+                     double* sx,
+                     double* sy);
 
 void
-bsi_cursor_process_swipe(struct bsi_server* server,
+cursor_process_motion(struct bsi_server* server,
+                      union bsi_cursor_event cursor_event);
+
+void
+cursor_process_view_move(struct bsi_server* server,
                          union bsi_cursor_event cursor_event);
+
+void
+cursor_process_view_resize(struct bsi_server* server,
+                           union bsi_cursor_event cursor_event);
+
+void
+cursor_process_swipe(struct bsi_server* server,
+                     union bsi_cursor_event cursor_event);

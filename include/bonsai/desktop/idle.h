@@ -27,24 +27,24 @@ struct bsi_idle_inhibitor
 };
 
 void
-bsi_idle_inhibitors_add(struct bsi_server* server,
-                        struct bsi_idle_inhibitor* inhibitor);
+idle_inhibitors_add(struct bsi_server* server,
+                    struct bsi_idle_inhibitor* inhibitor);
 
 void
-bsi_idle_inhibitors_remove(struct bsi_idle_inhibitor* inhibitor);
+idle_inhibitors_remove(struct bsi_idle_inhibitor* inhibitor);
 
 void
-bsi_idle_inhibitors_state_update(struct bsi_server* server);
+idle_inhibitors_update(struct bsi_server* server);
 
 struct bsi_idle_inhibitor*
-bsi_idle_inhibitor_init(struct bsi_idle_inhibitor* inhibitor,
-                        struct wlr_idle_inhibitor_v1* wlr_inhibitor,
-                        struct bsi_server* server,
-                        struct bsi_view* view,
-                        enum bsi_idle_inhibit_mode mode);
+idle_inhibitor_init(struct bsi_idle_inhibitor* inhibitor,
+                    struct wlr_idle_inhibitor_v1* wlr_inhibitor,
+                    struct bsi_server* server,
+                    struct bsi_view* view,
+                    enum bsi_idle_inhibit_mode mode);
 
 void
-bsi_idle_inhibitor_destroy(struct bsi_idle_inhibitor* inhibitor);
+idle_inhibitor_destroy(struct bsi_idle_inhibitor* inhibitor);
 
 bool
-bsi_idle_inhibitor_active(struct bsi_idle_inhibitor* inhibitor);
+idle_inhibitor_active(struct bsi_idle_inhibitor* inhibitor);

@@ -29,8 +29,8 @@
 #include "bonsai/util.h"
 
 bool
-bsi_keyboard_keybinds_process(struct bsi_input_device* device,
-                              struct wlr_keyboard_key_event* event)
+keyboard_keybinds_process(struct bsi_input_device* device,
+                          struct wlr_keyboard_key_event* event)
 {
     assert(device->type == BSI_INPUT_DEVICE_KEYBOARD);
 
@@ -73,80 +73,79 @@ bsi_keyboard_keybinds_process(struct bsi_input_device* device,
         else
             return false;
 
-        return bsi_keyboard_keybinds_handle(server, combo, syms, syms_len);
+        return keyboard_keybinds_handle(server, combo, syms, syms_len);
     }
 
     return false;
 }
 
 bool
-bsi_keyboard_keybinds_handle(struct bsi_server* server,
-                             enum bsi_keyboard_modifier combo,
-                             const xkb_keysym_t* syms,
-                             const size_t syms_len)
+keyboard_keybinds_handle(struct bsi_server* server,
+                         enum bsi_keyboard_modifier combo,
+                         const xkb_keysym_t* syms,
+                         const size_t syms_len)
 {
     bool handled = false;
     switch (combo) {
         case BSI_KEYBOARD_MOD_NONE:
             for (size_t i = 0; i < syms_len; ++i)
-                handled = bsi_keyboard_mod_none_handle(server, syms[i]);
+                handled = keyboard_mod_none_handle(server, syms[i]);
             break;
         case BSI_KEYBOARD_MOD_CTRL:
             for (size_t i = 0; i < syms_len; ++i)
-                handled = bsi_keyboard_mod_ctrl_handle(server, syms[i]);
+                handled = keyboard_mod_ctrl_handle(server, syms[i]);
             break;
         case BSI_KEYBOARD_MOD_ALT:
             for (size_t i = 0; i < syms_len; ++i)
-                handled = bsi_keyboard_mod_alt_handle(server, syms[i]);
+                handled = keyboard_mod_alt_handle(server, syms[i]);
             break;
         case BSI_KEYBOARD_MOD_SUPER:
             for (size_t i = 0; i < syms_len; ++i)
-                handled = bsi_keyboard_mod_super_handle(server, syms[i]);
+                handled = keyboard_mod_super_handle(server, syms[i]);
             break;
         case BSI_KEYBOARD_MOD_CTRL_ALT:
             for (size_t i = 0; i < syms_len; ++i)
-                handled = bsi_keyboard_mod_ctrl_alt_handle(server, syms[i]);
+                handled = keyboard_mod_ctrl_alt_handle(server, syms[i]);
             break;
         case BSI_KEYBOARD_MOD_CTRL_SHIFT:
             for (size_t i = 0; i < syms_len; ++i)
-                handled = bsi_keyboard_mod_ctrl_shift_handle(server, syms[i]);
+                handled = keyboard_mod_ctrl_shift_handle(server, syms[i]);
             break;
         case BSI_KEYBOARD_MOD_CTRL_ALT_SHIFT:
             for (size_t i = 0; i < syms_len; ++i)
-                handled =
-                    bsi_keyboard_mod_ctrl_alt_shift_handle(server, syms[i]);
+                handled = keyboard_mod_ctrl_alt_shift_handle(server, syms[i]);
             break;
         case BSI_KEYBOARD_MOD_SUPER_SHIFT:
             for (size_t i = 0; i < syms_len; i++)
-                handled = bsi_keyboard_mod_super_shift_handle(server, syms[i]);
+                handled = keyboard_mod_super_shift_handle(server, syms[i]);
             break;
     }
     return handled;
 }
 
 bool
-bsi_keyboard_mod_none_handle(struct bsi_server* server, xkb_keysym_t sym)
+keyboard_mod_none_handle(struct bsi_server* server, xkb_keysym_t sym)
 {
     switch (sym) {
         case XKB_KEY_Print: {
             bsi_debug("Got Print -> screenshot all outputs");
             char* const argp[] = { "sh", "-c", "grim - | wl-copy", NULL };
-            return bsi_util_tryexec(argp, 4);
+            return util_tryexec(argp, 4);
         }
         case XKB_KEY_Escape: {
             bsi_debug("Got Escape -> un-fullscreen if fulscreen");
-            struct bsi_view* focused = bsi_views_get_focused(server);
+            struct bsi_view* focused = views_get_focused(server);
             if (focused && focused->state == BSI_VIEW_STATE_FULLSCREEN) {
-                bsi_view_set_fullscreen(focused, false);
+                view_set_fullscreen(focused, false);
                 return true;
             }
             return false;
         }
         case XKB_KEY_F11: {
             bsi_debug("Got F11 -> fullscreen focused view");
-            struct bsi_view* focused = bsi_views_get_focused(server);
+            struct bsi_view* focused = views_get_focused(server);
             if (focused && focused->state != BSI_VIEW_STATE_FULLSCREEN) {
-                bsi_view_set_fullscreen(focused, true);
+                view_set_fullscreen(focused, true);
                 return true;
             }
             return false;
@@ -156,7 +155,7 @@ bsi_keyboard_mod_none_handle(struct bsi_server* server, xkb_keysym_t sym)
 }
 
 bool
-bsi_keyboard_mod_ctrl_handle(struct bsi_server* server, xkb_keysym_t sym)
+keyboard_mod_ctrl_handle(struct bsi_server* server, xkb_keysym_t sym)
 {
     bsi_debug("Got Ctrl mod");
     switch (sym) {
@@ -173,20 +172,20 @@ bsi_keyboard_mod_ctrl_handle(struct bsi_server* server, xkb_keysym_t sym)
             char cmd[50] = { 0 };
             sprintf(cmd, "grim -o %s - | wl-copy", output->name);
             char* const argp[] = { "sh", "-c", cmd, NULL };
-            return bsi_util_tryexec(argp, 4);
+            return util_tryexec(argp, 4);
         }
     }
     return false;
 }
 
 bool
-bsi_keyboard_mod_alt_handle(struct bsi_server* server, xkb_keysym_t sym)
+keyboard_mod_alt_handle(struct bsi_server* server, xkb_keysym_t sym)
 {
     bsi_debug("Got Alt mod");
     switch (sym) {
         case XKB_KEY_Tab: {
             bsi_debug("Got Alt+Tab -> cycle views");
-            bsi_views_mru_focus(server);
+            views_mru_focus(server);
             return true;
         }
     }
@@ -194,7 +193,7 @@ bsi_keyboard_mod_alt_handle(struct bsi_server* server, xkb_keysym_t sym)
 }
 
 bool
-bsi_keyboard_mod_super_handle(struct bsi_server* server, xkb_keysym_t sym)
+keyboard_mod_super_handle(struct bsi_server* server, xkb_keysym_t sym)
 {
     bsi_debug("Got Super mod");
     switch (sym) {
@@ -202,43 +201,43 @@ bsi_keyboard_mod_super_handle(struct bsi_server* server, xkb_keysym_t sym)
         case XKB_KEY_L: {
             bsi_debug("Got Super+L -> lock session");
             char* const argp[] = { "swaylock", NULL };
-            return bsi_util_tryexec(argp, 2);
+            return util_tryexec(argp, 2);
         }
         case XKB_KEY_d:
         case XKB_KEY_D: {
             bsi_debug("Got Super+D -> bemenu");
             char* const argp[] = { "bemenu-run", "-c", "-i", NULL };
-            return bsi_util_tryexec(argp, 4);
+            return util_tryexec(argp, 4);
         }
         case XKB_KEY_Return: {
             bsi_debug("Got Super+Return -> term");
             char* const argp[] = { "foot", NULL };
-            return bsi_util_tryexec(argp, 2);
+            return util_tryexec(argp, 2);
         }
         case XKB_KEY_Up: {
             bsi_debug("Got Super+Up -> maximize active");
-            struct bsi_view* focused = bsi_views_get_focused(server);
+            struct bsi_view* focused = views_get_focused(server);
             if (focused)
-                bsi_view_set_maximized(focused, true);
+                view_set_maximized(focused, true);
             return true;
         }
         case XKB_KEY_Down: {
             bsi_debug("Got Super+Down -> unmaximize active");
-            struct bsi_view* focused = bsi_views_get_focused(server);
+            struct bsi_view* focused = views_get_focused(server);
             if (focused)
-                bsi_view_set_maximized(focused, false);
+                view_set_maximized(focused, false);
             return true;
         }
         case XKB_KEY_Left: {
             bsi_debug("Got Super+Left -> tile left/untile");
-            struct bsi_view* focused = bsi_views_get_focused(server);
+            struct bsi_view* focused = views_get_focused(server);
             if (focused) {
                 switch (focused->state) {
                     case BSI_VIEW_STATE_TILED_RIGHT:
-                        bsi_view_set_tiled_right(focused, false);
+                        view_set_tiled_right(focused, false);
                         break;
                     case BSI_VIEW_STATE_NORMAL:
-                        bsi_view_set_tiled_left(focused, true);
+                        view_set_tiled_left(focused, true);
                         break;
                     default:
                         break;
@@ -248,14 +247,14 @@ bsi_keyboard_mod_super_handle(struct bsi_server* server, xkb_keysym_t sym)
         }
         case XKB_KEY_Right: {
             bsi_debug("Got Super+Right -> tile right/untile");
-            struct bsi_view* focused = bsi_views_get_focused(server);
+            struct bsi_view* focused = views_get_focused(server);
             if (focused) {
                 switch (focused->state) {
                     case BSI_VIEW_STATE_TILED_LEFT:
-                        bsi_view_set_tiled_left(focused, false);
+                        view_set_tiled_left(focused, false);
                         break;
                     case BSI_VIEW_STATE_NORMAL:
-                        bsi_view_set_tiled_right(focused, true);
+                        view_set_tiled_right(focused, true);
                         break;
                     default:
                         break;
@@ -266,13 +265,13 @@ bsi_keyboard_mod_super_handle(struct bsi_server* server, xkb_keysym_t sym)
         case XKB_KEY_x:
         case XKB_KEY_X: {
             bsi_debug("Got Super+X -> hide all workspace views");
-            bsi_workspace_views_show_all(server->active_workspace, false);
+            workspace_views_show_all(server->active_workspace, false);
             return true;
         }
         case XKB_KEY_z:
         case XKB_KEY_Z: {
             bsi_debug("Got Super+Z -> show all workspace views");
-            bsi_workspace_views_show_all(server->active_workspace, true);
+            workspace_views_show_all(server->active_workspace, true);
             return true;
         }
     }
@@ -280,7 +279,7 @@ bsi_keyboard_mod_super_handle(struct bsi_server* server, xkb_keysym_t sym)
 }
 
 bool
-bsi_keyboard_mod_ctrl_alt_handle(struct bsi_server* server, xkb_keysym_t sym)
+keyboard_mod_ctrl_alt_handle(struct bsi_server* server, xkb_keysym_t sym)
 {
     bsi_debug("Got Ctrl+Alt mod");
     switch (sym) {
@@ -293,8 +292,8 @@ bsi_keyboard_mod_ctrl_alt_handle(struct bsi_server* server, xkb_keysym_t sym)
             if (!output)
                 return true;
 
-            struct bsi_output* active_output = bsi_outputs_find(server, output);
-            bsi_workspaces_next(active_output);
+            struct bsi_output* active_output = outputs_find(server, output);
+            workspaces_next(active_output);
             return true;
         }
         case XKB_KEY_Left: {
@@ -306,8 +305,8 @@ bsi_keyboard_mod_ctrl_alt_handle(struct bsi_server* server, xkb_keysym_t sym)
             if (!output)
                 return true;
 
-            struct bsi_output* active_output = bsi_outputs_find(server, output);
-            bsi_workspaces_prev(active_output);
+            struct bsi_output* active_output = outputs_find(server, output);
+            workspaces_prev(active_output);
             return true;
         }
     }
@@ -315,7 +314,7 @@ bsi_keyboard_mod_ctrl_alt_handle(struct bsi_server* server, xkb_keysym_t sym)
 }
 
 bool
-bsi_keyboard_mod_ctrl_shift_handle(struct bsi_server* server, xkb_keysym_t sym)
+keyboard_mod_ctrl_shift_handle(struct bsi_server* server, xkb_keysym_t sym)
 {
     bsi_debug("Got Ctrl+Shift mod");
     switch (sym) {
@@ -324,22 +323,21 @@ bsi_keyboard_mod_ctrl_shift_handle(struct bsi_server* server, xkb_keysym_t sym)
             char* const argp[] = {
                 "sh", "-c", "grim -g \"$(slurp)\" - | wl-copy", NULL
             };
-            return bsi_util_tryexec(argp, 4);
+            return util_tryexec(argp, 4);
         }
     }
     return false;
 }
 
 bool
-bsi_keyboard_mod_ctrl_alt_shift_handle(struct bsi_server* server,
-                                       xkb_keysym_t sym)
+keyboard_mod_ctrl_alt_shift_handle(struct bsi_server* server, xkb_keysym_t sym)
 {
     bsi_debug("Got Ctrl+Alt+Shift mod");
     return false;
 }
 
 bool
-bsi_keyboard_mod_super_shift_handle(struct bsi_server* server, xkb_keysym_t sym)
+keyboard_mod_super_shift_handle(struct bsi_server* server, xkb_keysym_t sym)
 {
     bsi_debug("Got Super+Shift mod");
     switch (sym) {
@@ -347,7 +345,7 @@ bsi_keyboard_mod_super_shift_handle(struct bsi_server* server, xkb_keysym_t sym)
         case XKB_KEY_Q:
             bsi_info("Got Super+Shift+Q -> exit");
             wlr_backend_destroy(server->wlr_backend);
-            bsi_server_finish(server);
+            server_finish(server);
             exit(EXIT_SUCCESS);
     }
     return false;

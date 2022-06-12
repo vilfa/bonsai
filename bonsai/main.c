@@ -33,8 +33,6 @@
 #include "bonsai/server.h"
 #include "bonsai/util.h"
 
-// TODO: Implement working screenshare, look into xdg-desktop-portal.
-
 // TODO: Maybe add multipurpose client for indicating things to the user (e.g.
 // took screenshot, switched to workspace).
 
@@ -48,6 +46,8 @@
 
 // TODO: Rework view.
 
+// TODO: Rework keyboard keymap settings.
+
 int
 main(void)
 {
@@ -57,12 +57,12 @@ main(void)
     wlr_log_init(WLR_INFO, NULL);
 #endif
 
-    struct bsi_server server;
     struct bsi_config config;
+    struct bsi_server server;
 
-    bsi_config_init(&config, &server);
-    bsi_config_parse(&config);
-    bsi_server_init(&server, &config);
+    config_init(&config, &server);
+    config_parse(&config);
+    server_init(&server, &config);
 
     server.wl_socket = wl_display_add_socket_auto(server.wl_display);
     bsi_debug("Created server socket '%s'", server.wl_socket);
