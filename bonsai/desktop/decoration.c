@@ -41,8 +41,7 @@ void
 decoration_update(struct bsi_xdg_decoration* decoration)
 {
     struct bsi_view* view = decoration->view;
-    bsi_debug("Update decoration for view '%s'",
-              view->wlr_xdg_toplevel->app_id);
+    debug("Update decoration for view '%s'", view->wlr_xdg_toplevel->app_id);
     wlr_scene_node_set_enabled(&decoration->scene_rect->node, view->mapped);
     wlr_scene_rect_set_size(
         decoration->scene_rect, view->geom.width + 4, view->geom.height + 4);
@@ -71,7 +70,7 @@ decoration_iter(struct wlr_scene_buffer* buffer,
                 int sy,
                 void* user_data)
 {
-    bsi_info("Hello decoration buffer");
+    info("Hello decoration buffer");
     struct bsi_xdg_decoration* deco = user_data;
     struct bsi_view* view = deco->view;
 
@@ -112,7 +111,7 @@ decoration_iter(struct wlr_scene_buffer* buffer,
         memcpy(data, cairo_image_surface_get_data(surface), isize);
         wlr_buffer_end_data_ptr_access(buffer->buffer);
     } else {
-        bsi_error("FUUUUCCCCCKKKKK");
+        error("FUUUUCCCCCKKKKK");
     }
 
     cairo_surface_destroy(surface);
@@ -123,7 +122,7 @@ decoration_iter(struct wlr_scene_buffer* buffer,
 static void
 handle_destroy(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event destroy from wlr_server_decoration");
+    debug("Got event destroy from wlr_server_decoration");
     struct bsi_xdg_decoration* server_deco =
         wl_container_of(listener, server_deco, listen.destroy);
     decorations_remove(server_deco);
@@ -133,16 +132,16 @@ handle_destroy(struct wl_listener* listener, void* data)
 static void
 handle_request_mode(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event request_mode from wlr_server_decoration");
+    debug("Got event request_mode from wlr_server_decoration");
     struct bsi_xdg_decoration* server_deco =
         wl_container_of(listener, server_deco, listen.request_mode);
     struct wlr_xdg_toplevel_decoration_v1* deco = data;
     struct bsi_view* view = deco->surface->data;
 
-    bsi_info("View with app-id '%s', requested SSD %d",
-             view->wlr_xdg_toplevel->app_id,
-             deco->requested_mode ==
-                 WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
+    info("View with app-id '%s', requested SSD %d",
+         view->wlr_xdg_toplevel->app_id,
+         deco->requested_mode ==
+             WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
 
     wlr_xdg_toplevel_decoration_v1_set_mode(deco, deco->requested_mode);
 }
@@ -152,7 +151,7 @@ void
 handle_xdg_decoration_manager_new_decoration(struct wl_listener* listener,
                                              void* data)
 {
-    bsi_debug("Got event new_decoration from wlr_decoration_manager");
+    debug("Got event new_decoration from wlr_decoration_manager");
 
     struct bsi_server* server =
         wl_container_of(listener, server, listen.new_decoration);

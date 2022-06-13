@@ -59,7 +59,7 @@ session_lock_surface_destroy(struct bsi_session_lock_surface* surface)
 static void
 handle_surface_map(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event map from wlr_session_lock_surface");
+    debug("Got event map from wlr_session_lock_surface");
 
     struct bsi_session_lock_surface* lock_surface =
         wl_container_of(listener, lock_surface, listen.map);
@@ -119,7 +119,7 @@ handle_surface_commit(struct wl_listener* listener, void* data)
 static void
 handle_output_mode(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event mode from wlr_output of wlr_session_lock_surface");
+    debug("Got event mode from wlr_output of wlr_session_lock_surface");
 
     struct bsi_session_lock_surface* lock_surface =
         wl_container_of(listener, lock_surface, listen.mode);
@@ -148,7 +148,7 @@ handle_output_commit(struct wl_listener* listener, void* data)
 static void
 handle_new_surface(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event new_surface from bsi_session_lock");
+    debug("Got event new_surface from bsi_session_lock");
 
     struct bsi_session_lock* lock =
         wl_container_of(listener, lock, listen.new_surface);
@@ -191,14 +191,14 @@ handle_new_surface(struct wl_listener* listener, void* data)
 static void
 handle_unlock(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event unlock from bsi_session_lock");
+    debug("Got event unlock from bsi_session_lock");
 
     struct bsi_session_lock* lock =
         wl_container_of(listener, lock, listen.unlock);
     struct bsi_server* server = lock->server;
 
     server->session.locked = false;
-    bsi_info("Session unlocked");
+    info("Session unlocked");
 
     struct bsi_output* output;
     wl_list_for_each(output, &server->output.outputs, link_server)
@@ -210,7 +210,7 @@ handle_unlock(struct wl_listener* listener, void* data)
 static void
 handle_destroy(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event destroy from bsi_sesion_lock");
+    debug("Got event destroy from bsi_sesion_lock");
 
     struct bsi_session_lock* lock =
         wl_container_of(listener, lock, listen.destroy);
@@ -230,7 +230,7 @@ handle_destroy(struct wl_listener* listener, void* data)
 void
 handle_session_lock_manager_new_lock(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event new_lock from wlr_session_lock_manager");
+    debug("Got event new_lock from wlr_session_lock_manager");
 
     struct bsi_server* server =
         wl_container_of(listener, server, listen.new_lock);
@@ -242,7 +242,7 @@ handle_session_lock_manager_new_lock(struct wl_listener* listener, void* data)
     }
 
     server->session.locked = true;
-    bsi_info("Session locked");
+    info("Session locked");
 
     struct bsi_session_lock* session_lock =
         calloc(1, sizeof(struct bsi_session_lock));

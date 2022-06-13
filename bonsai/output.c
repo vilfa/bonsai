@@ -57,11 +57,11 @@ output_init(struct bsi_output* output,
 void
 output_set_usable_box(struct bsi_output* output, struct wlr_box* box)
 {
-    bsi_debug("Set output usable box to [%d, %d, %d, %d]",
-              box->x,
-              box->y,
-              box->width,
-              box->height);
+    debug("Set output usable box to [%d, %d, %d, %d]",
+          box->x,
+          box->y,
+          box->width,
+          box->height);
     output->usable.x = box->x;
     output->usable.y = box->y;
     output->usable.width = box->width;
@@ -133,9 +133,9 @@ output_layer_arrange(struct bsi_output* output,
         struct wlr_layer_surface_v1* layer_surf = layer_toplevel->layer_surface;
         struct wlr_layer_surface_v1_state* state = &layer_surf->current;
 
-        bsi_debug("Arranging layer surface at level '%s', wants exclusive %d",
-                  layer_level,
-                  state->exclusive_zone > 0);
+        debug("Arranging layer surface at level '%s', wants exclusive %d",
+              layer_level,
+              state->exclusive_zone > 0);
 
         /* Check if this surface wants the layer exclusively. */
         if (exclusive != (state->exclusive_zone > 0))
@@ -270,15 +270,15 @@ output_layers_arrange(struct bsi_output* output)
                 if (toplevel->at_layer < ZWLR_LAYER_SHELL_V1_LAYER_TOP) {
                     /* These are background layers, arrange the views
                      * appropriately.*/
-                    bsi_debug("Lower layer with namespace '%s' to bottom",
-                              toplevel->layer_surface->namespace);
+                    debug("Lower layer with namespace '%s' to bottom",
+                          toplevel->layer_surface->namespace);
                     wlr_scene_node_lower_to_bottom(toplevel->scene_node->node);
                 } else if (toplevel->at_layer >
                            ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM) {
                     /* These are foreground layers, arrange the views
                      * appropriately. */
-                    bsi_debug("Raise layer with namespace '%s' to top",
-                              toplevel->layer_surface->namespace);
+                    debug("Raise layer with namespace '%s' to top",
+                          toplevel->layer_surface->namespace);
                     wlr_scene_node_raise_to_top(toplevel->scene_node->node);
                 }
             }
@@ -326,7 +326,7 @@ output_layers_arrange(struct bsi_output* output)
 void
 output_destroy(struct bsi_output* output)
 {
-    bsi_info("Destroying output %ld/%s", output->id, output->output->name);
+    info("Destroying output %ld/%s", output->id, output->output->name);
 
     wl_list_remove(&output->listen.frame.link);
     wl_list_remove(&output->listen.destroy.link);
@@ -337,7 +337,7 @@ output_destroy(struct bsi_output* output)
          * to the active workspace of the active output, or the first workspace
          * of the first output.  */
 
-        bsi_debug("Moving member views to next workspace");
+        debug("Moving member views to next workspace");
 
         struct bsi_output* next_output =
             wlr_output_layout_output_at(server->wlr_output_layout,
@@ -362,11 +362,11 @@ output_destroy(struct bsi_output* output)
     } else {
         /* Destroy everything, there are no more outputs. */
 
-        bsi_debug("Last output, destroy everything");
-        bsi_debug("Destroying %d workspaces for output %ld/%s",
-                  wl_list_length(&output->workspaces),
-                  output->id,
-                  output->output->name);
+        debug("Last output, destroy everything");
+        debug("Destroying %d workspaces for output %ld/%s",
+              wl_list_length(&output->workspaces),
+              output->id,
+              output->output->name);
 
         struct bsi_workspace *ws, *ws_tmp;
         wl_list_for_each_safe(ws, ws_tmp, &output->workspaces, link_output)
@@ -382,9 +382,9 @@ output_destroy(struct bsi_output* output)
 
     /* Cleanup of layer shell surfaces is taken care of by toplevel layer
      * output_destroy listeners. */
-    bsi_debug("Destroying layer surfaces for output %ld/%s",
-              output->id,
-              output->output->name);
+    debug("Destroying layer surfaces for output %ld/%s",
+          output->id,
+          output->output->name);
     for (size_t i = 0; i < 4; i++) {
         if (!wl_list_empty(&output->layers[i])) {
             struct bsi_layer_surface_toplevel *toplevel, *toplevel_tmp;
@@ -420,14 +420,14 @@ handle_frame(struct wl_listener* listener, void* data)
 static void
 handle_destroy(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event destroy from wlr_output");
+    debug("Got event destroy from wlr_output");
 
     struct bsi_output* output =
         wl_container_of(listener, output, listen.destroy);
     struct bsi_server* server = output->server;
 
     if (wl_list_length(&server->output.outputs) == 1) {
-        bsi_info("Last output destroyed, shutting down");
+        info("Last output destroyed, shutting down");
         server->session.shutting_down = true;
     }
 
@@ -436,7 +436,7 @@ handle_destroy(struct wl_listener* listener, void* data)
     output_destroy(output);
 
     if (wl_list_length(&server->output.outputs) == 0) {
-        bsi_debug("Out of outputs, exiting");
+        debug("Out of outputs, exiting");
         server_destroy(server);
         exit(EXIT_SUCCESS);
     }
@@ -484,7 +484,7 @@ handle_damage_frame(struct wl_listener* listener, void* data)
 void
 handle_new_output(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event new_output from wlr_backend");
+    debug("Got event new_output from wlr_backend");
 
     struct bsi_server* server =
         wl_container_of(listener, server, listen.new_output);
@@ -512,15 +512,15 @@ handle_new_output(struct wl_listener* listener, void* data)
         wlr_output_preferred_mode(wlr_output);
     /* Set preffered mode first, if output has one. */
     if (preffered_mode && !has_config) {
-        bsi_info("Output has preffered mode, setting %dx%d@%d",
-                 preffered_mode->width,
-                 preffered_mode->height,
-                 preffered_mode->refresh);
+        info("Output has preffered mode, setting %dx%d@%d",
+             preffered_mode->width,
+             preffered_mode->height,
+             preffered_mode->refresh);
 
         wlr_output_set_mode(wlr_output, preffered_mode);
         wlr_output_enable(wlr_output, true);
         if (!wlr_output_commit(wlr_output)) {
-            bsi_error("Failed to commit on output '%s'", wlr_output->name);
+            error("Failed to commit on output '%s'", wlr_output->name);
             return;
         }
     } else if (!wl_list_empty(&wlr_output->modes) && !has_config) {
@@ -529,7 +529,7 @@ handle_new_output(struct wl_listener* listener, void* data)
         wlr_output_set_mode(wlr_output, mode);
         wlr_output_enable(wlr_output, true);
         if (!wlr_output_commit(wlr_output)) {
-            bsi_error("Failed to commit on output '%s'", wlr_output->name);
+            error("Failed to commit on output '%s'", wlr_output->name);
             return;
         }
     }
@@ -545,7 +545,7 @@ handle_new_output(struct wl_listener* listener, void* data)
     workspace_init(workspace, server, output, workspace_name);
     workspaces_add(output, workspace);
 
-    bsi_info("Attached %s to output %s", workspace->name, output->output->name);
+    info("Attached %s to output %s", workspace->name, output->output->name);
 
     util_slot_connect(
         &output->output->events.frame, &output->listen.frame, handle_frame);
@@ -574,7 +574,7 @@ handle_new_output(struct wl_listener* listener, void* data)
 void
 handle_output_layout_change(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event change from wlr_output_layout");
+    debug("Got event change from wlr_output_layout");
 
     struct bsi_server* server =
         wl_container_of(listener, server, listen.output_layout_change);
@@ -625,7 +625,7 @@ handle_output_layout_change(struct wl_listener* listener, void* data)
 void
 handle_output_manager_apply(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event apply from wlr_output_manager");
+    debug("Got event apply from wlr_output_manager");
     struct bsi_server* server =
         wl_container_of(listener, server, listen.output_manager_apply);
     struct wlr_output_configuration_v1* config = data;
@@ -641,7 +641,7 @@ handle_output_manager_apply(struct wl_listener* listener, void* data)
 void
 handle_output_manager_test(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event test from wlr_output_manager");
+    debug("Got event test from wlr_output_manager");
     struct bsi_server* server =
         wl_container_of(listener, server, listen.output_manager_test);
     struct wlr_output_configuration_v1* config = data;
@@ -653,7 +653,7 @@ handle_output_manager_test(struct wl_listener* listener, void* data)
     wl_list_for_each(config_head, &config->heads, link)
     {
         struct wlr_output* output = config_head->state.output;
-        bsi_debug("Testing output %s", output->name);
+        debug("Testing output %s", output->name);
 
         if (!wl_list_empty(&output->modes)) {
             struct wlr_output_mode* preffered_mode =

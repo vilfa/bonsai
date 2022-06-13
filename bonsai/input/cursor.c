@@ -143,15 +143,18 @@ cursor_process_view_move(struct bsi_server* server,
         view->geom.y = server->wlr_cursor->y - server->cursor.grab_sy;
         server->cursor.grab_sx = (double)view->geom.width / 2;
         server->cursor.grab_sy = 0;
-        bsi_debug("Unmaximize by move, surface coords are (%d, %d)",
-                  view->geom.x,
-                  view->geom.y);
+        debug("Unmaximize by move, surface coords are (%d, %d)",
+              view->geom.x,
+              view->geom.y);
     } else {
         view->geom.x = server->wlr_cursor->x - server->cursor.grab_sx;
         view->geom.y = server->wlr_cursor->y - server->cursor.grab_sy;
     }
 
-    bsi_debug("Moving view to coords (%d, %d)", view->geom.x, view->geom.y);
+    debug("Pointer delta is { dx=%.2lf, dy=%.2lf }",
+          event->delta_x,
+          event->delta_y);
+    debug("Moving view to coords (%d, %d)", view->geom.x, view->geom.y);
     wlr_scene_node_set_position(view->node, view->geom.x, view->geom.y);
 }
 
@@ -214,11 +217,17 @@ cursor_process_view_resize(struct bsi_server* server,
     /* Set new view size. */
     wlr_xdg_toplevel_set_size(
         view->wlr_xdg_toplevel, new_right - new_left, new_bottom - new_top);
-    // if (view->xdg_decoration_mode ==
-    //     WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE)
-    //     bsi_decoration_update(view->xdg_decoration);
 
     wlr_xdg_toplevel_set_resizing(view->wlr_xdg_toplevel, false);
+
+    debug("Pointer delta is { dx=%.2lf, dy=%.2lf }",
+          event->delta_x,
+          event->delta_y);
+    debug("New view geometry is { x=%d, y=%d, w=%d, h=%d }",
+          view->geom.x,
+          view->geom.y,
+          view->geom.width,
+          view->geom.height);
 }
 
 void
@@ -238,6 +247,6 @@ cursor_process_swipe(struct bsi_server* server,
         server->cursor.swipe_dy += event->dy;
     } else {
         /* This is very very very unlikely, but hey, it's not impossible. */
-        bsi_debug("Whoa, exactly equal swipe directions");
+        debug("Whoa, exactly equal swipe directions");
     }
 }

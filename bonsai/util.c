@@ -52,11 +52,11 @@ util_tryexec(char* const* argp, const size_t len_argp)
         for (size_t i = 1; i < len_argp; ++i) {
             aargp[i] = argp[i];
         }
-        bsi_info("Trying to exec '%s'", fargp);
+        info("Trying to exec '%s'", fargp);
         if (access(fargp, F_OK | X_OK) == 0) {
             return util_forkexec(aargp, len_argp);
         } else {
-            bsi_error("File '%s' F_OK | X_OK != 0", fargp);
+            error("File '%s' F_OK | X_OK != 0", fargp);
         }
         memset(fargp, 0, 50);
     }
@@ -75,12 +75,12 @@ util_forkexec(char* const* argp, const size_t len_argp)
 
             execve(argp[0], argp, environ);
 
-            bsi_errno("Exec '%s' failed", argp[0]);
+            errn("Exec '%s' failed", argp[0]);
             _exit(EXIT_FAILURE);
             break;
         }
         case -1:
-            bsi_errno("Fork failed");
+            errn("Fork failed");
             return false;
         default:
             return true;
@@ -187,16 +187,14 @@ util_split_delim(char* in, const char* delim, char*** out, bool ignore_quotes)
     char tokens[1024] = { 0 };
     tokens[0] = '[';
     for (size_t i = 0; i < len - 1; ++i) {
-        if (strlen(tokens) + strlen((*out)[i] + 1) > 1023) {
-            strncpy(tokens, (*out)[i], 1024 - strlen(tokens) - 1);
-            tokens[1023] = '\0';
-        }
-        sprintf(tokens, "%s%s,", tokens, (*out)[i]);
+        size_t avail = 1023 - strlen(tokens);
+        strncat(tokens, (*out)[i], (avail > 0) ? avail : 0);
+        strncat(tokens, ",", (avail - 1 > 0) ? avail - 1 : 0);
     }
     tokens[strlen(tokens) - 1] = ']';
     tokens[strlen(tokens)] = '\0';
 
-    bsi_debug("Tokens { len=%ld, tokens=%s }", len, tokens);
+    debug("Tokens { len=%ld, tokens=%s }", len, tokens);
 
     return len;
 }

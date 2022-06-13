@@ -204,7 +204,7 @@ bsi_layer_move(struct bsi_layer_surface_toplevel* toplevel,
 static void
 handle_subsurface_map(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event map from bsi_layer_surface_subsurface");
+    debug("Got event map from bsi_layer_surface_subsurface");
 
     struct bsi_layer_surface_subsurface* layer_subsurface =
         wl_container_of(listener, layer_subsurface, listen.map);
@@ -218,7 +218,7 @@ handle_subsurface_map(struct wl_listener* listener, void* data)
 static void
 handle_subsurface_unmap(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event unmap from bsi_layer_surface_subsurface");
+    debug("Got event unmap from bsi_layer_surface_subsurface");
 
     struct bsi_layer_surface_subsurface* layer_subsurface =
         wl_container_of(listener, layer_subsurface, listen.unmap);
@@ -238,7 +238,7 @@ handle_subsurface_unmap(struct wl_listener* listener, void* data)
 static void
 handle_subsurface_destroy(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event destroy from bsi_layer_surface_subsurface");
+    debug("Got event destroy from bsi_layer_surface_subsurface");
 
     struct bsi_layer_surface_subsurface* layer_subsurface =
         wl_container_of(listener, layer_subsurface, listen.destroy);
@@ -261,7 +261,7 @@ handle_subsurface_destroy(struct wl_listener* listener, void* data)
 static void
 handle_subsurface_commit(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event commit from bsi_layer_surface_subsurface");
+    debug("Got event commit from bsi_layer_surface_subsurface");
 
     struct bsi_layer_surface_subsurface* layer_subsurface =
         wl_container_of(listener, layer_subsurface, listen.commit);
@@ -277,7 +277,7 @@ handle_subsurface_commit(struct wl_listener* listener, void* data)
 static void
 handle_popup_map(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event map from bsi_layer_surface_popup");
+    debug("Got event map from bsi_layer_surface_popup");
 
     struct bsi_layer_surface_popup* layer_popup =
         wl_container_of(listener, layer_popup, listen.map);
@@ -295,7 +295,7 @@ handle_popup_map(struct wl_listener* listener, void* data)
 static void
 handle_popup_unmap(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event unmap from bsi_layer_surface_popup");
+    debug("Got event unmap from bsi_layer_surface_popup");
 
     struct bsi_layer_surface_popup* layer_popup =
         wl_container_of(listener, layer_popup, listen.unmap);
@@ -319,7 +319,7 @@ handle_popup_unmap(struct wl_listener* listener, void* data)
 static void
 handle_popup_destroy(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event popup_destroy from bsi_layer_surface_popup");
+    debug("Got event popup_destroy from bsi_layer_surface_popup");
 
     struct bsi_layer_surface_popup* layer_popup =
         wl_container_of(listener, layer_popup, listen.destroy);
@@ -340,7 +340,7 @@ handle_popup_destroy(struct wl_listener* listener, void* data)
 static void
 handle_popup_commit(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event commit from bsi_layer_surface_popup");
+    debug("Got event commit from bsi_layer_surface_popup");
 
     struct bsi_layer_surface_popup* layer_popup =
         wl_container_of(listener, layer_popup, listen.commit);
@@ -357,7 +357,7 @@ handle_popup_commit(struct wl_listener* listener, void* data)
 static void
 handle_popup_new_popup(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event new_popup from bsi_layer_surface_popup");
+    debug("Got event new_popup from bsi_layer_surface_popup");
 
     struct bsi_layer_surface_popup* parent_popup =
         wl_container_of(listener, parent_popup, listen.new_popup);
@@ -408,7 +408,7 @@ handle_popup_new_popup(struct wl_listener* listener, void* data)
 static void
 handle_map(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event map from bsi_layer_surface_toplevel");
+    debug("Got event map from bsi_layer_surface_toplevel");
 
     struct bsi_layer_surface_toplevel* layer_toplevel =
         wl_container_of(listener, layer_toplevel, listen.map);
@@ -422,7 +422,7 @@ handle_map(struct wl_listener* listener, void* data)
 static void
 handle_unmap(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event unmap from bsi_layer_surface_toplevel");
+    debug("Got event unmap from bsi_layer_surface_toplevel");
 
     struct bsi_layer_surface_toplevel* layer_toplevel =
         wl_container_of(listener, layer_toplevel, listen.unmap);
@@ -443,7 +443,7 @@ handle_unmap(struct wl_listener* listener, void* data)
 static void
 handle_destroy(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event destroy from bsi_layer_surface_toplevel");
+    debug("Got event destroy from bsi_layer_surface_toplevel");
 
     struct bsi_layer_surface_toplevel* layer_toplevel =
         wl_container_of(listener, layer_toplevel, listen.destroy);
@@ -464,7 +464,7 @@ handle_destroy(struct wl_listener* listener, void* data)
 static void
 handle_new_popup(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event new_popup from bsi_layer_surface_toplevel");
+    debug("Got event new_popup from bsi_layer_surface_toplevel");
 
     struct bsi_layer_surface_toplevel* layer_toplevel =
         wl_container_of(listener, layer_toplevel, listen.new_popup);
@@ -508,14 +508,14 @@ handle_new_popup(struct wl_listener* listener, void* data)
 static void
 handle_commit(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event commit from bsi_layer_surface_toplevel");
+    debug("Got event commit from bsi_layer_surface_toplevel");
 
     struct bsi_layer_surface_toplevel* layer_toplevel =
         wl_container_of(listener, layer_toplevel, listen.commit);
     struct bsi_output* output = layer_toplevel->output;
 
-    bsi_debug("Toplevel namespace is '%s'",
-              layer_toplevel->layer_surface->namespace);
+    debug("Toplevel namespace is '%s'",
+          layer_toplevel->layer_surface->namespace);
 
     bool to_another_layer = false;
     if (layer_toplevel->layer_surface->current.committed != 0 ||
@@ -537,7 +537,7 @@ handle_commit(struct wl_listener* listener, void* data)
 static void
 handle_new_subsurface(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event new_subsurface from bsi_layer_surface_toplevel");
+    debug("Got event new_subsurface from bsi_layer_surface_toplevel");
 
     struct wlr_subsurface* wlr_subsurface = data;
     struct bsi_layer_surface_toplevel* layer_toplevel =
@@ -566,7 +566,7 @@ handle_new_subsurface(struct wl_listener* listener, void* data)
 void
 handle_layer_shell_new_surface(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event new_surface from wlr_layer_shell_v1");
+    debug("Got event new_surface from wlr_layer_shell_v1");
 
     struct bsi_server* server =
         wl_container_of(listener, server, listen.layer_new_surface);
@@ -596,10 +596,10 @@ handle_layer_shell_new_surface(struct wl_listener* listener, void* data)
     //                      link_output)
     //     {
     //         if (toplevel->layer_surface->current.exclusive_zone > 0) {
-    //             bsi_debug(
+    //             debug(
     //                 "Refusing layer shell client wanting already exclusively
     //                 " "taken layer");
-    //             bsi_debug("New client namespace '%s', exclusive client "
+    //             debug("New client namespace '%s', exclusive client "
     //                       "namespace '%s'",
     //                       toplevel->layer_surface->namespace,
     //                       layer_surface->namespace);

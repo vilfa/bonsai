@@ -112,9 +112,9 @@ xdg_shell_view_cursor_interactive(struct bsi_view* view,
         wlr_scene_node_coords(view->node, &lx, &ly);
         server->cursor.grab_sx = server->wlr_cursor->x - lx;
         server->cursor.grab_sy = server->wlr_cursor->y - ly;
-        bsi_debug("Surface local move coords are (%.2f, %.2f)",
-                  server->cursor.grab_sx,
-                  server->cursor.grab_sy);
+        debug("Surface local move coords are (%.2f, %.2f)",
+              server->cursor.grab_sx,
+              server->cursor.grab_sy);
     } else {
         struct wlr_box surface_box;
         struct wlr_xdg_toplevel_resize_event* event = toplevel_event.resize;
@@ -142,14 +142,14 @@ xdg_shell_view_cursor_interactive(struct bsi_view* view,
         server->cursor.grab_box.height += surface_box.y;
         server->cursor.resize_edges = event->edges;
 
-        bsi_debug("Surface local resize coords are (%.2f, %.2f)",
-                  server->cursor.grab_sx,
-                  server->cursor.grab_sy);
-        bsi_debug("Surface grab box is [%d, %d, %d, %d]",
-                  server->cursor.grab_box.x,
-                  server->cursor.grab_box.y,
-                  server->cursor.grab_box.width,
-                  server->cursor.grab_box.height);
+        debug("Surface local resize coords are (%.2f, %.2f)",
+              server->cursor.grab_sx,
+              server->cursor.grab_sy);
+        debug("Surface grab box is [%d, %d, %d, %d]",
+              server->cursor.grab_box.x,
+              server->cursor.grab_box.y,
+              server->cursor.grab_box.width,
+              server->cursor.grab_box.height);
     }
 }
 
@@ -165,11 +165,11 @@ xdg_shell_view_set_maximized(struct bsi_view* view, bool maximized)
     view->state = new_state;
 
     if (view->state == BSI_VIEW_STATE_NORMAL) {
-        bsi_debug("Unmaximize view '%s', restore prev",
-                  view->wlr_xdg_toplevel->app_id);
+        debug("Unmaximize view '%s', restore prev",
+              view->wlr_xdg_toplevel->app_id);
         view_restore_prev(view);
     } else {
-        bsi_debug("Maximize view '%s'", view->wlr_xdg_toplevel->app_id);
+        debug("Maximize view '%s'", view->wlr_xdg_toplevel->app_id);
 
         /* Save the geometry. */
         wlr_xdg_surface_get_geometry(view->wlr_xdg_toplevel->base, &view->geom);
@@ -198,15 +198,15 @@ xdg_shell_view_set_minimized(struct bsi_view* view, bool minimized)
     view->state = new_state;
 
     if (view->state == BSI_VIEW_STATE_NORMAL) {
-        bsi_debug("Unimimize view '%s', restore prev",
-                  view->wlr_xdg_toplevel->app_id);
+        debug("Unimimize view '%s', restore prev",
+              view->wlr_xdg_toplevel->app_id);
         view_restore_prev(view);
         views_remove(view);
         views_add(view->server, view);
         output_layers_arrange(view->workspace->output);
         wlr_scene_node_set_enabled(view->node, true);
     } else {
-        bsi_debug("Minimize view '%s'", view->wlr_xdg_toplevel->app_id);
+        debug("Minimize view '%s'", view->wlr_xdg_toplevel->app_id);
         wlr_scene_node_set_enabled(view->node, false);
         views_remove(view);
         views_focus_recent(view->server);
@@ -227,7 +227,7 @@ xdg_shell_view_set_fullscreen(struct bsi_view* view, bool fullscreen)
     view->state = new_state;
 
     if (view->state == BSI_VIEW_STATE_NORMAL) {
-        bsi_debug("Unfullscreen view '%s'", view->wlr_xdg_toplevel->app_id);
+        debug("Unfullscreen view '%s'", view->wlr_xdg_toplevel->app_id);
 
         /* Remove from fullscreen views. */
         wl_list_remove(&view->link_fullscreen);
@@ -245,7 +245,7 @@ xdg_shell_view_set_fullscreen(struct bsi_view* view, bool fullscreen)
             WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_CLIENT_SIDE);
         view_restore_prev(view);
     } else {
-        bsi_debug("Fullscreen view '%s'", view->wlr_xdg_toplevel->app_id);
+        debug("Fullscreen view '%s'", view->wlr_xdg_toplevel->app_id);
 
         /* Save the geometry. */
         wlr_xdg_surface_get_geometry(view->wlr_xdg_toplevel->base, &view->geom);
@@ -296,10 +296,10 @@ xdg_shell_view_set_tiled_left(struct bsi_view* view, bool tiled)
     view->state = new_state;
 
     if (view->state == BSI_VIEW_STATE_NORMAL) {
-        bsi_debug("Untile view '%s'", view->wlr_xdg_toplevel->app_id);
+        debug("Untile view '%s'", view->wlr_xdg_toplevel->app_id);
         view_restore_prev(view);
     } else {
-        bsi_debug("Tile view '%s' left", view->wlr_xdg_toplevel->app_id);
+        debug("Tile view '%s' left", view->wlr_xdg_toplevel->app_id);
 
         /* Save the geometry. */
         wlr_xdg_surface_get_geometry(view->wlr_xdg_toplevel->base, &view->geom);
@@ -327,10 +327,10 @@ xdg_shell_view_set_tiled_right(struct bsi_view* view, bool tiled)
     view->state = new_state;
 
     if (view->state == BSI_VIEW_STATE_NORMAL) {
-        bsi_debug("Untile view '%s'", view->wlr_xdg_toplevel->app_id);
+        debug("Untile view '%s'", view->wlr_xdg_toplevel->app_id);
         view_restore_prev(view);
     } else {
-        bsi_debug("Tile view '%s' right", view->wlr_xdg_toplevel->app_id);
+        debug("Tile view '%s' right", view->wlr_xdg_toplevel->app_id);
 
         /* Save the geometry. */
         wlr_xdg_surface_get_geometry(view->wlr_xdg_toplevel->base, &view->geom);
@@ -366,9 +366,8 @@ xdg_shell_view_restore_prev(struct bsi_view* view)
             break;
     }
 
-    bsi_debug(
-        "Restoring view position to (%d, %d)", view->geom.x, view->geom.y);
-    bsi_debug(
+    debug("Restoring view position to (%d, %d)", view->geom.x, view->geom.y);
+    debug(
         "Restoring view size to (%d, %d)", view->geom.width, view->geom.height);
     wlr_scene_node_set_position(view->node, view->geom.x, view->geom.y);
     wlr_xdg_toplevel_set_resizing(view->wlr_xdg_toplevel, true);
@@ -458,14 +457,14 @@ static const struct bsi_view_impl view_impl = {
 static void
 handle_destroy(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event destroy from wlr_xdg_surface");
+    debug("Got event destroy from wlr_xdg_surface");
 
     struct bsi_xdg_shell_view* v = wl_container_of(listener, v, listen.destroy);
     struct bsi_view* view = &v->view;
 
-    bsi_info("Workspace %s now has %d views",
-             view->workspace->name,
-             wl_list_length(&view->workspace->views) - 1);
+    info("Workspace %s now has %d views",
+         view->workspace->name,
+         wl_list_length(&view->workspace->views) - 1);
 
     /* The view will already have been unmapped by the time it gets here, no
      * need to call remove. */
@@ -476,7 +475,7 @@ handle_destroy(struct wl_listener* listener, void* data)
 static void
 handle_map(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event map from wlr_xdg_surface");
+    debug("Got event map from wlr_xdg_surface");
 
     struct bsi_xdg_shell_view* v = wl_container_of(listener, v, listen.map);
     struct bsi_view* view = &v->view;
@@ -494,15 +493,15 @@ handle_map(struct wl_listener* listener, void* data)
         wants_box.y = (output_h - wants_box.height) / 2;
         wlr_scene_node_set_position(view->node, wants_box.x, wants_box.y);
 
-        bsi_debug("Output effective resolution is %dx%d, client wants %dx%d",
-                  output_w,
-                  output_h,
-                  wants_box.width,
-                  wants_box.height);
+        debug("Output effective resolution is %dx%d, client wants %dx%d",
+              output_w,
+              output_h,
+              wants_box.width,
+              wants_box.height);
 
-        bsi_debug("Set client node base position to (%d, %d)",
-                  wants_box.x,
-                  wants_box.y);
+        debug("Set client node base position to (%d, %d)",
+              wants_box.x,
+              wants_box.y);
     }
 
     /* Only honor one request of this type. A surface can't request to be
@@ -522,7 +521,7 @@ handle_map(struct wl_listener* listener, void* data)
 static void
 handle_unmap(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event unmap from wlr_xdg_surface");
+    debug("Got event unmap from wlr_xdg_surface");
 
     struct bsi_xdg_shell_view* v = wl_container_of(listener, v, listen.unmap);
     struct bsi_view* view = &v->view;
@@ -536,7 +535,7 @@ handle_unmap(struct wl_listener* listener, void* data)
 static void
 handle_request_maximize(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event request_maximize from wlr_xdg_toplevel");
+    debug("Got event request_maximize from wlr_xdg_toplevel");
 
     struct bsi_xdg_shell_view* v =
         wl_container_of(listener, v, listen.request_maximize);
@@ -549,7 +548,7 @@ handle_request_maximize(struct wl_listener* listener, void* data)
 static void
 handle_request_fullscreen(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event request_fullscreen from wlr_xdg_toplevel");
+    debug("Got event request_fullscreen from wlr_xdg_toplevel");
 
     struct bsi_xdg_shell_view* v =
         wl_container_of(listener, v, listen.request_fullscreen);
@@ -562,7 +561,7 @@ handle_request_fullscreen(struct wl_listener* listener, void* data)
 static void
 handle_request_minimize(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event request_minimize from wlr_xdg_toplevel");
+    debug("Got event request_minimize from wlr_xdg_toplevel");
 
     struct bsi_xdg_shell_view* v =
         wl_container_of(listener, v, listen.request_minimize);
@@ -576,7 +575,7 @@ handle_request_minimize(struct wl_listener* listener, void* data)
 static void
 handle_request_move(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event request_move from wlr_xdg_toplevel");
+    debug("Got event request_move from wlr_xdg_toplevel");
 
     /* The user would like to begin an interactive move operation. This is
      * raised when a user clicks on the client side decorations. */
@@ -594,7 +593,7 @@ handle_request_move(struct wl_listener* listener, void* data)
 static void
 handle_request_resize(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event request_resize from wlr_xdg_toplevel");
+    debug("Got event request_resize from wlr_xdg_toplevel");
 
     /* The user would like to begin an interactive resize operation. This is
      * raised when a use clicks on the client side decorations. */
@@ -612,7 +611,7 @@ handle_request_resize(struct wl_listener* listener, void* data)
 static void
 handle_request_show_window_menu(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event request_show_window_menu from wlr_xdg_toplevel");
+    debug("Got event request_show_window_menu from wlr_xdg_toplevel");
 
     struct bsi_xdg_shell_view* v =
         wl_container_of(listener, v, listen.request_show_window_menu);
@@ -622,7 +621,7 @@ handle_request_show_window_menu(struct wl_listener* listener, void* data)
 
     // TODO: Handle show window menu
     if (wlr_seat_client_validate_event_serial(event->seat, event->serial)) {
-        bsi_debug("Should show window menu");
+        debug("Should show window menu");
     }
 }
 
@@ -630,7 +629,7 @@ handle_request_show_window_menu(struct wl_listener* listener, void* data)
 void
 handle_xdg_shell_new_surface(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event new_surface from wlr_xdg_shell");
+    debug("Got event new_surface from wlr_xdg_shell");
 
     struct bsi_server* server =
         wl_container_of(listener, server, listen.xdg_new_surface);
@@ -707,17 +706,17 @@ handle_xdg_shell_new_surface(struct wl_listener* listener, void* data)
 
         /* Add wired up view to workspace on the active output. */
         workspace_view_add(workspace, &view->view);
-        bsi_debug("Attached view to workspace %s", workspace->name);
-        bsi_info("Workspace %s now has %d views",
-                 workspace->name,
-                 wl_list_length(&workspace->views));
+        debug("Attached view to workspace %s", workspace->name);
+        info("Workspace %s now has %d views",
+             workspace->name,
+             wl_list_length(&workspace->views));
     }
 }
 
 void
 handle_xdg_request_activate(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event request_activate from wlr_xdg_activation");
+    debug("Got event request_activate from wlr_xdg_activation");
 
     struct wlr_xdg_activation_v1_request_activate_event* event = data;
 

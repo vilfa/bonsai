@@ -84,42 +84,40 @@ config_output_apply(struct bsi_config_atom* atom, struct bsi_server* server)
     wl_list_for_each(output, &server->output.outputs, link_server)
     {
         if (strcmp(output->output->name, output_name) == 0) {
-            bsi_debug("Matched output %s (%s %s)",
-                      output->output->name,
-                      output->output->make,
-                      output->output->model);
+            debug("Matched output %s (%s %s)",
+                  output->output->name,
+                  output->output->make,
+                  output->output->model);
             found = true;
 
             wlr_output_set_custom_mode(output->output, width, height, refresh);
             wlr_output_enable(output->output, true);
             if (!wlr_output_commit(output->output)) {
-                bsi_error("Failed to commit on output '%s'",
-                          output->output->name);
+                error("Failed to commit on output '%s'", output->output->name);
                 return false;
             }
 
-            bsi_info("Set mode { width=%d, height=%d, refresh=%d } for output "
-                     "%ld/%s (%s %s)",
-                     width,
-                     height,
-                     refresh,
-                     output->id,
-                     output->output->name,
-                     output->output->make,
-                     output->output->model);
+            info("Set mode { width=%d, height=%d, refresh=%d } for output "
+                 "%ld/%s (%s %s)",
+                 width,
+                 height,
+                 refresh,
+                 output->id,
+                 output->output->name,
+                 output->output->make,
+                 output->output->model);
 
             return true;
         } else {
-            bsi_debug(
-                "Found output %s (%s %s), doesn't match current config entry",
-                output->output->name,
-                output->output->make,
-                output->output->model);
+            debug("Found output %s (%s %s), doesn't match current config entry",
+                  output->output->name,
+                  output->output->make,
+                  output->output->model);
         }
     }
 
     if (!found)
-        bsi_error("No output matching name '%s' found", output_name);
+        error("No output matching config entry '%s' found", output_name);
 
     return false;
 
@@ -128,9 +126,9 @@ error:
         util_split_free(&cmd);
     if (resl)
         util_split_free(&resl);
-    bsi_error("Invalid output config syntax '%s', syntax is 'output <name> "
-              "mode <w>x<h> refresh <r>'",
-              atom->cmd);
+    error("Invalid output config syntax '%s', syntax is 'output <name> "
+          "mode <w>x<h> refresh <r>'",
+          atom->cmd);
     return false;
 }
 
@@ -141,6 +139,7 @@ config_input_apply(struct bsi_config_atom* atom, struct bsi_server* server)
      *  input pointer <name> accel_speed <f.f>
      *  input pointer <name> accel_profile <none|flat|adaptive>
      *  input pointer <name> scroll natural
+     *  input pointer <name> tap
      *  input keyboard <name> layout <layout>
      *  input keyboard <name> repeat_info <n> <n>
      */
@@ -155,7 +154,7 @@ config_input_apply(struct bsi_config_atom* atom, struct bsi_server* server)
     input_config = calloc(1, sizeof(struct bsi_config_input));
 
     if (strcasecmp("pointer", cmd[1]) == 0) {
-        if (len_cmd != 6)
+        if (len_cmd != 5 && len_cmd != 6)
             goto error;
 
         util_strip_quotes(cmd[2]);
@@ -167,6 +166,9 @@ config_input_apply(struct bsi_config_atom* atom, struct bsi_server* server)
             input_config->accel_speed = strtod(cmd[4], NULL);
             if (errno)
                 goto error;
+            info("Pointer accel_speed is %.2lf for device '%s'",
+                 input_config->accel_speed,
+                 input_config->device_name);
         } else if (strcasecmp("accel_profile", cmd[3]) == 0) {
             input_config->type = BSI_CONFIG_INPUT_POINTER_ACCEL_PROFILE;
             if (strcasecmp("none", cmd[4]) == 0) {
@@ -182,10 +184,20 @@ config_input_apply(struct bsi_config_atom* atom, struct bsi_server* server)
                 input_config->accel_profile =
                     LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE;
             }
+            info("Pointer accel_profile is %d for device '%s'",
+                 input_config->accel_profile,
+                 input_config->device_name);
         } else if (strcasecmp("scroll", cmd[3]) == 0 &&
                    strcasecmp("natural", cmd[4]) == 0) {
             input_config->type = BSI_CONFIG_INPUT_POINTER_SCROLL_NATURAL;
             input_config->natural_scroll = true;
+            info("Pointer natural scroll is on for device '%s'",
+                 input_config->device_name);
+        } else if (strcasecmp("tap", cmd[3]) == 0) {
+            input_config->type = BSI_CONFIG_INPUT_POINTER_TAP;
+            input_config->tap = true;
+            info("Pointer tap is on for device '%s'",
+                 input_config->device_name);
         } else {
             goto error;
         }
@@ -199,6 +211,9 @@ config_input_apply(struct bsi_config_atom* atom, struct bsi_server* server)
         if (strcasecmp("layout", cmd[3]) == 0) {
             input_config->type = BSI_CONFIG_INPUT_KEYBOARD_LAYOUT;
             input_config->layout = strdup(cmd[4]);
+            info("Keyboard layout for device '%s' is '%s'",
+                 input_config->device_name,
+                 input_config->layout);
         } else if (strcasecmp("repeat_info", cmd[3]) == 0) {
             input_config->type = BSI_CONFIG_INPUT_KEYBOARD_REPEAT_INFO;
             errno = 0;
@@ -206,9 +221,13 @@ config_input_apply(struct bsi_config_atom* atom, struct bsi_server* server)
             if (errno)
                 goto error;
             errno = 0;
-            input_config->delay = strtoul(cmd[5], NULL, 10);
+            input_config->repeat_delay = strtoul(cmd[5], NULL, 10);
             if (errno)
                 goto error;
+            info("Keyboard repeat info for device '%s' is rate=%d, delay=%d",
+                 input_config->device_name,
+                 input_config->repeat_rate,
+                 input_config->repeat_delay);
         } else {
             goto error;
         }
@@ -226,13 +245,14 @@ error:
     if (input_config)
         free(input_config);
     util_split_free(&cmd);
-    bsi_error("Invalid input config syntax '%s', syntax is one of: \n"
-              "\tinput pointer <name> accel_speed <f.f>\n"
-              "\tinput pointer <name> accel_profile <none|flat|adaptive>\n"
-              "\tinput pointer <name> scroll natural\n"
-              "\tinput keyboard <name> layout <layout>\n"
-              "\tinput keyboard <name> repeat_info <n> <n>",
-              atom->cmd);
+    error("Invalid input config syntax '%s', syntax is one of: \n"
+          "\tinput pointer <name> accel_speed <f.f>\n"
+          "\tinput pointer <name> accel_profile <none|flat|adaptive>\n"
+          "\tinput pointer <name> scroll natural\n"
+          "\tinput pointer <name> tap\n"
+          "\tinput keyboard <name> layout <layout>\n"
+          "\tinput keyboard <name> repeat_info <n> <n>",
+          atom->cmd);
     return false;
 }
 
@@ -255,15 +275,15 @@ config_workspace_apply(struct bsi_config_atom* atom, struct bsi_server* server)
     server->config.workspaces = workspaces_max;
     util_split_free(&cmd);
 
-    bsi_info("Max workspace count is %ld", server->config.workspaces);
+    info("Workspace count is %ld", server->config.workspaces);
 
     return true;
 
 error:
     util_split_free(&cmd);
-    bsi_error("Invalid workspace limit syntax '%s', syntax is 'workspace "
-              "count max <n>'",
-              atom->cmd);
+    error("Invalid workspace limit syntax '%s', syntax is 'workspace "
+          "count max <n>'",
+          atom->cmd);
     return false;
 }
 
@@ -275,16 +295,16 @@ config_wallpaper_apply(struct bsi_config_atom* atom, struct bsi_server* server)
     size_t len_cmd = util_split_delim(atom->cmd, " ", &cmd, false);
     if (len_cmd != 3) {
         util_split_free(&cmd);
-        bsi_error("Invalid wallpaper config syntax '%s', syntax is 'wallpaper "
-                  "<abs_path>'",
-                  atom->cmd);
+        error("Invalid wallpaper config syntax '%s', syntax is 'wallpaper "
+              "<abs_path>'",
+              atom->cmd);
         return false;
     }
 
     server->config.wallpaper = cmd[1];
     util_split_free(&cmd);
 
-    bsi_info("Wallpaper path is '%s'", server->config.wallpaper);
+    info("Wallpaper is '%s'", server->config.wallpaper);
 
     return true;
 }

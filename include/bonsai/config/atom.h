@@ -20,6 +20,7 @@ enum bsi_config_input_type
     BSI_CONFIG_INPUT_POINTER_ACCEL_SPEED,
     BSI_CONFIG_INPUT_POINTER_ACCEL_PROFILE,
     BSI_CONFIG_INPUT_POINTER_SCROLL_NATURAL,
+    BSI_CONFIG_INPUT_POINTER_TAP,
     BSI_CONFIG_INPUT_KEYBOARD_LAYOUT,
     BSI_CONFIG_INPUT_KEYBOARD_REPEAT_INFO,
 };
@@ -31,9 +32,10 @@ struct bsi_config_input
     double accel_speed;
     enum libinput_config_accel_profile accel_profile;
     bool natural_scroll;
+    bool tap;
     char* layout;
     uint32_t repeat_rate;
-    uint32_t delay;
+    uint32_t repeat_delay;
     struct wl_list link;
 };
 

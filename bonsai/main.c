@@ -45,8 +45,6 @@
 
 // TODO: Rework keyboard keymap settings.
 
-// TODO: Add config option for touchpad tap.
-
 int
 main(void)
 {

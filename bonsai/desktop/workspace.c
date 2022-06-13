@@ -95,7 +95,7 @@ workspace_views_show_all(struct bsi_workspace* workspace, bool show_all)
 
     struct bsi_view* view;
     if (show_all) {
-        bsi_info("Show all views of workspace '%s'", workspace->name);
+        info("Show all views of workspace '%s'", workspace->name);
 
         wl_list_for_each(view, &workspace->views, link_workspace)
         {
@@ -103,7 +103,7 @@ workspace_views_show_all(struct bsi_workspace* workspace, bool show_all)
                 view_set_minimized(view, false);
         }
     } else {
-        bsi_info("Hide all views of workspace '%s'", workspace->name);
+        info("Hide all views of workspace '%s'", workspace->name);
 
         wl_list_for_each(view, &workspace->views, link_workspace)
         {
@@ -130,45 +130,45 @@ workspace_views_show_all(struct bsi_workspace* workspace, bool show_all)
 void
 handle_server_workspace_active(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event active for bsi_server from bsi_workspace");
+    debug("Got event active for bsi_server from bsi_workspace");
 
     struct bsi_workspace* workspace = data;
     struct bsi_server* server = workspace->server;
     server->active_workspace = (workspace->active) ? workspace : NULL;
-    bsi_info("Server workspace %ld/%s is now %s",
-             workspace_get_global_id(workspace),
-             workspace->name,
-             (workspace->active) ? "active" : "inactive");
+    info("Server workspace %ld/%s is now %s",
+         workspace_get_global_id(workspace),
+         workspace->name,
+         (workspace->active) ? "active" : "inactive");
 }
 
 void
 handle_output_workspace_active(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event active for bsi_output from bsi_workspace");
+    debug("Got event active for bsi_output from bsi_workspace");
 
     struct bsi_workspace* workspace = data;
     struct bsi_output* output = workspace->output;
     output->active_workspace = (workspace->active) ? workspace : NULL;
-    bsi_debug("Workspace %ld/%s for output %ld/%s is now %s",
-              workspace_get_global_id(workspace),
-              workspace->name,
-              output->id,
-              output->output->name,
-              (workspace->active) ? "active" : "inactive");
+    debug("Workspace %ld/%s for output %ld/%s is now %s",
+          workspace_get_global_id(workspace),
+          workspace->name,
+          output->id,
+          output->output->name,
+          (workspace->active) ? "active" : "inactive");
 }
 
 void
 handle_view_workspace_active(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event active for bsi_view from bsi_workspace");
+    debug("Got event active for bsi_view from bsi_workspace");
 
     struct bsi_workspace* workspace = data;
     struct bsi_view* view =
         wl_container_of(listener, view, listen.workspace_active);
     wlr_scene_node_set_enabled(view->node, workspace->active);
-    bsi_debug("View with app_id '%s' of workspace %ld/%s is now %s",
-              view->wlr_xdg_toplevel->app_id,
-              workspace_get_global_id(workspace),
-              workspace->name,
-              (workspace->active) ? "enabled" : "disabled");
+    debug("View with app_id '%s' of workspace %ld/%s is now %s",
+          view->wlr_xdg_toplevel->app_id,
+          workspace_get_global_id(workspace),
+          workspace->name,
+          (workspace->active) ? "enabled" : "disabled");
 }

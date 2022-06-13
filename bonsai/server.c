@@ -70,10 +70,8 @@ server_init(struct bsi_server* server, struct bsi_config* config)
     config_apply(config);
 
     wl_list_init(&server->output.outputs);
-    bsi_debug("Initialized bsi_outputs");
 
     server->wl_display = wl_display_create();
-    bsi_debug("Created display");
 
     server->wlr_backend = wlr_backend_autocreate(server->wl_display);
     util_slot_connect(&server->wlr_backend->events.new_output,
@@ -82,34 +80,28 @@ server_init(struct bsi_server* server, struct bsi_config* config)
     util_slot_connect(&server->wlr_backend->events.new_input,
                       &server->listen.new_input,
                       handle_new_input);
-    bsi_debug("Autocreated backend & attached handlers");
 
     server->wlr_renderer = wlr_renderer_autocreate(server->wlr_backend);
     if (!wlr_renderer_init_wl_display(server->wlr_renderer,
                                       server->wl_display)) {
-        bsi_error("Failed to intitialize renderer with wl_display");
+        error("Failed to intitialize renderer with wl_display");
         wlr_backend_destroy(server->wlr_backend);
         wl_display_destroy(server->wl_display);
         exit(EXIT_FAILURE);
     }
-    bsi_debug("Autocreated renderer & initialized wl_display");
 
     server->wlr_allocator =
         wlr_allocator_autocreate(server->wlr_backend, server->wlr_renderer);
-    bsi_debug("Autocreated wlr_allocator");
 
     wlr_compositor_create(server->wl_display, server->wlr_renderer);
     wlr_subcompositor_create(server->wl_display);
     wlr_data_device_manager_create(server->wl_display);
     wlr_gamma_control_manager_v1_create(server->wl_display);
-    bsi_debug("Created wlr_compositor, wlr_subcompositor, "
-              "wlr_data_device_manager & wlr_gamma_control_manager");
 
     server->wlr_output_layout = wlr_output_layout_create();
     util_slot_connect(&server->wlr_output_layout->events.change,
                       &server->listen.output_layout_change,
                       handle_output_layout_change);
-    bsi_debug("Created output layout");
 
     server->wlr_output_manager =
         wlr_output_manager_v1_create(server->wl_display);
@@ -119,22 +111,18 @@ server_init(struct bsi_server* server, struct bsi_config* config)
     util_slot_connect(&server->wlr_output_manager->events.test,
                       &server->listen.output_manager_test,
                       handle_output_manager_test);
-    bsi_debug("Created wlr_output_manager_v1 & attached handlers");
 
     wlr_xdg_output_manager_v1_create(server->wl_display,
                                      server->wlr_output_layout);
-    bsi_debug("Created xdg_output_manager_v1");
 
     server->wlr_scene = wlr_scene_create();
     wlr_scene_attach_output_layout(server->wlr_scene,
                                    server->wlr_output_layout);
-    bsi_debug("Created wlr_scene & attached wlr_output_layout");
 
     server->wlr_xdg_shell = wlr_xdg_shell_create(server->wl_display, 2);
     util_slot_connect(&server->wlr_xdg_shell->events.new_surface,
                       &server->listen.xdg_new_surface,
                       handle_xdg_shell_new_surface);
-    bsi_debug("Created wlr_xdg_shell & attached handlers");
 
     server->wlr_xdg_decoration_manager =
         wlr_xdg_decoration_manager_v1_create(server->wl_display);
@@ -142,39 +130,29 @@ server_init(struct bsi_server* server, struct bsi_config* config)
         &server->wlr_xdg_decoration_manager->events.new_toplevel_decoration,
         &server->listen.new_decoration,
         handle_xdg_decoration_manager_new_decoration);
-    bsi_debug("Created wlr_xdg_decoration_manager & attached handlers");
 
     server->wlr_layer_shell = wlr_layer_shell_v1_create(server->wl_display);
     util_slot_connect(&server->wlr_layer_shell->events.new_surface,
                       &server->listen.layer_new_surface,
                       handle_layer_shell_new_surface);
-    bsi_debug("Created wlr_layer_shell_v1 & attached handlers");
 
     server->wlr_cursor = wlr_cursor_create();
     wlr_cursor_attach_output_layout(server->wlr_cursor,
                                     server->wlr_output_layout);
-    bsi_debug("Created wlr_cursor & attached it to wlr_output_layout");
 
     const float cursor_scale = 1.0f;
     server->wlr_xcursor_manager = wlr_xcursor_manager_create("default", 24);
     wlr_xcursor_manager_load(server->wlr_xcursor_manager, cursor_scale);
-    bsi_debug(
-        "Created wlr_xcursor_manager & loaded xcursor theme with scale %.1f",
-        cursor_scale);
 
     wlr_export_dmabuf_manager_v1_create(server->wl_display);
     wlr_screencopy_manager_v1_create(server->wl_display);
     wlr_data_control_manager_v1_create(server->wl_display);
     wlr_primary_selection_v1_device_manager_create(server->wl_display);
-    bsi_debug(
-        "Created wlr_export_dmabuf_manager, wlr_screencopy_manager, "
-        "wlr_data_control_manager & wlr_primary_selection_device_manager");
 
     struct wlr_xdg_foreign_registry* foreign_registry =
         wlr_xdg_foreign_registry_create(server->wl_display);
     wlr_xdg_foreign_v1_create(server->wl_display, foreign_registry);
     wlr_xdg_foreign_v2_create(server->wl_display, foreign_registry);
-    bsi_debug("Created wlr_xdg_foreign_registry");
 
     server->wlr_xdg_activation =
         wlr_xdg_activation_v1_create(server->wl_display);
@@ -192,7 +170,6 @@ server_init(struct bsi_server* server, struct bsi_config* config)
                       &server->listen.new_inhibitor,
                       handle_idle_manager_new_inhibitor);
     wl_list_init(&server->idle.inhibitors);
-    bsi_debug("Created wlr_idle, wlr_idle_inhibit_manager & added handlers");
 
     server->wlr_session_lock_manager =
         wlr_session_lock_manager_v1_create(server->wl_display);
@@ -201,7 +178,6 @@ server_init(struct bsi_server* server, struct bsi_config* config)
                       handle_session_lock_manager_new_lock);
     server->session.locked = false;
     server->session.lock = NULL;
-    bsi_debug("Created wlr_session_lock_manager & added handlers");
 
     server->cursor.cursor_mode = BSI_CURSOR_NORMAL;
     server->cursor.cursor_image = BSI_CURSOR_IMAGE_NORMAL;
@@ -218,17 +194,14 @@ server_init(struct bsi_server* server, struct bsi_config* config)
     server->cursor.swipe_cancelled = false;
     server->cursor.swipe_fingers = 0;
     server->cursor.swipe_timest = 0;
-    bsi_debug("Initialized bsi_cursor");
 
     const char* seat_name = "seat0";
     server->wlr_seat = wlr_seat_create(server->wl_display, seat_name);
-    bsi_debug("Created seat '%s'", seat_name);
 
     server->wlr_input_inhbit_manager =
         wlr_input_inhibit_manager_create(server->wl_display);
 
     wl_list_init(&server->input.inputs);
-    bsi_debug("Initialized bsi_inputs");
 
     util_slot_connect(&server->wlr_seat->events.pointer_grab_begin,
                       &server->listen.pointer_grab_begin,
@@ -251,15 +224,12 @@ server_init(struct bsi_server* server, struct bsi_config* config)
     util_slot_connect(&server->wlr_seat->events.request_set_primary_selection,
                       &server->listen.request_set_primary_selection,
                       handle_request_set_primary_selection_notify);
-    bsi_debug("Attached handlers for seat '%s'", seat_name);
 
     wl_list_init(&server->scene.views);
     wl_list_init(&server->scene.views_fullscreen);
     wl_list_init(&server->scene.xdg_decorations);
-    bsi_debug("Initialized views and decorations");
 
     wl_list_init(&server->listen.workspace);
-    bsi_debug("Initialized workspace listeners");
 
     server->active_workspace = NULL;
     server->session.shutting_down = false;
@@ -279,17 +249,17 @@ void
 server_setup(struct bsi_server* server)
 {
     server->wl_socket = wl_display_add_socket_auto(server->wl_display);
-    bsi_debug("Created server socket '%s'", server->wl_socket);
+    debug("Created server socket '%s'", server->wl_socket);
 
     if (setenv("WAYLAND_DISPLAY", server->wl_socket, true) != 0) {
-        bsi_errno("Failed to set WAYLAND_DISPLAY env var");
+        errn("Failed to set WAYLAND_DISPLAY env var");
         wlr_backend_destroy(server->wlr_backend);
         wl_display_destroy(server->wl_display);
         exit(EXIT_FAILURE);
     }
 
     if (setenv("XDG_CURRENT_DESKTOP", "wlroots", true) != 0) {
-        bsi_errno("Failed to set XDG_CURRENT_DESKTOP env var");
+        errn("Failed to set XDG_CURRENT_DESKTOP env var");
         wlr_backend_destroy(server->wlr_backend);
         wl_display_destroy(server->wl_display);
         exit(EXIT_FAILURE);
@@ -297,11 +267,8 @@ server_setup(struct bsi_server* server)
 
 #ifdef BSI_SOFTWARE_CURSOR
     if (setenv("WLR_NO_HARDWARE_CURSORS", "1", true) != 0) {
-        /* Workaround for https://github.com/swaywm/wlroots/issues/3189
-         * Note: Make sure the default cursor theme is set correctly in
-         * `/usr/share/icons/default/index.theme` or
-         * `$XDG_CONFIG_HOME/.icons/default/index.theme` */
-        bsi_errno("Failed to set WLR_NO_HARDWARE_CURSORS env var");
+        /* Workaround for https://github.com/swaywm/wlroots/issues/3189 */
+        errn("Failed to set WLR_NO_HARDWARE_CURSORS env var");
         wlr_backend_destroy(server->wlr_backend);
         wl_display_destroy(server->wl_display);
         exit(EXIT_FAILURE);
@@ -310,7 +277,7 @@ server_setup(struct bsi_server* server)
 
     if (setenv("GDK_BACKEND", "wayland", true) != 0) {
         /* If this is not set, waybar might think it's running under X. */
-        bsi_errno("Failed to set GDK_BACKEND env var");
+        errn("Failed to set GDK_BACKEND env var");
         wlr_backend_destroy(server->wlr_backend);
         wl_display_destroy(server->wl_display);
         exit(EXIT_FAILURE);
@@ -321,20 +288,20 @@ void
 server_run(struct bsi_server* server)
 {
     if (!wlr_backend_start(server->wlr_backend)) {
-        bsi_error("Failed to start backend");
+        error("Failed to start backend");
         wlr_backend_destroy(server->wlr_backend);
         wl_display_destroy(server->wl_display);
         exit(EXIT_FAILURE);
     }
 
-    bsi_info("Running compositor on socket '%s'", server->wl_socket);
+    info("Running compositor on socket '%s'", server->wl_socket);
     wl_display_run(server->wl_display);
 }
 
 void
 server_destroy(struct bsi_server* server)
 {
-    bsi_debug("Server finish");
+    debug("Server finish");
 
     server->session.shutting_down = true;
     wl_list_remove(&server->listen.new_output.link);
@@ -501,7 +468,7 @@ workspaces_get_active(struct bsi_output* output)
 void
 workspaces_next(struct bsi_output* output)
 {
-    bsi_info("Switch to next workspace");
+    info("Switch to next workspace");
 
     int32_t len_ws = wl_list_length(&output->workspaces);
     if (len_ws < (int32_t)output->server->config.workspaces &&
@@ -516,13 +483,12 @@ workspaces_next(struct bsi_output* output)
         workspace_init(workspace, output->server, output, workspace_name);
         workspaces_add(output, workspace);
 
-        bsi_info(
-            "Created new workspace %ld/%s", workspace->id, workspace->name);
-        bsi_info("Attached %ld/%s to output %ld/%s",
-                 workspace->id,
-                 workspace->name,
-                 output->id,
-                 output->output->name);
+        info("Created new workspace %ld/%s", workspace->id, workspace->name);
+        info("Attached %ld/%s to output %ld/%s",
+             workspace->id,
+             workspace->name,
+             output->id,
+             output->output->name);
     } else {
         struct bsi_workspace* next_workspace =
             output_get_next_workspace(output);
@@ -534,7 +500,7 @@ workspaces_next(struct bsi_output* output)
 void
 workspaces_prev(struct bsi_output* output)
 {
-    bsi_info("Switch to previous workspace");
+    info("Switch to previous workspace");
     struct bsi_workspace* prev_workspace = output_get_prev_workspace(output);
     workspace_set_active(output->active_workspace, false);
     workspace_set_active(prev_workspace, true);
@@ -649,31 +615,31 @@ decorations_remove(struct bsi_xdg_decoration* deco)
 void
 handle_pointer_grab_begin_notify(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event pointer_grab_begin from wlr_seat");
+    debug("Got event pointer_grab_begin from wlr_seat");
 }
 
 void
 handle_pointer_grab_end_notify(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event pointer_grab_end from wlr_seat");
+    debug("Got event pointer_grab_end from wlr_seat");
 }
 
 void
 handle_keyboard_grab_begin_notify(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event keyboard_grab_begin from wlr_seat");
+    debug("Got event keyboard_grab_begin from wlr_seat");
 }
 
 void
 handle_keyboard_grab_end_notify(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event keyboard_grab_end from wlr_seat");
+    debug("Got event keyboard_grab_end from wlr_seat");
 }
 
 void
 handle_request_set_cursor_notify(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event request_set_cursor from wlr_seat");
+    debug("Got event request_set_cursor from wlr_seat");
 
     struct bsi_server* server =
         wl_container_of(listener, server, listen.request_set_cursor);
@@ -690,7 +656,7 @@ handle_request_set_cursor_notify(struct wl_listener* listener, void* data)
 void
 handle_request_set_selection_notify(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event request_set_selection from wlr_seat");
+    debug("Got event request_set_selection from wlr_seat");
 
     struct bsi_server* server =
         wl_container_of(listener, server, listen.request_set_selection);
@@ -704,7 +670,7 @@ void
 handle_request_set_primary_selection_notify(struct wl_listener* listener,
                                             void* data)
 {
-    bsi_debug("Got event request_set_primary_selection from wlr_seat");
+    debug("Got event request_set_primary_selection from wlr_seat");
 
     struct bsi_server* server =
         wl_container_of(listener, server, listen.request_set_primary_selection);

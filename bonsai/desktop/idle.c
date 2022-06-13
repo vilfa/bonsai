@@ -64,7 +64,7 @@ idle_inhibitor_active(struct bsi_idle_inhibitor* inhibitor)
 static void
 handle_destroy(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event destroy from wlr_idle_inhibitor");
+    debug("Got event destroy from wlr_idle_inhibitor");
 
     struct bsi_idle_inhibitor* inhibitor =
         wl_container_of(listener, inhibitor, listen.destroy);
@@ -78,7 +78,7 @@ handle_destroy(struct wl_listener* listener, void* data)
 void
 handle_idle_manager_new_inhibitor(struct wl_listener* listener, void* data)
 {
-    bsi_debug("Got event new_inhibitor from wlr_idle_inhibit_manager");
+    debug("Got event new_inhibitor from wlr_idle_inhibit_manager");
 
     struct bsi_server* server =
         wl_container_of(listener, server, listen.new_inhibitor);
@@ -87,7 +87,7 @@ handle_idle_manager_new_inhibitor(struct wl_listener* listener, void* data)
     /* Only xdg and layer shell surfaces can have inhbitors. */
     if (!wlr_surface_is_xdg_surface(idle_inhibitor->surface) &&
         !wlr_surface_is_layer_surface(idle_inhibitor->surface)) {
-        bsi_info("Refuse to set inhbitor for non- xdg or layer shell surface");
+        info("Refuse to set inhbitor for non- xdg or layer shell surface");
         return;
     }
 

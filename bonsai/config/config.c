@@ -78,12 +78,12 @@ config_find(struct bsi_config* config)
 
             struct stat st;
             if (stat(pfull, &st) != 0) {
-                bsi_info("No config exists in location '%s'", pfull);
+                error("No config exists in location '%s'", pfull);
                 memset(pfull, 0, 255);
                 continue;
             }
             if (access(pfull, F_OK | R_OK) != 0 || !S_ISREG(st.st_mode)) {
-                bsi_info("No config exists in location '%s'", pfull);
+                error("No config exists in location '%s'", pfull);
                 memset(pfull, 0, 255);
                 continue;
             }
@@ -92,13 +92,13 @@ config_find(struct bsi_config* config)
             memcpy(config->path, pfull, 255);
         }
     } else {
-        bsi_info("$XDG_CONFIG_HOME not set");
+        info("XDG_CONFIG_HOME not set");
 
         char* phome;
         char pfull[255] = { 0 };
 
         if (!(phome = getenv("HOME"))) {
-            bsi_error("$HOME not set");
+            error("HOME not set");
             exit(EXIT_FAILURE);
         }
 
@@ -110,12 +110,12 @@ config_find(struct bsi_config* config)
 
             struct stat st;
             if (stat(pfull, &st) != 0) {
-                bsi_info("No config exists in location '%s'", pfull);
+                error("No config exists in location '%s'", pfull);
                 memset(pfull, 0, 255);
                 continue;
             }
             if (access(pfull, F_OK | R_OK) != 0 || !S_ISREG(st.st_mode)) {
-                bsi_info("No config exists in location '%s'", pfull);
+                error("No config exists in location '%s'", pfull);
                 memset(pfull, 0, 255);
                 continue;
             }
@@ -132,15 +132,15 @@ config_parse(struct bsi_config* config)
 {
     config_find(config);
     if (!config->found) {
-        bsi_info("No config found, using defaults");
+        info("No config found, using defaults");
         return;
     }
 
-    bsi_info("Found config file '%s'", config->path);
+    info("Found config '%s'", config->path);
 
     FILE* f;
     if (!(f = fopen(config->path, "r"))) {
-        bsi_errno("Failed to open config file '%s'", config->path);
+        errn("Failed to open config '%s'", config->path);
         exit(EXIT_FAILURE);
     }
 
@@ -169,7 +169,7 @@ void
 config_apply(struct bsi_config* config)
 {
     if (wl_list_empty(&config->atoms)) {
-        bsi_info("Server config is empty, using defaults");
+        info("Server config is empty, using defaults");
     }
 
     size_t len_applied = 0;
@@ -189,7 +189,7 @@ config_apply(struct bsi_config* config)
         }
     }
 
-    bsi_info("Applied %ld config commands", len_applied);
+    debug("Applied %ld config commands", len_applied);
 }
 
 #undef len_config_loc
