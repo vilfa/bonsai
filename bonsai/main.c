@@ -43,8 +43,6 @@
 
 // TODO: Implement xwayland support.
 
-// TODO: Rework keyboard keymap settings.
-
 // TODO: Add idle daemon and configuration.
 
 int

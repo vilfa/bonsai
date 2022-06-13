@@ -91,9 +91,20 @@ input_device_keymap_set(struct bsi_input_device* input_device,
     struct xkb_keymap* xkb_keymap = xkb_keymap_new_from_names(
         xkb_context, xkb_rule_names, XKB_KEYMAP_COMPILE_NO_FLAGS);
 
-    wlr_keyboard_set_keymap(input_device->device->keyboard, xkb_keymap);
+    if (xkb_keymap != NULL) {
+        wlr_keyboard_set_keymap(input_device->device->keyboard, xkb_keymap);
+        xkb_keymap_unref(xkb_keymap);
+        debug("Set keymap from xkb_rule_names { rules=%s, model=%s, layout=%s, "
+              "variant=%s, options=%s }",
+              xkb_rule_names->rules,
+              xkb_rule_names->model,
+              xkb_rule_names->layout,
+              xkb_rule_names->variant,
+              xkb_rule_names->options);
+    } else {
+        error("Keymap compilation failed");
+    }
 
-    xkb_keymap_unref(xkb_keymap);
     xkb_context_unref(xkb_context);
 }
 
@@ -678,8 +689,8 @@ handle_new_input(struct wl_listener* listener, void* data)
             /* Default rules. */
             struct xkb_rule_names xkb_rules = {
                 .rules = NULL,
-                .model = "pc105",
-                .layout = "us",
+                .model = NULL,
+                .layout = NULL,
                 .variant = NULL,
                 .options = NULL,
             };
@@ -710,7 +721,7 @@ handle_new_input(struct wl_listener* listener, void* data)
                                   conf->kbd_repeat_delay);
                             break;
                         case BSI_CONFIG_INPUT_KEYBOARD_MODEL:
-                            xkb_rules.layout = conf->kbd_model;
+                            xkb_rules.model = conf->kbd_model;
                             break;
                         default:
                             break;
@@ -721,6 +732,14 @@ handle_new_input(struct wl_listener* listener, void* data)
             if (!has_config)
                 info("No input matching config for entry '%s'",
                      device->device->name);
+
+            debug("Xkb keyboard rules { rules=%s, model=%s, layout=%s, "
+                  "variant=%s, options=%s }",
+                  xkb_rules.rules,
+                  xkb_rules.model,
+                  xkb_rules.layout,
+                  xkb_rules.variant,
+                  xkb_rules.options);
 
             input_device_keymap_set(device, &xkb_rules);
 
