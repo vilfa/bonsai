@@ -59,7 +59,7 @@ config_destroy(struct bsi_config* config)
     {
         config_atom_destroy(atom);
     }
-    struct bsi_config_input *conf, *conf_tmp;
+    struct bsi_input_config *conf, *conf_tmp;
     wl_list_for_each_safe(conf, conf_tmp, &config->server->config.input, link)
     {
         config_input_destroy(conf);
@@ -78,12 +78,12 @@ config_find(struct bsi_config* config)
 
             struct stat st;
             if (stat(pfull, &st) != 0) {
-                error("No config exists in location '%s'", pfull);
+                info("No config exists in location '%s'", pfull);
                 memset(pfull, 0, 255);
                 continue;
             }
             if (access(pfull, F_OK | R_OK) != 0 || !S_ISREG(st.st_mode)) {
-                error("No config exists in location '%s'", pfull);
+                info("No config exists in location '%s'", pfull);
                 memset(pfull, 0, 255);
                 continue;
             }
@@ -110,12 +110,12 @@ config_find(struct bsi_config* config)
 
             struct stat st;
             if (stat(pfull, &st) != 0) {
-                error("No config exists in location '%s'", pfull);
+                info("No config exists in location '%s'", pfull);
                 memset(pfull, 0, 255);
                 continue;
             }
             if (access(pfull, F_OK | R_OK) != 0 || !S_ISREG(st.st_mode)) {
-                error("No config exists in location '%s'", pfull);
+                info("No config exists in location '%s'", pfull);
                 memset(pfull, 0, 255);
                 continue;
             }
@@ -147,6 +147,10 @@ config_parse(struct bsi_config* config)
     size_t len = 0;
     char* line = NULL;
     while (getline(&line, &len, f) != -1) {
+        if (strncmp(line, "#", 1) == 0) {
+            /* Skip comments. */
+            continue;
+        }
         for (size_t i = 0; i < len_keywords; ++i) {
             if (strncmp(keywords[i], line, strlen(keywords[i])) == 0) {
                 line[strcspn(line, "\r\n")] = '\0';

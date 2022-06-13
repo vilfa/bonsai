@@ -1,12 +1,32 @@
+# Syntax:
+#     output <name> mode <w>x<h> refresh <r>
+#     input pointer <name> accel_speed <f.f>
+#     input pointer <name> accel_profile <none|flat|adaptive>
+#     input pointer <name> scroll_natural <yes/no>
+#     input pointer <name> tap <yes/no>
+#     input keyboard <name> layout <layout_spec[,layout_spec[,...]]>
+#     input keyboard <name> layout_toggle <toggle_spec>
+#     input keyboard <name> model <model_spec>
+#     input keyboard <name> repeat_info <n,n>
+#     workspace count max <n>
+#     wallpaper <abs_path>
+
+### Output configuration (refresh frequency is an integer)
 output @default_output@ mode @default_mode@ refresh @default_refresh@
 
+### Input configuration (device names containing spaces should be quoted)
 input pointer "@default_pointer@" accel_speed @default_accel_speed@
 input pointer "@default_pointer@" accel_profile @default_accel_profile@
-input pointer "@default_pointer@" scroll natural
-input pointer "@default_pointer@" tap
+input pointer "@default_pointer@" scroll_natural @default_scroll_natural@
+input pointer "@default_pointer@" tap @default_tap@
+# For detailed keyboard layout options, see xkeyboard-config(7).
 input keyboard "@default_keyboard@" layout @default_keyboard_layout@
-input keyboard "@default_keyboard@" repeat_info @default_repeat_rate@ @default_repeat_delay@
+input keyboard "@default_keyboard@" layout_toggle @default_keyboard_layout_toggle@
+input keyboard "@default_keyboard@" model @default_keyboard_model@
+input keyboard "@default_keyboard@" repeat_info @default_repeat_rate@,@default_repeat_delay@
 
+### Workspace configuration (they are dynamically created, this is the max)
 workspace count max @default_workspace@
 
+### Wallpaper (same wallpaper for every output)
 wallpaper @default_wallpaper@

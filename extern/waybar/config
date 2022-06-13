@@ -24,7 +24,7 @@
         "tooltip-format-wifi": "int {ifname} via {gwaddr}",
         "tooltip-format-ethernet": "int {ifname} via {gwaddr}",
         "tooltip-format-disconnected": "",
-        "on-click": "gnome-control-center wifi"
+        "on-click": "foot ip a"
     },
     "cpu": {
         "interval": 10,

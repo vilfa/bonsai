@@ -83,66 +83,13 @@ input_device_destroy(struct bsi_input_device* input_device)
 
 void
 input_device_keymap_set(struct bsi_input_device* input_device,
-                        const struct xkb_rule_names* xkb_rule_names,
-                        const size_t xkb_rule_names_len)
+                        const struct xkb_rule_names* xkb_rule_names)
 {
     assert(input_device->type == BSI_INPUT_DEVICE_KEYBOARD);
 
-#define rs_len_max 50
-    size_t rs_len[] = { [4] = 0 };
-    char rules[rs_len_max] = { 0 }, models[rs_len_max] = { 0 },
-         layouts[rs_len_max] = { 0 }, variants[rs_len_max] = { 0 },
-         options[rs_len_max] = { 0 };
-
-    for (size_t i = 0; i < xkb_rule_names_len; ++i) {
-        const struct xkb_rule_names* rs = &xkb_rule_names[i];
-        if (rs->rules != NULL &&
-            rs_len[0] + strlen(rs->rules) < rs_len_max - 1) {
-            if (rs_len[0] != 0)
-                strcat(rules + strlen(rules), ",");
-            strcat(rules + strlen(rules), rs->rules);
-            rs_len[0] = strlen(rules);
-        }
-        if (rs->model != NULL &&
-            rs_len[1] + strlen(rs->model) < rs_len_max - 1) {
-            if (rs_len[1] != 0)
-                strcat(models + strlen(models), ",");
-            strcat(models + strlen(models), rs->model);
-            rs_len[1] = strlen(models);
-        }
-        if (rs->layout != NULL &&
-            rs_len[2] + strlen(rs->layout) < rs_len_max - 1) {
-            if (rs_len[2] != 0)
-                strcat(layouts + strlen(layouts), ",");
-            strcat(layouts + strlen(layouts), rs->layout);
-            rs_len[2] = strlen(layouts);
-        }
-        if (rs->variant != NULL &&
-            rs_len[3] + strlen(rs->variant) < rs_len_max - 1) {
-            if (rs_len[3] != 0)
-                strcat(variants + strlen(variants), ",");
-            strcat(variants + strlen(variants), rs->variant);
-            rs_len[3] = strlen(variants);
-        }
-        if (rs->options != NULL && rs_len[4] == 0 &&
-            rs_len[4] + strlen(rs->options) < rs_len_max - 1) {
-            strcat(options + strlen(options), rs->options);
-            rs_len[4] = strlen(options);
-        }
-    }
-#undef rs_len_max
-
-    struct xkb_rule_names xkb_rules_all = {
-        .rules = rules,
-        .model = models,
-        .layout = layouts,
-        .variant = variants,
-        .options = options,
-    };
-
     struct xkb_context* xkb_context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
     struct xkb_keymap* xkb_keymap = xkb_keymap_new_from_names(
-        xkb_context, &xkb_rules_all, XKB_KEYMAP_COMPILE_NO_FLAGS);
+        xkb_context, xkb_rule_names, XKB_KEYMAP_COMPILE_NO_FLAGS);
 
     wlr_keyboard_set_keymap(input_device->device->keyboard, xkb_keymap);
 
@@ -626,21 +573,21 @@ handle_new_input(struct wl_listener* listener, void* data)
                 struct libinput_device* libinput_dev =
                     wlr_libinput_get_device_handle(device->device);
 
+                /* Apply config. */
                 bool has_config = false;
-                struct bsi_config_input* conf;
+                struct bsi_input_config* conf;
                 wl_list_for_each(conf, &server->config.input, link)
                 {
-                    if (strcasecmp(conf->device_name, device->device->name) ==
-                        0) {
+                    if (strcasecmp(conf->devname, device->device->name) == 0) {
                         debug("Matched config for input device '%s'",
                               device->device->name);
                         has_config = true;
                         switch (conf->type) {
                             case BSI_CONFIG_INPUT_POINTER_ACCEL_SPEED: {
                                 double speed =
-                                    (conf->accel_speed > 0.0)
-                                        ? fmax(conf->accel_speed, 1.0)
-                                        : fmax(conf->accel_speed, -1.0);
+                                    (conf->ptr_accel_speed > 0.0)
+                                        ? fmax(conf->ptr_accel_speed, 1.0)
+                                        : fmax(conf->ptr_accel_speed, -1.0);
                                 if (libinput_device_config_accel_set_speed(
                                         libinput_dev, speed) ==
                                     LIBINPUT_CONFIG_STATUS_UNSUPPORTED) {
@@ -650,39 +597,47 @@ handle_new_input(struct wl_listener* listener, void* data)
                                 debug("Set accel_speed %.2f", speed);
                                 break;
                             }
-                            case BSI_CONFIG_INPUT_POINTER_ACCEL_PROFILE:
+                            case BSI_CONFIG_INPUT_POINTER_ACCEL_PROFILE: {
                                 if (libinput_device_config_accel_set_profile(
-                                        libinput_dev, conf->accel_profile) ==
+                                        libinput_dev,
+                                        conf->ptr_accel_profile) ==
                                     LIBINPUT_CONFIG_STATUS_UNSUPPORTED) {
                                     error(
                                         "Setting accel_profile is unsupported");
                                     break;
                                 }
                                 debug("Set accel_profile %d",
-                                      conf->accel_profile);
+                                      conf->ptr_accel_profile);
                                 break;
-                            case BSI_CONFIG_INPUT_POINTER_SCROLL_NATURAL:
+                            }
+                            case BSI_CONFIG_INPUT_POINTER_SCROLL_NATURAL: {
                                 if (libinput_device_config_scroll_set_natural_scroll_enabled(
-                                        libinput_dev, conf->natural_scroll) ==
+                                        libinput_dev,
+                                        conf->ptr_natural_scroll) ==
                                     LIBINPUT_CONFIG_STATUS_UNSUPPORTED) {
-                                    error("Setting natural scroll is "
+                                    error("Setting natural_scroll is "
                                           "unsupported");
                                     break;
                                 }
-                                debug("Set natural scroll %d",
-                                      conf->natural_scroll);
+                                debug("Set natural_scroll %d",
+                                      conf->ptr_natural_scroll);
                                 break;
-                            case BSI_CONFIG_INPUT_POINTER_TAP:
+                            }
+                            case BSI_CONFIG_INPUT_POINTER_TAP: {
+                                enum libinput_config_tap_state enable =
+                                    (conf->ptr_tap)
+                                        ? LIBINPUT_CONFIG_TAP_ENABLED
+                                        : LIBINPUT_CONFIG_TAP_DISABLED;
                                 if (libinput_device_config_tap_set_enabled(
-                                        libinput_dev,
-                                        LIBINPUT_CONFIG_TAP_ENABLED) ==
+                                        libinput_dev, enable) ==
                                     LIBINPUT_CONFIG_STATUS_UNSUPPORTED) {
-                                    error(
-                                        "Setting tap-to-click is unsupported");
+                                    error("Setting tap-to-click is "
+                                          "unsupported");
                                     break;
                                 }
-                                debug("Set tap-to-click on");
+                                debug("Set tap-to-click %d", conf->ptr_tap);
                                 break;
+                            }
                             default:
                                 break;
                         }
@@ -690,7 +645,7 @@ handle_new_input(struct wl_listener* listener, void* data)
                 }
 
                 if (!has_config)
-                    info("No matching config for input device '%s'",
+                    info("No input matching config for entry '%s'",
                          device->device->name);
             } else {
                 info("Device '%s' doesn't use libinput backend, skipping",
@@ -720,25 +675,42 @@ handle_new_input(struct wl_listener* listener, void* data)
                               &device->listen.destroy,
                               handle_destroy);
 
+            /* Default rules. */
+            struct xkb_rule_names xkb_rules = {
+                .rules = NULL,
+                .model = "pc105",
+                .layout = "us",
+                .variant = NULL,
+                .options = NULL,
+            };
+
+            /* Apply config. */
             bool has_config = false;
-            struct bsi_config_input* conf;
+            struct bsi_input_config* conf;
             wl_list_for_each(conf, &server->config.input, link)
             {
-                if (strcasecmp(conf->device_name, device->device->name) == 0) {
+                if (strcasecmp(conf->devname, device->device->name) == 0) {
                     debug("Matched config for input device '%s'",
                           device->device->name);
                     has_config = true;
                     switch (conf->type) {
                         case BSI_CONFIG_INPUT_KEYBOARD_LAYOUT:
+                            xkb_rules.layout = conf->kbd_layout;
+                            break;
+                        case BSI_CONFIG_INPUT_KEYBOARD_LAYOUT_TOGGLE:
+                            xkb_rules.options = conf->kbd_layout_toggle;
                             break;
                         case BSI_CONFIG_INPUT_KEYBOARD_REPEAT_INFO:
                             wlr_keyboard_set_repeat_info(
                                 device->device->keyboard,
-                                conf->repeat_rate,
-                                conf->repeat_delay);
+                                conf->kbd_repeat_rate,
+                                conf->kbd_repeat_delay);
                             debug("Set repeat info { rate=%d, delay=%d }",
-                                  conf->repeat_rate,
-                                  conf->repeat_delay);
+                                  conf->kbd_repeat_rate,
+                                  conf->kbd_repeat_delay);
+                            break;
+                        case BSI_CONFIG_INPUT_KEYBOARD_MODEL:
+                            xkb_rules.layout = conf->kbd_model;
                             break;
                         default:
                             break;
@@ -747,11 +719,10 @@ handle_new_input(struct wl_listener* listener, void* data)
             }
 
             if (!has_config)
-                info("No matching config for input device '%s'",
+                info("No input matching config for entry '%s'",
                      device->device->name);
 
-            input_device_keymap_set(
-                device, bsi_input_keyboard_rules, bsi_input_keyboard_rules_len);
+            input_device_keymap_set(device, &xkb_rules);
 
             wlr_seat_set_keyboard(server->wlr_seat, device->device->keyboard);
 

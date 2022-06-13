@@ -15,27 +15,39 @@ enum bsi_config_atom_type
     BSI_CONFIG_ATOM_WALLPAPER,
 };
 
-enum bsi_config_input_type
+enum bsi_input_config_type
 {
+    BSI_CONFIG_INPUT_POINTER_BEGIN,
     BSI_CONFIG_INPUT_POINTER_ACCEL_SPEED,
     BSI_CONFIG_INPUT_POINTER_ACCEL_PROFILE,
     BSI_CONFIG_INPUT_POINTER_SCROLL_NATURAL,
     BSI_CONFIG_INPUT_POINTER_TAP,
+    BSI_CONFIG_INPUT_POINTER_END,
+
+    BSI_CONFIG_INPUT_KEYBOARD_BEGIN,
     BSI_CONFIG_INPUT_KEYBOARD_LAYOUT,
+    BSI_CONFIG_INPUT_KEYBOARD_LAYOUT_TOGGLE,
     BSI_CONFIG_INPUT_KEYBOARD_REPEAT_INFO,
+    BSI_CONFIG_INPUT_KEYBOARD_MODEL,
+    BSI_CONFIG_INPUT_KEYBOARD_END,
 };
 
-struct bsi_config_input
+struct bsi_input_config
 {
-    enum bsi_config_input_type type;
-    char* device_name;
-    double accel_speed;
-    enum libinput_config_accel_profile accel_profile;
-    bool natural_scroll;
-    bool tap;
-    char* layout;
-    uint32_t repeat_rate;
-    uint32_t repeat_delay;
+    enum bsi_input_config_type type;
+    char* devname;
+
+    enum libinput_config_accel_profile ptr_accel_profile;
+    double ptr_accel_speed;
+    bool ptr_natural_scroll;
+    bool ptr_tap;
+
+    char* kbd_layout;
+    char* kbd_layout_toggle;
+    char* kbd_model;
+    uint32_t kbd_repeat_rate;
+    uint32_t kbd_repeat_delay;
+
     struct wl_list link;
 };
 
@@ -62,7 +74,7 @@ void
 config_atom_destroy(struct bsi_config_atom* atom);
 
 void
-config_input_destroy(struct bsi_config_input* conf);
+config_input_destroy(struct bsi_input_config* conf);
 
 bool
 config_output_apply(struct bsi_config_atom* atom, struct bsi_server* server);

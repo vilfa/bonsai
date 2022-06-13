@@ -35,11 +35,11 @@ add_project_arguments(
     language : 'c',
 )
 
-if get_option('bsi-software-cursor')
+if get_option('bsi_software_cursor')
     add_project_arguments('-DBSI_SOFTWARE_CURSOR', language : 'c')
 endif
 
-if get_option('bsi-verbose')
+if get_option('bsi_verbose')
     add_project_arguments('-DBSI_DEBUG', language : 'c')
 endif
 
@@ -116,8 +116,12 @@ config.set('default_refresh', '60')
 config.set('default_pointer', 'wayland-pointer-seat0')
 config.set('default_accel_speed', '0.0')
 config.set('default_accel_profile', 'flat')
-config.set('default_keyboard_layout', 'en_US')
+config.set('default_scroll_natural', 'yes')
+config.set('default_tap', 'yes')
 config.set('default_keyboard', 'wayland-keyboard-seat0')
+config.set('default_keyboard_layout', 'us')
+config.set('default_keyboard_layout_toggle', 'grp:win_space_toggle')
+config.set('default_keyboard_model', 'pc105')
 config.set('default_repeat_rate', '20')
 config.set('default_repeat_delay', '600')
 config.set('default_workspace', '3')
@@ -144,13 +148,13 @@ install_data(
 
 # Fonts
 install_data(
-    'extern/fonts/Symbols-2048-em-Nerd-Font-Complete.ttf',
+    'extern/fonts/Nerd-Font-Symbols-Complete.ttf',
     'extern/fonts/LICENSE',
     install_dir : join_paths(datadir, 'fonts'),
 )
 
 # User configs
-if get_option('bsi-user-configs')
+if get_option('bsi_user_configs')
     run_command(
         'extern/install.sh',
         capture : true,

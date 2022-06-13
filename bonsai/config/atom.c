@@ -28,16 +28,20 @@ config_atom_init(struct bsi_config_atom* atom,
 void
 config_atom_destroy(struct bsi_config_atom* atom)
 {
-    free((void*)atom->cmd);
+    free(atom->cmd);
     free(atom);
 }
 
 void
-config_input_destroy(struct bsi_config_input* conf)
+config_input_destroy(struct bsi_input_config* conf)
 {
-    free(conf->device_name);
-    if (conf->layout)
-        free(conf->layout);
+    if (conf->kbd_layout)
+        free(conf->kbd_layout);
+    if (conf->kbd_layout_toggle)
+        free(conf->kbd_layout_toggle);
+    if (conf->kbd_model)
+        free(conf->kbd_model);
+    free(conf->devname);
     free(conf);
 }
 
@@ -117,7 +121,7 @@ config_output_apply(struct bsi_config_atom* atom, struct bsi_server* server)
     }
 
     if (!found)
-        error("No output matching config entry '%s' found", output_name);
+        info("No output matching config for entry '%s'", output_name);
 
     return false;
 
@@ -138,121 +142,200 @@ config_input_apply(struct bsi_config_atom* atom, struct bsi_server* server)
     /* Syntax:
      *  input pointer <name> accel_speed <f.f>
      *  input pointer <name> accel_profile <none|flat|adaptive>
-     *  input pointer <name> scroll natural
-     *  input pointer <name> tap
-     *  input keyboard <name> layout <layout>
-     *  input keyboard <name> repeat_info <n> <n>
+     *  input pointer <name> scroll_natural <yes/no>
+     *  input pointer <name> tap <yes/no>
+     *  input keyboard <name> layout <layout_spec[,layout_spec[,...]]>
+     *  input keyboard <name> layout_toggle <toggle_spec>
+     *  input keyboard <name> model <model_spec>
+     *  input keyboard <name> repeat_info <n,n>
      */
+
+    static const char* keys[] = {
+        [BSI_CONFIG_INPUT_POINTER_ACCEL_SPEED] = "accel_speed",
+        [BSI_CONFIG_INPUT_POINTER_ACCEL_PROFILE] = "accel_profile",
+        [BSI_CONFIG_INPUT_POINTER_SCROLL_NATURAL] = "scroll_natural",
+        [BSI_CONFIG_INPUT_POINTER_TAP] = "tap",
+        [BSI_CONFIG_INPUT_KEYBOARD_LAYOUT] = "layout",
+        [BSI_CONFIG_INPUT_KEYBOARD_LAYOUT_TOGGLE] = "layout_toggle",
+        [BSI_CONFIG_INPUT_KEYBOARD_REPEAT_INFO] = "repeat_info",
+        [BSI_CONFIG_INPUT_KEYBOARD_MODEL] = "model",
+    };
 
     char** cmd = NULL;
     size_t len_cmd = util_split_delim(atom->cmd, " ", &cmd, false);
-    struct bsi_config_input* input_config = NULL;
+    struct bsi_input_config* config = NULL;
 
-    if (len_cmd < 3 || strcasecmp("input", cmd[0]))
-        goto error;
-
-    input_config = calloc(1, sizeof(struct bsi_config_input));
-
-    if (strcasecmp("pointer", cmd[1]) == 0) {
-        if (len_cmd != 5 && len_cmd != 6)
-            goto error;
-
-        util_strip_quotes(cmd[2]);
-        input_config->device_name = strdup(cmd[2]);
-
-        if (strcasecmp("accel_speed", cmd[3]) == 0) {
-            input_config->type = BSI_CONFIG_INPUT_POINTER_ACCEL_SPEED;
-            errno = 0;
-            input_config->accel_speed = strtod(cmd[4], NULL);
-            if (errno)
-                goto error;
-            info("Pointer accel_speed is %.2lf for device '%s'",
-                 input_config->accel_speed,
-                 input_config->device_name);
-        } else if (strcasecmp("accel_profile", cmd[3]) == 0) {
-            input_config->type = BSI_CONFIG_INPUT_POINTER_ACCEL_PROFILE;
-            if (strcasecmp("none", cmd[4]) == 0) {
-                input_config->accel_profile =
-                    LIBINPUT_CONFIG_ACCEL_PROFILE_NONE;
-            } else if (strcasecmp("flat", cmd[4]) == 0) {
-                input_config->accel_profile =
-                    LIBINPUT_CONFIG_ACCEL_PROFILE_FLAT;
-            } else if (strcasecmp("adaptive", cmd[4]) == 0) {
-                input_config->accel_profile =
-                    LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE;
-            } else {
-                input_config->accel_profile =
-                    LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE;
-            }
-            info("Pointer accel_profile is %d for device '%s'",
-                 input_config->accel_profile,
-                 input_config->device_name);
-        } else if (strcasecmp("scroll", cmd[3]) == 0 &&
-                   strcasecmp("natural", cmd[4]) == 0) {
-            input_config->type = BSI_CONFIG_INPUT_POINTER_SCROLL_NATURAL;
-            input_config->natural_scroll = true;
-            info("Pointer natural scroll is on for device '%s'",
-                 input_config->device_name);
-        } else if (strcasecmp("tap", cmd[3]) == 0) {
-            input_config->type = BSI_CONFIG_INPUT_POINTER_TAP;
-            input_config->tap = true;
-            info("Pointer tap is on for device '%s'",
-                 input_config->device_name);
-        } else {
-            goto error;
-        }
-    } else if (strcasecmp("keyboard", cmd[1]) == 0) {
-        if (len_cmd != 6 && len_cmd != 7)
-            goto error;
-
-        util_strip_quotes(cmd[2]);
-        input_config->device_name = strdup(cmd[2]);
-
-        if (strcasecmp("layout", cmd[3]) == 0) {
-            input_config->type = BSI_CONFIG_INPUT_KEYBOARD_LAYOUT;
-            input_config->layout = strdup(cmd[4]);
-            info("Keyboard layout for device '%s' is '%s'",
-                 input_config->device_name,
-                 input_config->layout);
-        } else if (strcasecmp("repeat_info", cmd[3]) == 0) {
-            input_config->type = BSI_CONFIG_INPUT_KEYBOARD_REPEAT_INFO;
-            errno = 0;
-            input_config->repeat_rate = strtoul(cmd[4], NULL, 10);
-            if (errno)
-                goto error;
-            errno = 0;
-            input_config->repeat_delay = strtoul(cmd[5], NULL, 10);
-            if (errno)
-                goto error;
-            info("Keyboard repeat info for device '%s' is rate=%d, delay=%d",
-                 input_config->device_name,
-                 input_config->repeat_rate,
-                 input_config->repeat_delay);
-        } else {
-            goto error;
-        }
-    } else {
+    if (len_cmd != 6) {
         goto error;
     }
 
-    wl_list_insert(&server->config.input, &input_config->link);
+    char* conf_spec = cmd[0];
+    char* conf_type = cmd[1];
+    char* conf_dev = cmd[2];
+    char* conf_param = cmd[3];
+    char* conf_val = cmd[4];
+
+    if (strcasecmp("input", conf_spec) != 0) {
+        goto error;
+    }
+
+    /* 0 = pointer, 1 = keyboard */
+    int32_t mode = (strcasecmp("pointer", conf_type) == 0)    ? 0
+                   : (strcasecmp("keyboard", conf_type) == 0) ? 1
+                                                              : -1;
+
+    if (mode < 0) {
+        goto error;
+    }
+
+    config = calloc(1, sizeof(struct bsi_input_config));
+
+    if (mode == 0) {
+        for (size_t i = BSI_CONFIG_INPUT_POINTER_BEGIN + 1;
+             i < BSI_CONFIG_INPUT_POINTER_END;
+             ++i) {
+            if (strcasecmp(keys[i], conf_param) != 0) {
+                continue;
+            }
+            util_strip_quotes(conf_dev);
+            config->devname = strdup(conf_dev);
+            config->type = i;
+            switch (config->type) {
+                case BSI_CONFIG_INPUT_POINTER_ACCEL_SPEED: {
+                    errno = 0;
+                    config->ptr_accel_speed = strtod(conf_val, NULL);
+                    if (errno) {
+                        goto error;
+                    }
+                    info("Pointer accel_speed is %.2lf for device '%s'",
+                         config->ptr_accel_speed,
+                         config->devname);
+                    break;
+                }
+                case BSI_CONFIG_INPUT_POINTER_ACCEL_PROFILE: {
+                    if (strcasecmp("none", conf_val) == 0) {
+                        config->ptr_accel_profile =
+                            LIBINPUT_CONFIG_ACCEL_PROFILE_NONE;
+                    } else if (strcasecmp("flat", conf_val) == 0) {
+                        config->ptr_accel_profile =
+                            LIBINPUT_CONFIG_ACCEL_PROFILE_FLAT;
+                    } else if (strcasecmp("adaptive", conf_val) == 0) {
+                        config->ptr_accel_profile =
+                            LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE;
+                    } else {
+                        config->ptr_accel_profile =
+                            LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE;
+                    }
+                    info("Pointer accel_profile is %d for device '%s'",
+                         config->ptr_accel_profile,
+                         config->devname);
+                    break;
+                }
+                case BSI_CONFIG_INPUT_POINTER_SCROLL_NATURAL: {
+                    config->ptr_natural_scroll =
+                        (strcasecmp("yes", conf_val) == 0) ? true : false;
+                    info("Pointer natural_scroll is %d for device '%s'",
+                         config->ptr_natural_scroll,
+                         config->devname);
+                    break;
+                }
+                case BSI_CONFIG_INPUT_POINTER_TAP: {
+                    config->ptr_tap =
+                        (strcasecmp("yes", conf_val) == 0) ? true : false;
+                    info("Pointer tap is %d for device '%s'",
+                         config->ptr_tap,
+                         config->devname);
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
+    } else if (mode == 1) {
+        for (size_t i = BSI_CONFIG_INPUT_KEYBOARD_BEGIN + 1;
+             i < BSI_CONFIG_INPUT_KEYBOARD_END;
+             ++i) {
+            if (strcasecmp(keys[i], conf_param) != 0) {
+                continue;
+            }
+            util_strip_quotes(conf_dev);
+            config->devname = strdup(conf_dev);
+            config->type = i;
+            switch (config->type) {
+                case BSI_CONFIG_INPUT_KEYBOARD_LAYOUT: {
+                    config->kbd_layout = strdup(conf_val);
+                    info("Added keyboard layouts '%s' for device '%s'",
+                         config->devname,
+                         config->kbd_layout);
+                    break;
+                }
+                case BSI_CONFIG_INPUT_KEYBOARD_LAYOUT_TOGGLE: {
+                    config->kbd_layout_toggle = strdup(conf_val);
+                    info("Keyboard layout toggle for device '%s' is '%s'",
+                         config->devname,
+                         config->kbd_layout_toggle);
+                    break;
+                }
+                case BSI_CONFIG_INPUT_KEYBOARD_REPEAT_INFO: {
+                    char** rinfo = NULL;
+                    size_t len_rinfo =
+                        util_split_delim(conf_val, ",", &rinfo, true);
+                    if (len_rinfo != 3) {
+                        util_split_free(&rinfo);
+                        goto error;
+                    }
+                    errno = 0;
+                    config->kbd_repeat_rate = strtoul(rinfo[0], NULL, 10);
+                    if (errno) {
+                        util_split_free(&rinfo);
+                        goto error;
+                    }
+                    errno = 0;
+                    config->kbd_repeat_delay = strtoul(rinfo[1], NULL, 10);
+                    if (errno) {
+                        util_split_free(&rinfo);
+                        goto error;
+                    }
+                    util_split_free(&rinfo);
+                    info("Keyboard repeat info for device '%s' is { rate=%d, "
+                         "delay=%d }",
+                         config->devname,
+                         config->kbd_repeat_rate,
+                         config->kbd_repeat_delay);
+                    break;
+                }
+                case BSI_CONFIG_INPUT_KEYBOARD_MODEL: {
+                    config->kbd_model = strdup(conf_val);
+                    info("Keyboard model for device '%s' is '%s'",
+                         config->devname,
+                         config->kbd_model);
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
+    }
+
+    wl_list_insert(&server->config.input, &config->link);
 
     return true;
 
 error:
-    if (input_config && input_config->device_name)
-        free(input_config->device_name);
-    if (input_config)
-        free(input_config);
+    if (config && config->devname)
+        free(config->devname);
+    if (config)
+        free(config);
     util_split_free(&cmd);
-    error("Invalid input config syntax '%s', syntax is one of: \n"
+    error("Invalid input config syntax, should be: \n"
           "\tinput pointer <name> accel_speed <f.f>\n"
           "\tinput pointer <name> accel_profile <none|flat|adaptive>\n"
-          "\tinput pointer <name> scroll natural\n"
-          "\tinput pointer <name> tap\n"
-          "\tinput keyboard <name> layout <layout>\n"
-          "\tinput keyboard <name> repeat_info <n> <n>",
-          atom->cmd);
+          "\tinput pointer <name> scroll_natural <yes/no>\n"
+          "\tinput pointer <name> tap <yes/no>\n"
+          "\tinput keyboard <name> layout <layout_spec[,layout_spec[,...]]>\n"
+          "\tinput keyboard <name> layout_toggle <toggle_spec>\n"
+          "\tinput keyboard <name> model <model_spec>\n"
+          "\tinput keyboard <name> repeat_info <n,n>\n");
     return false;
 }
 
