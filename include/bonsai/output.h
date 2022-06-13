@@ -18,8 +18,8 @@ struct bsi_output
     struct timespec last_frame;
     struct wlr_box usable;
 
-    size_t id; /* Incremental. */
-    bool new;  /* If this output has just been added. */
+    size_t id;              /* Incremental. */
+    bool added, destroying; /* If this output has just been added. */
 
     struct wlr_output_damage* damage;
 

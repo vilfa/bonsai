@@ -148,7 +148,10 @@ layer_surface_destroy(union bsi_layer_surface layer_surface,
                     subsurf, subsurf_tmp, &toplevel->subsurfaces, link)
                 {
                     wl_list_remove(&subsurf->link);
-                    free(subsurf);
+                    union bsi_layer_surface layer_surface = { .subsurface =
+                                                                  subsurf };
+                    layer_surface_destroy(layer_surface,
+                                          BSI_LAYER_SURFACE_SUBSURFACE);
                 }
             }
             free(toplevel);
@@ -179,9 +182,9 @@ layer_surface_destroy(union bsi_layer_surface layer_surface,
 }
 
 void
-bsi_layer_move(struct bsi_layer_surface_toplevel* toplevel,
-               struct bsi_output* output,
-               enum zwlr_layer_shell_v1_layer to_layer)
+layer_move(struct bsi_layer_surface_toplevel* toplevel,
+           struct bsi_output* output,
+           enum zwlr_layer_shell_v1_layer to_layer)
 {
     wl_list_remove(&toplevel->link_output);
     wl_list_insert(&output->layers[to_layer], &toplevel->link_output);
@@ -232,6 +235,9 @@ handle_subsurface_unmap(struct wl_listener* listener, void* data)
             output->server->wlr_seat, layer_subsurface->subsurface->surface))
         wlr_seat_pointer_notify_clear_focus(output->server->wlr_seat);
 
+    if (output->destroying)
+        return;
+
     output_surface_damage(output, NULL, true);
 }
 
@@ -253,6 +259,10 @@ handle_subsurface_destroy(struct wl_listener* listener, void* data)
 
     wl_list_remove(&layer_subsurface->link);
     layer_surface_destroy(layer_surface, BSI_LAYER_SURFACE_SUBSURFACE);
+
+    if (toplevel_parent->output->destroying)
+        return;
+
     output_surface_damage(toplevel_parent->output, NULL, true);
 }
 
@@ -313,6 +323,9 @@ handle_popup_unmap(struct wl_listener* listener, void* data)
                                            layer_popup->popup->base->surface))
         wlr_seat_pointer_notify_clear_focus(output->server->wlr_seat);
 
+    if (output->destroying)
+        return;
+
     output_surface_damage(output, NULL, true);
 }
 
@@ -333,6 +346,10 @@ handle_popup_destroy(struct wl_listener* listener, void* data)
         return;
 
     layer_surface_destroy(layer_surface, BSI_LAYER_SURFACE_POPUP);
+
+    if (toplevel_parent->output->destroying)
+        return;
+
     output_surface_damage(toplevel_parent->output, NULL, true);
 }
 
@@ -437,6 +454,9 @@ handle_unmap(struct wl_listener* listener, void* data)
         wlr_seat_pointer_notify_clear_focus(
             layer_toplevel->output->server->wlr_seat);
 
+    if (output->destroying)
+        return;
+
     output_surface_damage(output, NULL, true);
 }
 
@@ -451,6 +471,9 @@ handle_destroy(struct wl_listener* listener, void* data)
     struct bsi_server* server = output->server;
 
     if (server->session.shutting_down)
+        return;
+
+    if (output->destroying)
         return;
 
     /* Destroy the layer and rearrange this output. */
@@ -524,9 +547,9 @@ handle_commit(struct wl_listener* listener, void* data)
         to_another_layer = layer_toplevel->at_layer !=
                            layer_toplevel->layer_surface->current.layer;
         if (to_another_layer)
-            bsi_layer_move(layer_toplevel,
-                           output,
-                           layer_toplevel->layer_surface->current.layer);
+            layer_move(layer_toplevel,
+                       output,
+                       layer_toplevel->layer_surface->current.layer);
         output_layers_arrange(output);
     }
 

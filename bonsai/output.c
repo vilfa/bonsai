@@ -31,7 +31,8 @@ output_init(struct bsi_output* output,
     output->id = wl_list_length(&server->output.outputs);
     output->server = server;
     output->output = wlr_output;
-    output->new = true;
+    output->added = true;
+    output->destroying = false;
     wlr_output->data = output;
     /* Set the usable size of the output. */
     struct wlr_box box = { 0 };
@@ -261,6 +262,25 @@ output_layers_arrange(struct bsi_output* output)
                 output, &output->layers[i], &usable_box, false);
     }
 
+    /* Arrange layer positioning in global layout coordintes of its output. */
+    for (size_t i = 0; i < 4; ++i) {
+        struct bsi_layer_surface_toplevel* toplevel;
+        if (!wl_list_empty(&output->layers[i])) {
+            wl_list_for_each(toplevel, &output->layers[i], link_output)
+            {
+                struct wlr_box layout_box;
+                wlr_output_layout_get_box(output->server->wlr_output_layout,
+                                          output->output,
+                                          &layout_box);
+                int32_t lx, ly;
+                wlr_scene_node_coords(toplevel->scene_node->node, &lx, &ly);
+                wlr_scene_node_set_position(toplevel->scene_node->node,
+                                            lx + layout_box.x,
+                                            ly + layout_box.y);
+            }
+        }
+    }
+
     /* Arrange layers under & above windows. */
     for (size_t i = 0; i < 4; ++i) {
         struct bsi_layer_surface_toplevel* toplevel;
@@ -371,11 +391,9 @@ output_destroy(struct bsi_output* output)
         struct bsi_workspace *ws, *ws_tmp;
         wl_list_for_each_safe(ws, ws_tmp, &output->workspaces, link_output)
         {
-
-            /* The view take care of themselves -- they receive an xdg_surface
+            /* The views take care of themselves -- they receive an xdg_surface
              * destroy event. Note that a workspace might be freed before the
              * views, kind of depends on scheduling. */
-
             workspace_destroy(ws);
         }
     }
@@ -431,7 +449,8 @@ handle_destroy(struct wl_listener* listener, void* data)
         server->session.shutting_down = true;
     }
 
-    wlr_output_layout_remove(server->wlr_output_layout, output->output);
+    // wlr_output_layout_remove(server->wlr_output_layout, output->output);
+    output->destroying = true;
     outputs_remove(output);
     output_destroy(output);
 
@@ -565,9 +584,9 @@ handle_new_output(struct wl_listener* listener, void* data)
     wlr_output_layout_add_auto(server->wlr_output_layout, wlr_output);
 
     /* This if is kinda useless. */
-    if (output->new) {
+    if (output->added) {
         outputs_setup_extern(server);
-        output->new = false;
+        output->added = false;
     }
 }
 

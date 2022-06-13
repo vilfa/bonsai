@@ -365,8 +365,10 @@ outputs_setup_extern(struct bsi_server* server)
             char* argsp;
             if (i == BSI_SERVER_EXTERN_PROG_WALLPAPER) {
                 char swaybg_image[255] = { 0 };
-                snprintf(
-                    swaybg_image, 255, "--image=%s", server->config.wallpaper);
+                snprintf(swaybg_image,
+                         255,
+                         "--image=%s --output=*",
+                         server->config.wallpaper);
                 argsp = swaybg_image;
             } else {
                 argsp = "";

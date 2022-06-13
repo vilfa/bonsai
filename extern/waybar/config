@@ -24,7 +24,7 @@
         "tooltip-format-wifi": "int {ifname} via {gwaddr}",
         "tooltip-format-ethernet": "int {ifname} via {gwaddr}",
         "tooltip-format-disconnected": "",
-        "on-click": "foot ip a"
+        "on-click": "foot -H ip a"
     },
     "cpu": {
         "interval": 10,
