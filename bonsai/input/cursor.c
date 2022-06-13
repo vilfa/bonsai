@@ -170,8 +170,6 @@ cursor_process_view_resize(struct bsi_server* server,
     if (view->state != BSI_VIEW_STATE_NORMAL)
         return;
 
-    wlr_xdg_toplevel_set_resizing(view->wlr_xdg_toplevel, true);
-
     double rsiz_lx, rsiz_ly;
     int32_t new_left, new_right, new_top, new_bottom;
     /* The layout local coordinates of the cursor resizing. */
@@ -213,6 +211,8 @@ cursor_process_view_resize(struct bsi_server* server,
     view->geom.width = box.width;
     view->geom.height = box.height;
     wlr_scene_node_set_position(view->node, view->geom.x, view->geom.y);
+
+    wlr_xdg_toplevel_set_resizing(view->wlr_xdg_toplevel, true);
 
     /* Set new view size. */
     wlr_xdg_toplevel_set_size(

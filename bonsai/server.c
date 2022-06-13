@@ -258,12 +258,19 @@ server_setup(struct bsi_server* server)
         exit(EXIT_FAILURE);
     }
 
-    // if (setenv("XDG_CURRENT_DESKTOP", "wlroots", true) != 0) {
-    //     errn("Failed to set XDG_CURRENT_DESKTOP env var");
-    //     wlr_backend_destroy(server->wlr_backend);
-    //     wl_display_destroy(server->wl_display);
-    //     exit(EXIT_FAILURE);
-    // }
+    if (setenv("XDG_CURRENT_DESKTOP", "wlroots", true) != 0) {
+        errn("Failed to set XDG_CURRENT_DESKTOP env var");
+        wlr_backend_destroy(server->wlr_backend);
+        wl_display_destroy(server->wl_display);
+        exit(EXIT_FAILURE);
+    }
+
+    if (setenv("XDG_SESSION_DESKTOP", "wlroots", true) != 0) {
+        errn("Failed to set XDG_SESSION_DESKTOP env var");
+        wlr_backend_destroy(server->wlr_backend);
+        wl_display_destroy(server->wl_display);
+        exit(EXIT_FAILURE);
+    }
 
 #ifdef BSI_SOFTWARE_CURSOR
     if (setenv("WLR_NO_HARDWARE_CURSORS", "1", true) != 0) {
