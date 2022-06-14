@@ -165,7 +165,7 @@ handle_view_workspace_active(struct wl_listener* listener, void* data)
     struct bsi_workspace* workspace = data;
     struct bsi_view* view =
         wl_container_of(listener, view, listen.workspace_active);
-    wlr_scene_node_set_enabled(view->node, workspace->active);
+    wlr_scene_node_set_enabled(&view->tree->node, workspace->active);
     debug("View with app_id '%s' of workspace %ld/%s is now %s",
           view->wlr_xdg_toplevel->app_id,
           workspace_get_global_id(workspace),

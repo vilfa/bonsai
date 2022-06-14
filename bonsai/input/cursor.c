@@ -50,11 +50,12 @@ cursor_scene_data_at(struct bsi_server* server,
 {
     /* Search the server root node for the node at the coordinates
      * given by the cursor event. This is not necessarily the topmost node! */
-    struct wlr_scene_node* node = wlr_scene_node_at(&server->wlr_scene->node,
-                                                    server->wlr_cursor->x,
-                                                    server->wlr_cursor->y,
-                                                    sx,
-                                                    sy);
+    struct wlr_scene_node* node =
+        wlr_scene_node_at(&server->wlr_scene->tree.node,
+                          server->wlr_cursor->x,
+                          server->wlr_cursor->y,
+                          sx,
+                          sy);
 
     /* If this node is not a buffer node (eg. is rect, root, tree), then return
      * `NULL`. */
@@ -75,7 +76,7 @@ cursor_scene_data_at(struct bsi_server* server,
 
     /* Find the actual topmost node of this node tree. */
     while (node != NULL && node->data == NULL)
-        node = node->parent;
+        node = &node->parent->node;
 
     return node->data;
 }
@@ -155,7 +156,7 @@ cursor_process_view_move(struct bsi_server* server,
           event->delta_x,
           event->delta_y);
     debug("Moving view to coords (%d, %d)", view->geom.x, view->geom.y);
-    wlr_scene_node_set_position(view->node, view->geom.x, view->geom.y);
+    wlr_scene_node_set_position(&view->tree->node, view->geom.x, view->geom.y);
 }
 
 void
@@ -210,7 +211,7 @@ cursor_process_view_resize(struct bsi_server* server,
     view->geom.y = new_top - box.y;
     view->geom.width = box.width;
     view->geom.height = box.height;
-    wlr_scene_node_set_position(view->node, view->geom.x, view->geom.y);
+    wlr_scene_node_set_position(&view->tree->node, view->geom.x, view->geom.y);
 
     wlr_xdg_toplevel_set_resizing(view->wlr_xdg_toplevel, true);
 

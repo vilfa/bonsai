@@ -14,7 +14,7 @@ view_init(struct bsi_view* view,
     view->server = server;
     view->workspace = NULL;
     view->mapped = false;
-    view->node = NULL;
+    view->tree = NULL;
     view->inhibit.fullscreen = NULL;
     view->state = BSI_VIEW_STATE_NORMAL;
     return view;

@@ -273,8 +273,9 @@ output_layers_arrange(struct bsi_output* output)
                                           output->output,
                                           &layout_box);
                 int32_t lx, ly;
-                wlr_scene_node_coords(toplevel->scene_node->node, &lx, &ly);
-                wlr_scene_node_set_position(toplevel->scene_node->node,
+                wlr_scene_node_coords(
+                    &toplevel->scene_node->tree->node, &lx, &ly);
+                wlr_scene_node_set_position(&toplevel->scene_node->tree->node,
                                             lx + layout_box.x,
                                             ly + layout_box.y);
             }
@@ -292,14 +293,16 @@ output_layers_arrange(struct bsi_output* output)
                      * appropriately.*/
                     debug("Lower layer with namespace '%s' to bottom",
                           toplevel->layer_surface->namespace);
-                    wlr_scene_node_lower_to_bottom(toplevel->scene_node->node);
+                    wlr_scene_node_lower_to_bottom(
+                        &toplevel->scene_node->tree->node);
                 } else if (toplevel->at_layer >
                            ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM) {
                     /* These are foreground layers, arrange the views
                      * appropriately. */
                     debug("Raise layer with namespace '%s' to top",
                           toplevel->layer_surface->namespace);
-                    wlr_scene_node_raise_to_top(toplevel->scene_node->node);
+                    wlr_scene_node_raise_to_top(
+                        &toplevel->scene_node->tree->node);
                 }
             }
         }
@@ -310,7 +313,7 @@ output_layers_arrange(struct bsi_output* output)
     wl_list_for_each(
         view, &output->server->scene.views_fullscreen, link_fullscreen)
     {
-        wlr_scene_node_raise_to_top(view->node);
+        wlr_scene_node_raise_to_top(&view->tree->node);
     }
 
     /* If locked lock node should always be topmost. */

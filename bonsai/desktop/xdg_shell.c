@@ -68,7 +68,7 @@ xdg_shell_view_focus(struct bsi_view* view)
     views_add(server, view);
 
     /* Node to top & activate. */
-    wlr_scene_node_raise_to_top(view->node);
+    wlr_scene_node_raise_to_top(&view->tree->node);
     wlr_xdg_toplevel_set_activated(view->wlr_xdg_toplevel, true);
 
     /* Seat, enter this surface with the keyboard. Leave the pointer. */
@@ -109,7 +109,7 @@ xdg_shell_view_cursor_interactive(struct bsi_view* view,
     if (cursor_mode == BSI_CURSOR_MOVE) {
         /* Set the surface local coordinates for this grab. */
         int32_t lx, ly;
-        wlr_scene_node_coords(view->node, &lx, &ly);
+        wlr_scene_node_coords(&view->tree->node, &lx, &ly);
         server->cursor.grab_sx = server->wlr_cursor->x - lx;
         server->cursor.grab_sy = server->wlr_cursor->y - ly;
         debug("Surface local move coords are (%.2f, %.2f)",
@@ -173,11 +173,12 @@ xdg_shell_view_set_maximized(struct bsi_view* view, bool maximized)
 
         /* Save the geometry. */
         wlr_xdg_surface_get_geometry(view->wlr_xdg_toplevel->base, &view->geom);
-        wlr_scene_node_coords(view->node, &view->geom.x, &view->geom.y);
+        wlr_scene_node_coords(&view->tree->node, &view->geom.x, &view->geom.y);
 
         /* Maximize. */
         struct wlr_box* usable_box = &view->workspace->output->usable;
-        wlr_scene_node_set_position(view->node, usable_box->x, usable_box->y);
+        wlr_scene_node_set_position(
+            &view->tree->node, usable_box->x, usable_box->y);
         wlr_xdg_toplevel_set_resizing(view->wlr_xdg_toplevel, true);
         wlr_xdg_toplevel_set_size(
             view->wlr_xdg_toplevel, usable_box->width, usable_box->height);
@@ -204,10 +205,10 @@ xdg_shell_view_set_minimized(struct bsi_view* view, bool minimized)
         views_remove(view);
         views_add(view->server, view);
         output_layers_arrange(view->workspace->output);
-        wlr_scene_node_set_enabled(view->node, true);
+        wlr_scene_node_set_enabled(&view->tree->node, true);
     } else {
         debug("Minimize view '%s'", view->wlr_xdg_toplevel->app_id);
-        wlr_scene_node_set_enabled(view->node, false);
+        wlr_scene_node_set_enabled(&view->tree->node, false);
         views_remove(view);
         views_focus_recent(view->server);
         views_add(view->server, view);
@@ -249,7 +250,7 @@ xdg_shell_view_set_fullscreen(struct bsi_view* view, bool fullscreen)
 
         /* Save the geometry. */
         wlr_xdg_surface_get_geometry(view->wlr_xdg_toplevel->base, &view->geom);
-        wlr_scene_node_coords(view->node, &view->geom.x, &view->geom.y);
+        wlr_scene_node_coords(&view->tree->node, &view->geom.x, &view->geom.y);
 
         /* Add to fullscreen views. */
         wl_list_insert(&view->server->scene.views_fullscreen,
@@ -273,7 +274,7 @@ xdg_shell_view_set_fullscreen(struct bsi_view* view, bool fullscreen)
         wlr_output_layout_get_box(view->server->wlr_output_layout,
                                   view->workspace->output->output,
                                   &output_box);
-        wlr_scene_node_set_position(view->node, 0, 0);
+        wlr_scene_node_set_position(&view->tree->node, 0, 0);
         wlr_xdg_toplevel_set_resizing(view->wlr_xdg_toplevel, true);
         wlr_xdg_toplevel_set_size(
             view->wlr_xdg_toplevel, output_box.width, output_box.height);
@@ -303,11 +304,12 @@ xdg_shell_view_set_tiled_left(struct bsi_view* view, bool tiled)
 
         /* Save the geometry. */
         wlr_xdg_surface_get_geometry(view->wlr_xdg_toplevel->base, &view->geom);
-        wlr_scene_node_coords(view->node, &view->geom.x, &view->geom.y);
+        wlr_scene_node_coords(&view->tree->node, &view->geom.x, &view->geom.y);
 
         /* Tile left. */
         struct wlr_box* usable_box = &view->workspace->output->usable;
-        wlr_scene_node_set_position(view->node, usable_box->x, usable_box->y);
+        wlr_scene_node_set_position(
+            &view->tree->node, usable_box->x, usable_box->y);
         wlr_xdg_toplevel_set_resizing(view->wlr_xdg_toplevel, true);
         wlr_xdg_toplevel_set_size(
             view->wlr_xdg_toplevel, usable_box->width / 2, usable_box->height);
@@ -334,12 +336,12 @@ xdg_shell_view_set_tiled_right(struct bsi_view* view, bool tiled)
 
         /* Save the geometry. */
         wlr_xdg_surface_get_geometry(view->wlr_xdg_toplevel->base, &view->geom);
-        wlr_scene_node_coords(view->node, &view->geom.x, &view->geom.y);
+        wlr_scene_node_coords(&view->tree->node, &view->geom.x, &view->geom.y);
 
         /* Tile right. */
         struct wlr_box* usable_box = &view->workspace->output->usable;
         wlr_scene_node_set_position(
-            view->node, usable_box->width / 2, usable_box->y);
+            &view->tree->node, usable_box->width / 2, usable_box->y);
         wlr_xdg_toplevel_set_resizing(view->wlr_xdg_toplevel, true);
         wlr_xdg_toplevel_set_size(
             view->wlr_xdg_toplevel, usable_box->width / 2, usable_box->height);
@@ -369,7 +371,7 @@ xdg_shell_view_restore_prev(struct bsi_view* view)
     debug("Restoring view position to (%d, %d)", view->geom.x, view->geom.y);
     debug(
         "Restoring view size to (%d, %d)", view->geom.width, view->geom.height);
-    wlr_scene_node_set_position(view->node, view->geom.x, view->geom.y);
+    wlr_scene_node_set_position(&view->tree->node, view->geom.x, view->geom.y);
     wlr_xdg_toplevel_set_resizing(view->wlr_xdg_toplevel, true);
     wlr_xdg_toplevel_set_size(
         view->wlr_xdg_toplevel, view->geom.width, view->geom.height);
@@ -424,7 +426,7 @@ xdg_shell_view_set_correct(struct bsi_view* view, struct wlr_box* correction)
     view->geom.y += correction->y;
     view->geom.width += correction->width;
     view->geom.height += correction->height;
-    wlr_scene_node_set_position(view->node, view->geom.x, view->geom.y);
+    wlr_scene_node_set_position(&view->tree->node, view->geom.x, view->geom.y);
     wlr_xdg_toplevel_set_resizing(view->wlr_xdg_toplevel, true);
     wlr_xdg_toplevel_set_size(
         view->wlr_xdg_toplevel, view->geom.width, view->geom.height);
@@ -491,7 +493,8 @@ handle_map(struct wl_listener* listener, void* data)
         wlr_xdg_surface_get_geometry(toplevel->base, &wants_box);
         wants_box.x = (output_w - wants_box.width) / 2;
         wants_box.y = (output_h - wants_box.height) / 2;
-        wlr_scene_node_set_position(view->node, wants_box.x, wants_box.y);
+        wlr_scene_node_set_position(
+            &view->tree->node, wants_box.x, wants_box.y);
 
         debug("Output effective resolution is %dx%d, client wants %dx%d",
               output_w,
@@ -646,7 +649,7 @@ handle_xdg_shell_new_surface(struct wl_listener* listener, void* data)
         if (wlr_surface_is_xdg_surface(xdg_surface->popup->parent)) {
             struct wlr_xdg_surface* parent_surface =
                 wlr_xdg_surface_from_wlr_surface(xdg_surface->popup->parent);
-            struct wlr_scene_node* parent_node = parent_surface->data;
+            struct wlr_scene_tree* parent_node = parent_surface->data;
             xdg_surface->data =
                 wlr_scene_xdg_surface_create(parent_node, xdg_surface);
         } else if (wlr_surface_is_layer_surface(xdg_surface->popup->parent)) {
@@ -655,7 +658,7 @@ handle_xdg_shell_new_surface(struct wl_listener* listener, void* data)
                     xdg_surface->popup->parent);
             struct bsi_layer_surface_toplevel* parent_layer =
                 parent_surface->data;
-            struct wlr_scene_node* parent_node = parent_layer->scene_node->node;
+            struct wlr_scene_tree* parent_node = parent_layer->scene_node->tree;
             xdg_surface->data =
                 wlr_scene_xdg_surface_create(parent_node, xdg_surface);
         }
@@ -671,10 +674,10 @@ handle_xdg_shell_new_surface(struct wl_listener* listener, void* data)
 
         view_init(&view->view, BSI_VIEW_TYPE_XDG_SHELL, &view_impl, server);
         view->view.wlr_xdg_toplevel = xdg_surface->toplevel;
-        view->view.node =
-            wlr_scene_xdg_surface_create(&server->wlr_scene->node, xdg_surface);
-        view->view.node->data = &view->view;
-        xdg_surface->toplevel->base->data = view->view.node;
+        view->view.tree =
+            wlr_scene_xdg_surface_create(&server->wlr_scene->tree, xdg_surface);
+        view->view.tree->node.data = &view->view;
+        xdg_surface->toplevel->base->data = view->view.tree;
 
         util_slot_connect(&xdg_surface->events.destroy,
                           &view->listen.destroy,
