@@ -44,7 +44,7 @@ idle_inhibitor_active(struct bsi_idle_inhibitor* inhibitor)
             return inhibitor->view->state != BSI_VIEW_STATE_MINIMIZED &&
                    inhibitor->view->workspace ==
                        inhibitor->server->active_workspace &&
-                   inhibitor->view->node->state.enabled;
+                   inhibitor->view->tree->node.enabled;
         case BSI_IDLE_INHIBIT_USER:
             /* Inhibitor is destroyed manually by the user. */
             assert(!inhibitor->view);
@@ -55,7 +55,7 @@ idle_inhibitor_active(struct bsi_idle_inhibitor* inhibitor)
             return inhibitor->view->state == BSI_VIEW_STATE_FULLSCREEN &&
                    inhibitor->view->workspace ==
                        inhibitor->server->active_workspace &&
-                   inhibitor->view->node->state.enabled;
+                   inhibitor->view->tree->node.enabled;
     }
     return false;
 }

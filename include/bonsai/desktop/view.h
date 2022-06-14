@@ -63,7 +63,7 @@ struct bsi_view
 {
     enum bsi_view_type type;
     const struct bsi_view_impl* impl;
-    struct wlr_scene_node* node;
+    struct wlr_scene_tree* tree;
 
     struct bsi_server* server;
     struct bsi_workspace* workspace;

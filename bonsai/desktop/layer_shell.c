@@ -39,8 +39,8 @@ layer_surface_toplevel_init(struct bsi_layer_surface_toplevel* toplevel,
     toplevel->exclusive_configured = false;
 
     toplevel->scene_node = wlr_scene_layer_surface_v1_create(
-        &output->server->wlr_scene->node, toplevel->layer_surface);
-    toplevel->scene_node->node->data = toplevel;
+        &output->server->wlr_scene->tree, toplevel->layer_surface);
+    toplevel->scene_node->tree->node.data = toplevel;
 
     return toplevel;
 }

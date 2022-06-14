@@ -18,7 +18,7 @@ session_lock_init(struct bsi_session_lock* lock,
 {
     lock->lock = wlr_lock;
     lock->server = server;
-    lock->tree = wlr_scene_tree_create(&server->wlr_scene->node);
+    lock->tree = wlr_scene_tree_create(&server->wlr_scene->tree);
     wl_list_init(&lock->surfaces);
     return lock;
 }
@@ -176,7 +176,7 @@ handle_new_surface(struct wl_listener* listener, void* data)
 
     wl_list_insert(&lock->surfaces, &lock_surface->link_session_lock);
 
-    wlr_scene_subsurface_tree_create(&lock->tree->node, surface->surface);
+    wlr_scene_subsurface_tree_create(lock->tree, surface->surface);
 
     wlr_session_lock_surface_v1_configure(
         surface, surface->output->width, surface->output->height);

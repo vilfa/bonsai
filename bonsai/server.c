@@ -522,7 +522,7 @@ views_add(struct bsi_server* server, struct bsi_view* view)
     wl_list_insert(&server->scene.views, &view->link_server);
     /* Initialize geometry state and arrange output. */
     wlr_xdg_surface_get_geometry(view->wlr_xdg_toplevel->base, &view->geom);
-    wlr_scene_node_coords(view->node, &view->geom.x, &view->geom.y);
+    wlr_scene_node_coords(&view->tree->node, &view->geom.x, &view->geom.y);
     output_layers_arrange(view->workspace->output);
 }
 
