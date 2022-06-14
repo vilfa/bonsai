@@ -362,25 +362,20 @@ output_destroy(struct bsi_output* output)
 
         debug("Moving member views to next workspace");
 
-        struct bsi_output* next_output =
-            wlr_output_layout_output_at(server->wlr_output_layout,
-                                        server->wlr_cursor->x,
-                                        server->wlr_cursor->y)
-                ->data;
-        struct bsi_workspace* next_output_wspace =
-            workspaces_get_active(next_output);
+        struct bsi_output* next_output = outputs_find_not(server, output);
+        struct bsi_workspace* next_ws =
+            wl_container_of(next_output->workspaces.next, next_ws, link_output);
 
-        struct wl_list* curr_output_wspaces = &output->workspaces;
-        struct bsi_workspace *wspace, *wspace_tmp;
-        wl_list_for_each_safe(
-            wspace, wspace_tmp, curr_output_wspaces, link_output)
+        struct wl_list* curr_wss = &output->workspaces;
+        struct bsi_workspace *ws, *ws_tmp;
+        wl_list_for_each_safe(ws, ws_tmp, curr_wss, link_output)
         {
             struct bsi_view* view;
-            wl_list_for_each(view, &wspace->views, link_server)
+            wl_list_for_each(view, &ws->views, link_server)
             {
-                workspace_view_move(wspace, next_output_wspace, view);
+                workspace_view_move(ws, next_ws, view);
             }
-            workspace_destroy(wspace);
+            workspace_destroy(ws);
         }
     } else {
         /* Destroy everything, there are no more outputs. */
@@ -657,7 +652,6 @@ handle_output_manager_apply(struct wl_listener* listener, void* data)
 
     wlr_output_manager_v1_set_configuration(server->wlr_output_manager, config);
     wlr_output_configuration_v1_send_succeeded(config);
-    wlr_output_configuration_v1_destroy(config);
 }
 
 void
@@ -697,6 +691,4 @@ handle_output_manager_test(struct wl_listener* listener, void* data)
         wlr_output_configuration_v1_send_succeeded(config);
     else
         wlr_output_configuration_v1_send_failed(config);
-
-    wlr_output_configuration_v1_destroy(config);
 }

@@ -32,18 +32,10 @@
 #include "bonsai/server.h"
 #include "bonsai/util.h"
 
-// TODO: Maybe add multipurpose client for indicating things to the user (e.g.
-// took screenshot, switched to workspace).
-
-// TODO: Implement server decoration.
-
-// TODO: Implement input inhibitor, right now, it's faked.
-
-// TODO: Gracefully handle multiple outputs.
-
 // TODO: Implement xwayland support.
-
+// TODO: Implement input inhibitor, right now, it's faked.
 // TODO: Add idle daemon and configuration.
+// TODO: Implement server decoration.
 
 int
 main(void)

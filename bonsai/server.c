@@ -289,6 +289,15 @@ server_setup(struct bsi_server* server)
         wl_display_destroy(server->wl_display);
         exit(EXIT_FAILURE);
     }
+
+    char* const argp[] = { "dbus-update-activation-environment",
+                           "--systemd",
+                           "WAYLAND_DISPLAY",
+                           "XDG_CURRENT_DESKTOP",
+                           NULL };
+    if (!util_tryexec(argp, 5)) {
+        error("Failed to update dbus activation environment");
+    }
 }
 
 void
@@ -345,6 +354,21 @@ outputs_find(struct bsi_server* server, struct wlr_output* wlr_output)
     wl_list_for_each(output, &server->output.outputs, link_server)
     {
         if (output->output == wlr_output)
+            return output;
+    }
+
+    return NULL;
+}
+
+struct bsi_output*
+outputs_find_not(struct bsi_server* server, struct bsi_output* not_output)
+{
+    assert(wl_list_length(&server->output.outputs));
+
+    struct bsi_output* output;
+    wl_list_for_each(output, &server->output.outputs, link_server)
+    {
+        if (output != not_output)
             return output;
     }
 

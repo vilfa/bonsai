@@ -159,6 +159,9 @@ outputs_remove(struct bsi_output* output);
 struct bsi_output*
 outputs_find(struct bsi_server* server, struct wlr_output* wlr_output);
 
+struct bsi_output*
+outputs_find_not(struct bsi_server* server, struct bsi_output* not_output);
+
 void
 outputs_setup_extern(struct bsi_server* server);
 
