@@ -554,7 +554,7 @@ handle_new_output(struct wl_listener* listener, void* data)
     output_init(output, server, wlr_output);
 
     /* Attach a workspace to the output. */
-    char workspace_name[25];
+    char workspace_name[25] = { 0 };
     struct bsi_workspace* workspace = calloc(1, sizeof(struct bsi_workspace));
     sprintf(workspace_name,
             "Workspace %d",

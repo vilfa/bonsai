@@ -46,11 +46,8 @@ workspace_destroy(struct bsi_workspace* workspace)
 size_t
 workspace_get_global_id(struct bsi_workspace* workspace)
 {
-    struct bsi_output* bsi_output = workspace->output;
-    if (bsi_output->id > 0)
-        return bsi_output->id * 10 + workspace->id;
-    else
-        return workspace->id;
+    return workspace->output->id * workspace->server->config.workspaces +
+           workspace->id;
 }
 
 void

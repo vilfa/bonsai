@@ -33,9 +33,11 @@
 #include "bonsai/util.h"
 
 // TODO: Implement xwayland support.
-// TODO: Implement input inhibitor, right now, it's faked.
+// TODO: Implement input inhibitor - right now, it's faked.
 // TODO: Add idle daemon and configuration.
 // TODO: Implement server decoration.
+// TODO: Investigate weird swipe up/down behavior.
+// TODO: Workspaces & multi-output configurations.
 
 int
 main(void)

@@ -205,25 +205,25 @@ server_init(struct bsi_server* server, struct bsi_config* config)
 
     util_slot_connect(&server->wlr_seat->events.pointer_grab_begin,
                       &server->listen.pointer_grab_begin,
-                      handle_pointer_grab_begin_notify);
+                      handle_pointer_grab_begin);
     util_slot_connect(&server->wlr_seat->events.pointer_grab_end,
                       &server->listen.pointer_grab_end,
-                      handle_pointer_grab_end_notify);
+                      handle_pointer_grab_end);
     util_slot_connect(&server->wlr_seat->events.keyboard_grab_begin,
                       &server->listen.keyboard_grab_begin,
-                      handle_keyboard_grab_begin_notify);
+                      handle_keyboard_grab_begin);
     util_slot_connect(&server->wlr_seat->events.keyboard_grab_end,
                       &server->listen.keyboard_grab_end,
-                      handle_keyboard_grab_end_notify);
+                      handle_keyboard_grab_end);
     util_slot_connect(&server->wlr_seat->events.request_set_cursor,
                       &server->listen.request_set_cursor,
-                      handle_request_set_cursor_notify);
+                      handle_request_set_cursor);
     util_slot_connect(&server->wlr_seat->events.request_set_selection,
                       &server->listen.request_set_selection,
-                      handle_request_set_selection_notify);
+                      handle_request_set_selection);
     util_slot_connect(&server->wlr_seat->events.request_set_primary_selection,
                       &server->listen.request_set_primary_selection,
-                      handle_request_set_primary_selection_notify);
+                      handle_request_set_primary_selection);
 
     wl_list_init(&server->scene.views);
     wl_list_init(&server->scene.views_fullscreen);
@@ -646,31 +646,31 @@ decorations_remove(struct bsi_xdg_decoration* deco)
 
 /* Handlers. */
 void
-handle_pointer_grab_begin_notify(struct wl_listener* listener, void* data)
+handle_pointer_grab_begin(struct wl_listener* listener, void* data)
 {
     debug("Got event pointer_grab_begin from wlr_seat");
 }
 
 void
-handle_pointer_grab_end_notify(struct wl_listener* listener, void* data)
+handle_pointer_grab_end(struct wl_listener* listener, void* data)
 {
     debug("Got event pointer_grab_end from wlr_seat");
 }
 
 void
-handle_keyboard_grab_begin_notify(struct wl_listener* listener, void* data)
+handle_keyboard_grab_begin(struct wl_listener* listener, void* data)
 {
     debug("Got event keyboard_grab_begin from wlr_seat");
 }
 
 void
-handle_keyboard_grab_end_notify(struct wl_listener* listener, void* data)
+handle_keyboard_grab_end(struct wl_listener* listener, void* data)
 {
     debug("Got event keyboard_grab_end from wlr_seat");
 }
 
 void
-handle_request_set_cursor_notify(struct wl_listener* listener, void* data)
+handle_request_set_cursor(struct wl_listener* listener, void* data)
 {
     debug("Got event request_set_cursor from wlr_seat");
 
@@ -687,7 +687,7 @@ handle_request_set_cursor_notify(struct wl_listener* listener, void* data)
 }
 
 void
-handle_request_set_selection_notify(struct wl_listener* listener, void* data)
+handle_request_set_selection(struct wl_listener* listener, void* data)
 {
     debug("Got event request_set_selection from wlr_seat");
 
@@ -700,8 +700,7 @@ handle_request_set_selection_notify(struct wl_listener* listener, void* data)
 }
 
 void
-handle_request_set_primary_selection_notify(struct wl_listener* listener,
-                                            void* data)
+handle_request_set_primary_selection(struct wl_listener* listener, void* data)
 {
     debug("Got event request_set_primary_selection from wlr_seat");
 
