@@ -154,15 +154,16 @@ install_data(
 
 # Extern configs
 install_data(
-    'extern/swaylock',
+    'extern/swaylock/config',
     install_dir : join_paths(sysconfdir, 'swaylock'),
 )
 install_data(
-    'extern/waybar',
+    'extern/waybar/config',
+    'extern/waybar/style.css',
     install_dir : join_paths(sysconfdir, 'waybar'),
 )
 install_data(
-    'extern/xdg-desktop-portal-wlr',
+    'extern/xdg-desktop-portal-wlr/config',
     install_dir : join_paths(sysconfdir, 'xdg', 'xdg-desktop-portal-wlr'),
 )
 
