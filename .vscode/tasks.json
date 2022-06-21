@@ -1,0 +1,25 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Remote: Setup",
+            "type": "shell",
+            "command": "${workspaceFolder}/remote/setup.sh",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "Remote: Build all machines",
+            "type": "shell",
+            "command": "${workspaceFolder}/remote/build.sh",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+    ]
+}
