@@ -149,7 +149,7 @@ install_data(
 install_data(
     'extern/fonts/Nerd-Font-Symbols-Complete.ttf',
     'extern/fonts/LICENSE',
-    install_dir : join_paths(datadir, 'fonts'),
+    install_dir : join_paths(datadir, 'fonts', 'bonsai'),
 )
 
 # Extern configs
