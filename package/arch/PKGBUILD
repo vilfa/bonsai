@@ -1,0 +1,54 @@
+# Maintainer: Luka Vilfan <luka.vilfan@protonmail.com>
+pkgname=bonsai
+pkgver=0.1.0.dev
+pkgrel=1
+pkgdesc="A simple Wayland compositor focusing on OOB user experience."
+arch=(x86_64)
+url="https://github.com/vilfa/bonsai"
+license=(GPL-3.0)
+depends=(
+    # wlroots-git
+    wayland
+    wayland-protocols
+    wayland-utils
+    xdg-desktop-portal
+    xdg-desktop-portal-wlr
+    libinput
+    libxkbcommon
+    libdrm
+    pixman
+    cairo
+)
+makedepends=(
+    git
+    meson
+)
+optdepends=(
+    "swaybg: wallpaper support"
+    "swaylock: screen locking support"
+    "bemenu: dmenu-like laucher"
+    "waybar: status bar"
+    "slurp: screenshot support"
+    "grim: screenshot support"
+    "wl-clipboard: screenshot and clipboard support"
+    "brightnessctl: screen brightness setting support"
+)
+source=("${pkgname}::git+${url}.git")
+sha256sums=('SKIP')
+
+_builddir=build
+
+build() {
+    arch-meson \
+        --buildtype=debug \
+        -Dwerror=false \
+        -Dbsi_software_cursor=false \
+        -Dbsi_user_configs=false \
+        -Dbsi_verbose=false \
+        "${pkgname}" "${_builddir}"
+    meson compile -C "${_builddir}"
+}
+
+package() {
+    DESTDIR="${pkgdir}" meson install -C "${_builddir}"
+}

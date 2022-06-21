@@ -67,3 +67,8 @@ dkms.conf
 
 # # # Bonsai # # #
 **/*log*
+
+# # # ArchPkgbuild # # #
+package/arch/*
+!package/arch/*.pkg.tar.zst
+!package/arch/PKGBUILD

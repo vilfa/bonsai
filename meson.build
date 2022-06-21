@@ -1,6 +1,6 @@
 project(
     'bonsai', 'c',
-    version : '0.1.0',
+    version : '0.1.0-dev',
     license : 'GPL-3.0',
     meson_version : '>=0.61.0',
     default_options : [
@@ -152,13 +152,27 @@ install_data(
     install_dir : join_paths(datadir, 'fonts'),
 )
 
+# Extern configs
+install_data(
+    'extern/swaylock',
+    install_dir : join_paths(sysconfdir, 'swaylock'),
+)
+install_data(
+    'extern/waybar',
+    install_dir : join_paths(sysconfdir, 'waybar'),
+)
+install_data(
+    'extern/xdg-desktop-portal-wlr',
+    install_dir : join_paths(sysconfdir, 'xdg', 'xdg-desktop-portal-wlr'),
+)
+
 # User configs
 if get_option('bsi_user_configs')
     run_command(
         'extern/install.sh',
         capture : true,
         check : true,
-        env : { 
+        env : {
             'SRCDIR': '@0@'.format(meson.global_source_root()) 
         }
     )
