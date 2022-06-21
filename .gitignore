@@ -70,5 +70,4 @@ dkms.conf
 
 # # # ArchPkgbuild # # #
 package/arch/*
-!package/arch/*.pkg.tar.zst
 !package/arch/PKGBUILD
