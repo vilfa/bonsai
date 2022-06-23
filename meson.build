@@ -140,6 +140,7 @@ install_data(
     'assets/Wallpaper-1.jpg',
     'assets/Wallpaper-2.jpg',
     'assets/Wallpaper-3.jpg',
+    'assets/Wallpaper-4.jpg',
     'assets/Wallpaper-Default.jpg',
     'assets/LICENSE',
     install_dir : join_paths(datadir, 'backgrounds', 'bonsai'),
