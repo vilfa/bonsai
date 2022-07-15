@@ -568,7 +568,7 @@ views_focus_recent(struct bsi_server* server)
     if (!wl_list_empty(&active_ws->views)) {
         struct bsi_view* mru =
             wl_container_of(active_ws->views.prev, mru, link_workspace);
-        if (!mru->mapped)
+        if (mru->state == BSI_VIEW_STATE_MINIMIZED)
             return;
         wl_list_remove(&mru->link_workspace);
         wl_list_insert(&active_ws->views, &mru->link_workspace);
