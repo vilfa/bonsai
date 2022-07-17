@@ -290,6 +290,13 @@ server_setup(struct bsi_server* server)
         exit(EXIT_FAILURE);
     }
 
+    if (setenv("MOZ_ENABLE_WAYLAND", "1", true) != 0) {
+        errn("Failed to set MOZ_ENABLE_WAYLAND env var");
+        wlr_backend_destroy(server->wlr_backend);
+        wl_display_destroy(server->wl_display);
+        exit(EXIT_FAILURE);
+    }
+
     char* const argp[] = { "dbus-update-activation-environment",
                            "--systemd",
                            "WAYLAND_DISPLAY",
