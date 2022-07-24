@@ -92,7 +92,8 @@ input_device_keymap_set(struct bsi_input_device* input_device,
         xkb_context, xkb_rule_names, XKB_KEYMAP_COMPILE_NO_FLAGS);
 
     if (xkb_keymap != NULL) {
-        wlr_keyboard_set_keymap(input_device->device->keyboard, xkb_keymap);
+        wlr_keyboard_set_keymap(
+            wlr_keyboard_from_input_device(input_device->device), xkb_keymap);
         xkb_keymap_unref(xkb_keymap);
         debug("Set keymap from xkb_rule_names { rules=%s, model=%s, layout=%s, "
               "variant=%s, options=%s }",
@@ -467,7 +468,8 @@ handle_key(struct wl_listener* listener, void* data)
         /* A seat can only have one keyboard, but multiple keyboards can be
          * attached. Switch the seat to the correct underlying keyboard. Roots
          * handles this for us :). */
-        wlr_seat_set_keyboard(seat, device->device->keyboard);
+        wlr_seat_set_keyboard(seat,
+                              wlr_keyboard_from_input_device(device->device));
         /* The server knows not thy keybind, the client shall handle it. Notify
          * client of keys not handled by the server. */
         wlr_seat_keyboard_notify_key(
@@ -482,16 +484,16 @@ handle_modifiers(struct wl_listener* listener, void* data)
         wl_container_of(listener, device, listen.modifiers);
     struct bsi_server* server = device->server;
     struct wlr_seat* seat = server->wlr_seat;
-    struct wlr_input_device* dev = device->device;
 
     wlr_idle_notify_activity(device->server->wlr_idle, seat);
 
     /* A seat can only have one keyboard, but multiple keyboards can be
      * attached. Switch the seat to the correct underlying keyboard. Roots
      * handles this for us :). */
-    wlr_seat_set_keyboard(seat, dev->keyboard);
+    wlr_seat_set_keyboard(seat, wlr_keyboard_from_input_device(device->device));
     /* Notify client of keys not handled by the server. */
-    wlr_seat_keyboard_notify_modifiers(seat, &dev->keyboard->modifiers);
+    wlr_seat_keyboard_notify_modifiers(
+        seat, &wlr_keyboard_from_input_device(device->device)->modifiers);
 }
 
 static void
@@ -676,10 +678,12 @@ handle_new_input(struct wl_listener* listener, void* data)
                 device, BSI_INPUT_DEVICE_KEYBOARD, server, wlr_device);
             inputs_add(server, device);
 
-            util_slot_connect(&device->device->keyboard->events.key,
-                              &device->listen.key,
-                              handle_key);
-            util_slot_connect(&device->device->keyboard->events.modifiers,
+            util_slot_connect(
+                &wlr_keyboard_from_input_device(device->device)->events.key,
+                &device->listen.key,
+                handle_key);
+            util_slot_connect(&wlr_keyboard_from_input_device(device->device)
+                                   ->events.modifiers,
                               &device->listen.modifiers,
                               handle_modifiers);
             util_slot_connect(&device->device->events.destroy,
@@ -713,7 +717,7 @@ handle_new_input(struct wl_listener* listener, void* data)
                             break;
                         case BSI_CONFIG_INPUT_KEYBOARD_REPEAT_INFO:
                             wlr_keyboard_set_repeat_info(
-                                device->device->keyboard,
+                                wlr_keyboard_from_input_device(device->device),
                                 conf->kbd_repeat_rate,
                                 conf->kbd_repeat_delay);
                             debug("Set repeat info { rate=%d, delay=%d }",
@@ -743,7 +747,9 @@ handle_new_input(struct wl_listener* listener, void* data)
 
             input_device_keymap_set(device, &xkb_rules);
 
-            wlr_seat_set_keyboard(server->wlr_seat, device->device->keyboard);
+            wlr_seat_set_keyboard(
+                server->wlr_seat,
+                wlr_keyboard_from_input_device(device->device));
 
             info("Added new keyboard input device '%s' (vendor %x, product %x)",
                  device->device->name,
