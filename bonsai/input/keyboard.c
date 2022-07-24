@@ -36,7 +36,8 @@ keyboard_keybinds_process(struct bsi_input_device* device,
     assert(device->type == BSI_INPUT_DEVICE_KEYBOARD);
 
     struct bsi_server* server = device->server;
-    struct wlr_keyboard* wlr_keyboard = device->device->keyboard;
+    struct wlr_keyboard* wlr_keyboard =
+        wlr_keyboard_from_input_device(device->device);
 
     /* Translate libinput -> xkbcommon keycode. */
     uint32_t keycode = event->keycode + 8;
