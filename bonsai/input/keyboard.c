@@ -286,6 +286,7 @@ keyboard_mod_ctrl_alt_handle(struct bsi_server* server, xkb_keysym_t sym)
     debug("Got Ctrl+Alt mod");
     switch (sym) {
         case XKB_KEY_Right: {
+            debug("Got Ctrl+Alt+Right -> next workspace");
             struct wlr_output* output =
                 wlr_output_layout_output_at(server->wlr_output_layout,
                                             server->wlr_cursor->x,
@@ -299,6 +300,7 @@ keyboard_mod_ctrl_alt_handle(struct bsi_server* server, xkb_keysym_t sym)
             return true;
         }
         case XKB_KEY_Left: {
+            debug("Got Ctrl+Alt+Left -> previous workspace");
             struct wlr_output* output =
                 wlr_output_layout_output_at(server->wlr_output_layout,
                                             server->wlr_cursor->x,
