@@ -30,85 +30,6 @@
 #include "bonsai/server.h"
 #include "bonsai/util.h"
 
-struct bsi_input_device*
-input_device_init(struct bsi_input_device* input_device,
-                  enum bsi_input_device_type type,
-                  struct bsi_server* server,
-                  struct wlr_input_device* device)
-{
-    switch (type) {
-        case BSI_INPUT_DEVICE_POINTER:
-            input_device->server = server;
-            input_device->cursor = server->wlr_cursor;
-            input_device->device = device;
-            input_device->type = type;
-            break;
-        case BSI_INPUT_DEVICE_KEYBOARD:
-            input_device->server = server;
-            input_device->device = device;
-            input_device->type = type;
-            break;
-    }
-
-    return input_device;
-}
-
-void
-input_device_destroy(struct bsi_input_device* input_device)
-{
-    switch (input_device->type) {
-        case BSI_INPUT_DEVICE_POINTER:
-            wl_list_remove(&input_device->listen.motion.link);
-            wl_list_remove(&input_device->listen.motion_absolute.link);
-            wl_list_remove(&input_device->listen.button.link);
-            wl_list_remove(&input_device->listen.axis.link);
-            wl_list_remove(&input_device->listen.frame.link);
-            wl_list_remove(&input_device->listen.swipe_begin.link);
-            wl_list_remove(&input_device->listen.swipe_update.link);
-            wl_list_remove(&input_device->listen.swipe_end.link);
-            wl_list_remove(&input_device->listen.pinch_begin.link);
-            wl_list_remove(&input_device->listen.pinch_update.link);
-            wl_list_remove(&input_device->listen.pinch_end.link);
-            wl_list_remove(&input_device->listen.hold_begin.link);
-            wl_list_remove(&input_device->listen.hold_end.link);
-            break;
-        case BSI_INPUT_DEVICE_KEYBOARD:
-            wl_list_remove(&input_device->listen.key.link);
-            wl_list_remove(&input_device->listen.modifiers.link);
-            wl_list_remove(&input_device->listen.destroy.link);
-            break;
-    }
-    free(input_device);
-}
-
-void
-input_device_keymap_set(struct bsi_input_device* input_device,
-                        const struct xkb_rule_names* xkb_rule_names)
-{
-    assert(input_device->type == BSI_INPUT_DEVICE_KEYBOARD);
-
-    struct xkb_context* xkb_context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-    struct xkb_keymap* xkb_keymap = xkb_keymap_new_from_names(
-        xkb_context, xkb_rule_names, XKB_KEYMAP_COMPILE_NO_FLAGS);
-
-    if (xkb_keymap != NULL) {
-        wlr_keyboard_set_keymap(
-            wlr_keyboard_from_input_device(input_device->device), xkb_keymap);
-        xkb_keymap_unref(xkb_keymap);
-        debug("Set keymap from xkb_rule_names { rules=%s, model=%s, layout=%s, "
-              "variant=%s, options=%s }",
-              xkb_rule_names->rules,
-              xkb_rule_names->model,
-              xkb_rule_names->layout,
-              xkb_rule_names->variant,
-              xkb_rule_names->options);
-    } else {
-        error("Keymap compilation failed");
-    }
-
-    xkb_context_unref(xkb_context);
-}
-
 /* Handlers */
 static void
 handle_motion(struct wl_listener* listener, void* data)
@@ -790,4 +711,157 @@ handle_new_input(struct wl_listener* listener, void* data)
     debug("Server now has %ld input keyboard devices", len_keyboards);
 
     wlr_seat_set_capabilities(server->wlr_seat, capabilities);
+}
+
+static void
+handle_new_virtual_keyboard(struct wl_listener* listener, void* data)
+{
+}
+
+static void
+handle_new_virtual_pointer(struct wl_listener* listener, void* data)
+{
+}
+
+static void
+handle_input_inhibit_activate(struct wl_listener* listener, void* data)
+{
+}
+
+static void
+handle_input_inhibit_deactivate(struct wl_listener* listener, void* data)
+{
+}
+
+static void
+handle_new_keyboard_shortcuts_inhibitor(struct wl_listener* listener,
+                                        void* data)
+{
+}
+
+/* Function impls. */
+struct bsi_input_manager*
+input_manager_init(struct bsi_server* server)
+{
+    struct bsi_input_manager* input_manager =
+        calloc(1, sizeof(struct bsi_input_manager));
+
+    input_manager->server = server;
+    wl_list_init(&input_manager->seats);
+    wl_list_init(&input_manager->devices);
+
+    util_slot_connect(&server->wlr_backend->events.new_input,
+                      &input_manager->listen.new_input,
+                      handle_new_input);
+
+    input_manager->input_inhibit =
+        wlr_input_inhibit_manager_create(server->wl_display);
+    util_slot_connect(&input_manager->input_inhibit->events.activate,
+                      &input_manager->listen.input_inhibit_activate,
+                      handle_input_inhibit_activate);
+    util_slot_connect(&input_manager->input_inhibit->events.deactivate,
+                      &input_manager->listen.input_inhibit_deactivate,
+                      handle_input_inhibit_deactivate);
+
+    input_manager->keyboard_shortcuts_inhibit =
+        wlr_keyboard_shortcuts_inhibit_v1_create(server->wl_display);
+    util_slot_connect(
+        &input_manager->keyboard_shortcuts_inhibit->events.new_inhibitor,
+        &input_manager->listen.new_keyboard_shortcuts_inhibitor,
+        handle_new_keyboard_shortcuts_inhibitor);
+
+    input_manager->virtual_keyboard =
+        wlr_virtual_keyboard_manager_v1_create(server->wl_display);
+    util_slot_connect(
+        &input_manager->virtual_keyboard->events.new_virtual_keyboard,
+        &input_manager->listen.new_virtual_keyboard,
+        handle_new_virtual_keyboard);
+
+    input_manager->virtual_pointer =
+        wlr_virtual_pointer_manager_v1_create(server->wl_display);
+    util_slot_connect(
+        &input_manager->virtual_pointer->events.new_virtual_pointer,
+        &input_manager->listen.new_virtual_pointer,
+        handle_new_virtual_pointer);
+
+    return input_manager;
+}
+
+struct bsi_input_device*
+input_device_init(struct bsi_input_device* input_device,
+                  enum bsi_input_device_type type,
+                  struct bsi_server* server,
+                  struct wlr_input_device* device)
+{
+    switch (type) {
+        case BSI_INPUT_DEVICE_POINTER:
+            input_device->server = server;
+            input_device->cursor = server->wlr_cursor;
+            input_device->device = device;
+            input_device->type = type;
+            break;
+        case BSI_INPUT_DEVICE_KEYBOARD:
+            input_device->server = server;
+            input_device->device = device;
+            input_device->type = type;
+            break;
+    }
+
+    return input_device;
+}
+
+void
+input_device_destroy(struct bsi_input_device* input_device)
+{
+    switch (input_device->type) {
+        case BSI_INPUT_DEVICE_POINTER:
+            wl_list_remove(&input_device->listen.motion.link);
+            wl_list_remove(&input_device->listen.motion_absolute.link);
+            wl_list_remove(&input_device->listen.button.link);
+            wl_list_remove(&input_device->listen.axis.link);
+            wl_list_remove(&input_device->listen.frame.link);
+            wl_list_remove(&input_device->listen.swipe_begin.link);
+            wl_list_remove(&input_device->listen.swipe_update.link);
+            wl_list_remove(&input_device->listen.swipe_end.link);
+            wl_list_remove(&input_device->listen.pinch_begin.link);
+            wl_list_remove(&input_device->listen.pinch_update.link);
+            wl_list_remove(&input_device->listen.pinch_end.link);
+            wl_list_remove(&input_device->listen.hold_begin.link);
+            wl_list_remove(&input_device->listen.hold_end.link);
+            break;
+        case BSI_INPUT_DEVICE_KEYBOARD:
+            wl_list_remove(&input_device->listen.key.link);
+            wl_list_remove(&input_device->listen.modifiers.link);
+            wl_list_remove(&input_device->listen.destroy.link);
+            break;
+    }
+    free(input_device);
+}
+
+void
+input_device_keymap_set(struct bsi_input_device* input_device,
+                        const struct xkb_rule_names* xkb_rule_names)
+{
+    assert(input_device->type == BSI_INPUT_DEVICE_KEYBOARD);
+
+    struct xkb_context* xkb_context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+    struct xkb_keymap* xkb_keymap = xkb_keymap_new_from_names(
+        xkb_context, xkb_rule_names, XKB_KEYMAP_COMPILE_NO_FLAGS);
+
+    if (xkb_keymap != NULL) {
+        wlr_keyboard_set_keymap(
+            wlr_keyboard_from_input_device(input_device->device), xkb_keymap);
+        xkb_keymap_unref(xkb_keymap);
+        debug("Set keymap from xkb_rule_names { rules=%s, model=%s, layout=%s, "
+              "variant=%s, options=%s }",
+              xkb_rule_names->rules,
+              xkb_rule_names->model,
+              xkb_rule_names->layout,
+              xkb_rule_names->variant,
+              xkb_rule_names->options);
+    } else {
+        error("Keymap compilation failed");
+    }
+
+    xkb_context_unref(xkb_context);
 }

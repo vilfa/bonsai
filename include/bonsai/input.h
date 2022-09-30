@@ -5,7 +5,40 @@
 #include <stdlib.h>
 #include <wayland-server-core.h>
 #include <wayland-util.h>
+#include <wlr/types/wlr_input_inhibitor.h>
+#include <wlr/types/wlr_keyboard_shortcuts_inhibit_v1.h>
+#include <wlr/types/wlr_virtual_keyboard_v1.h>
+#include <wlr/types/wlr_virtual_pointer_v1.h>
 #include <xkbcommon/xkbcommon.h>
+
+struct bsi_input_manager
+{
+    struct bsi_server* server;
+
+    struct wl_list devices;
+    struct wl_list seats;
+
+    struct wlr_input_inhibit_manager* input_inhibit;
+    struct wlr_keyboard_shortcuts_inhibit_manager_v1*
+        keyboard_shortcuts_inhibit;
+    struct wlr_virtual_keyboard_manager_v1* virtual_keyboard;
+    struct wlr_virtual_pointer_manager_v1* virtual_pointer;
+
+    struct
+    {
+        /* wlr_backend */
+        struct wl_listener new_input;
+        /* wlr_input_inhibit_manager */
+        struct wl_listener input_inhibit_activate;
+        struct wl_listener input_inhibit_deactivate;
+        /* wlr_keyboard_shortcuts_inhibit_manager_v1 */
+        struct wl_listener new_keyboard_shortcuts_inhibitor;
+        /* wlr_virtual_keyboard_manager_v1 */
+        struct wl_listener new_virtual_keyboard;
+        /* wlr_virtual_pointer_manager_v1 */
+        struct wl_listener new_virtual_pointer;
+    } listen;
+};
 
 enum bsi_input_device_type
 {
@@ -47,6 +80,14 @@ struct bsi_input_device
     struct wl_list link_server; // bsi_server
 };
 
+/* bsi_input_manager */
+struct bsi_input_manager*
+input_manager_init(struct bsi_server* server);
+
+void
+input_manager_destroy(struct bsi_input_manager* input_manager);
+
+/* bsi_input_device */
 struct bsi_input_device*
 input_device_init(struct bsi_input_device* input_device,
                   enum bsi_input_device_type type,

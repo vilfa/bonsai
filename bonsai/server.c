@@ -48,7 +48,7 @@
 #include "bonsai/config/atom.h"
 #include "bonsai/config/config.h"
 #include "bonsai/desktop/decoration.h"
-#include "bonsai/desktop/idle.h"
+#include "bonsai/desktop/inhibit.h"
 #include "bonsai/desktop/layers.h"
 #include "bonsai/desktop/lock.h"
 #include "bonsai/desktop/view.h"
@@ -77,9 +77,10 @@ server_init(struct bsi_server* server, struct bsi_config* config)
     util_slot_connect(&server->wlr_backend->events.new_output,
                       &server->listen.new_output,
                       handle_new_output);
-    util_slot_connect(&server->wlr_backend->events.new_input,
-                      &server->listen.new_input,
-                      handle_new_input);
+    // util_slot_connect(&server->wlr_backend->events.new_input,
+    //   &server->listen.new_input,
+    //   handle_new_input);
+    server->bsi_input_manager = input_manager_init(server);
 
     server->wlr_renderer = wlr_renderer_autocreate(server->wlr_backend);
     if (!wlr_renderer_init_wl_display(server->wlr_renderer,
@@ -169,7 +170,8 @@ server_init(struct bsi_server* server, struct bsi_config* config)
     util_slot_connect(&server->wlr_idle_inhibit_manager->events.new_inhibitor,
                       &server->listen.new_inhibitor,
                       handle_idle_manager_new_inhibitor);
-    wl_list_init(&server->idle.inhibitors);
+    wl_list_init(&server->inhibitors.idle);
+    wl_list_init(&server->inhibitors.input);
 
     server->wlr_session_lock_manager =
         wlr_session_lock_manager_v1_create(server->wl_display);
@@ -327,8 +329,10 @@ server_destroy(struct bsi_server* server)
     debug("Server finish");
 
     server->session.shutting_down = true;
+
+    input_manager_destroy(server->bsi_input_manager);
+
     wl_list_remove(&server->listen.new_output.link);
-    wl_list_remove(&server->listen.new_input.link);
     wl_list_remove(&server->listen.pointer_grab_begin.link);
     wl_list_remove(&server->listen.pointer_grab_end.link);
     wl_list_remove(&server->listen.keyboard_grab_begin.link);
@@ -612,7 +616,7 @@ void
 idle_inhibitors_add(struct bsi_server* server,
                     struct bsi_idle_inhibitor* inhibitor)
 {
-    wl_list_insert(&server->idle.inhibitors, &inhibitor->link_server);
+    wl_list_insert(&server->inhibitors.idle, &inhibitor->link_server);
 }
 
 void
@@ -624,18 +628,30 @@ idle_inhibitors_remove(struct bsi_idle_inhibitor* inhibitor)
 void
 idle_inhibitors_update(struct bsi_server* server)
 {
-    if (wl_list_empty(&server->idle.inhibitors))
+    if (wl_list_empty(&server->inhibitors.idle))
         return;
 
     bool inhibit = false;
     struct bsi_idle_inhibitor* idle;
-    wl_list_for_each(idle, &server->idle.inhibitors, link_server)
+    wl_list_for_each(idle, &server->inhibitors.idle, link_server)
     {
         if ((inhibit = idle_inhibitor_active(idle)))
             break;
     }
 
     wlr_idle_set_enabled(server->wlr_idle, NULL, !inhibit);
+}
+
+/* Input inhibitors */
+void
+input_inhibitors_add(struct bsi_server* server,
+                     struct bsi_input_inhibitor* inhibitor)
+{
+}
+
+void
+input_inhibitors_remove(struct bsi_input_inhibitor* inhibitor)
+{
 }
 
 /* Decorations */

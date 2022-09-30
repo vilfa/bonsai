@@ -9,7 +9,7 @@
 #include <wlr/xwayland.h>
 
 #include "bonsai/desktop/decoration.h"
-#include "bonsai/desktop/idle.h"
+#include "bonsai/desktop/inhibit.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/desktop/workspace.h"
 #include "bonsai/input/cursor.h"

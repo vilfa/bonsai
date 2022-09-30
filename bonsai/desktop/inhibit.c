@@ -5,7 +5,7 @@
 #include <wlr/types/wlr_idle.h>
 #include <wlr/types/wlr_idle_inhibit_v1.h>
 
-#include "bonsai/desktop/idle.h"
+#include "bonsai/desktop/inhibit.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/events.h"
 #include "bonsai/log.h"

@@ -13,7 +13,7 @@
 #include <wlr/util/box.h>
 #include <wlr/util/edges.h>
 
-#include "bonsai/desktop/idle.h"
+#include "bonsai/desktop/inhibit.h"
 #include "bonsai/desktop/view.h"
 #include "bonsai/log.h"
 #include "bonsai/output.h"

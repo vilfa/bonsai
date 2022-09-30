@@ -38,11 +38,13 @@ struct bsi_server
     struct wlr_input_inhibit_manager* wlr_input_inhbit_manager;
     struct wlr_session_lock_manager_v1* wlr_session_lock_manager;
 
+    struct bsi_input_manager* bsi_input_manager;
+
     struct
     {
         /* wlr_backend */
         struct wl_listener new_output;
-        struct wl_listener new_input;
+        // struct wl_listener new_input; /* Moved to bsi_input_manager. */
         /* wlr_output_layout */
         struct wl_listener output_layout_change;
         /* wlr_output_manager_v1 */
@@ -70,6 +72,9 @@ struct bsi_server
         struct wl_listener activity_notify;
         /* wlr_session_lock_manager_v1 */
         struct wl_listener new_lock;
+        /* wlr_input_inhibit_manager */
+        struct wl_listener input_inhibit_activate;
+        struct wl_listener input_inhibit_deactivate;
         /* bsi_workspace */
         struct wl_list workspace; // bsi_workspace_listener::link
     } listen;
@@ -89,8 +94,9 @@ struct bsi_server
 
     struct
     {
-        struct wl_list inhibitors;
-    } idle;
+        struct wl_list idle;
+        struct wl_list input;
+    } inhibitors;
 
     struct
     {
