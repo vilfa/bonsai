@@ -45,6 +45,9 @@ library, meaning a rock-solid foundation to build on.
 * `wl-clipboard` (screenshot & clipboard)
 * `brightnessctl` (brightness control via waybar)
 
+### Using the Vagrant development environment
+TODO: Finish this section
+
 ### Building and installing
 
 * Clone the repo
