@@ -45,6 +45,71 @@ library, meaning a rock-solid foundation to build on.
 * `wl-clipboard` (screenshot & clipboard)
 * `brightnessctl` (brightness control via waybar)
 
+### Using the Vagrant development environment
+For the optimal developer experience, it is recommended you use the provided 
+Vagrant development environment. Currently this environment is only configured 
+with the `libvirt` provider, however, multiple Vagrant providers could quite easily
+be added in the future.
+
+To use this environment, make sure, you have the latest versions of the following
+packages:
+* `vagrant` (manages virtual machines)
+* `vagrant-libvirt` (the `libvirt` plugin for Vagrant)
+* `libvirt` + `qemu` (should be installed automatically with `vagrant`)
+* `virt-manager` (graphical frontend to `libvirt`)
+* `virt-viewer` (connect to virtual machine display)
+
+After installing the necessary dependencies (a restart may be required), move to
+the project root and simply run
+```bash
+vagrant up
+```
+
+This should automatically create a new virtual machine that is set up with all
+necessary compile- and run-time dependencies. As far as using this setup goes,
+there are several commands/provisioners that are available to you, to make working
+with the development virtual machine easier. These should be run in the project 
+root, in the following form
+```bash
+vagrant provision --provision-with <command/provisioner>
+```
+
+The available commands/provisioners are
+* `connect` -> connect to the dev env display using `virt-manager`
+* `prepare_git` -> clone the git upstream & prepare meson build env
+* `prepare_local` -> copy local sources from your project root & prepare meson build env
+* `build` -> build the project in the build env
+* `update` -> update build env with sources from your project root
+* `run` -> run bonsai in the graphical session on the dev env (currently not working)
+* `kill` -> kill the bonsai process on the dev env
+* `clean` -> clean the meson build artefacts from the project folder on the dev env
+
+Thus, the steps for the first build could be
+```bash
+git clone https://github.com/vilfa/bonsai.git && cd bonsai
+vagrant up
+vagrant provision --provision-with prepare_local
+vagrant provision --provision-with build
+```
+
+Then, in the dev env graphical session, login as vagrant:vagrant, and run the built
+project with
+```bash
+cd home/vagrant/bonsai && ./builddir/bonsai/bonsai
+```
+
+Then, when you make some changes, you might want to update your source on the dev env
+and rerun the compositor. That could also be done by running
+```bash
+vagrant provision --provision-with kill
+vagrant provision --provision-with update
+vagrant provision --provision-with build
+```
+
+...and repeating the above step for running.
+
+To make this even easier, VS Code tasks are also provided. Search for 'devenv'.
+
 ### Building and installing
 
 * Clone the repo
