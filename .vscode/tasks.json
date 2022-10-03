@@ -2,9 +2,21 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Remote: Setup",
+            "label": "Devenv: Connect to Display",
             "type": "shell",
-            "command": "${workspaceFolder}/remote/setup.sh",
+            "command": "virt-viewer -ac qemu:///system --uuid 60fa5b18-e4d6-47a4-af7a-023d3d34bfaa",
+            "group": "none",
+            "presentation": {
+                "reveal": "never",
+                "panel": "shared"
+            },
+            "isBackground": true,
+            "problemMatcher": []
+        },
+        {
+            "label": "Devenv: Prepare Project (Git)",
+            "type": "shell",
+            "command": "vagrant provision --provision-with prepare_git",
             "group": "build",
             "presentation": {
                 "reveal": "always",
@@ -12,14 +24,64 @@
             }
         },
         {
-            "label": "Remote: Build all machines",
+            "label": "Devenv: Prepare Project (Local)",
             "type": "shell",
-            "command": "${workspaceFolder}/remote/build.sh",
+            "command": "vagrant provision --provision-with prepare_local",
             "group": "build",
             "presentation": {
                 "reveal": "always",
                 "panel": "shared"
             }
         },
+        {
+            "label": "Devenv: Build Project",
+            "type": "shell",
+            "command": "vagrant provision --provision-with build",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "Devenv: Update Project",
+            "type": "shell",
+            "command": "vagrant provision --provision-with update",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "Devenv: Run Bonsai",
+            "type": "shell",
+            "command": "vagrant provision --provision-with run",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "Devenv: Kill Bonsai",
+            "type": "shell",
+            "command": "vagrant provision --provision-with kill",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "Devenv: Clean Project",
+            "type": "shell",
+            "command": "vagrant provision --provision-with clean",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        }
     ]
 }
