@@ -35,15 +35,24 @@ Vagrant.configure("2") do |config|
   config.vm.box = "generic/arch"
   config.vm.hostname = "bonsai-devenv"
   
+  # Configure virtualbox for 3d accelerated graphical session.
+  config.vm.provider :virtualbox do |m|
+    m.gui = true
+    m.memory = 2048
+    m.cpus = 4
+    m.customize ["modifyvm", :id, "--vram", "256"]
+    m.customize ["modifyvm", :id, "--accelerate3d", "on"]
+  end
+
   # Configure libvirt for 3d accelerated graphical session.
-  config.vm.provider :libvirt do |libvirt|
-    libvirt.graphics_type = "spice"
-    libvirt.video_accel3d = true
-    libvirt.video_type = "virtio"
-    libvirt.graphics_ip = nil
-    libvirt.graphics_port = nil
-    libvirt.uuid = "60fa5b18-e4d6-47a4-af7a-023d3d34bfaa"
-    libvirt.uri = "qemu:///system"
+  config.vm.provider :libvirt do |m|
+    m.graphics_type = "spice"
+    m.video_accel3d = true
+    m.video_type = "virtio"
+    m.graphics_ip = nil
+    m.graphics_port = nil
+    m.uuid = "60fa5b18-e4d6-47a4-af7a-023d3d34bfaa"
+    m.uri = "qemu:///system"
   end
   
   # Share working directory with devenv.
